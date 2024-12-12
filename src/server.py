@@ -44,20 +44,7 @@ async def new_config(request: Request, name: str):
 
 @app.put("/config/{idx}")
 async def update_config_by_id(request: Request, idx: str):
-    return Response(status_code=200)
-    api_key = request.headers.get("X-API-Key")
-    if not authorized(api_key=api_key):
-        return Response(status_code=401)
-    username = api_keys[api_key]
-    data = await request.body()
-    try:
-        configs.update_config_by_id(idx, json.loads(data))
-    except Exception as e:
-        return Response(status_code=500, content=e)
-    return {
-        "status": "success",
-        "message": f"Configuration {idx} updated successfully",
-    }
+    raise NotImplementedError
 
 
 @app.delete("/config/{idx}")
@@ -104,3 +91,25 @@ async def build_ui(request: Request, idx: str):
 
     # apply configuration to UI
     return UIBuilder.build_ui(config, data)
+
+
+from functions_to_format.mapper import Formatter
+from functions_to_format.mapper import functions_mapper
+
+formatter = Formatter()
+
+
+@app.get("/chat/v2/build_ui/text")
+async def format_data(request: Request):
+    data = await request.json()
+    return formatter.format_widget(widget_name="text_widget", data=data)
+    # return
+    # return Formatter().format_widget(data["widget_name"], data["data"])
+
+
+@app.get("/chat/v2/build_ui/actions")
+async def format_data_v2(request: Request):
+    data = await request.json()
+    return functions_mapper[data["function_name"]](
+        data["llm_output"], data["backend_output"]
+    )
