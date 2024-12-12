@@ -1,0 +1,69 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "array",
+    "items": [
+        {
+            "type": "string",
+            "enum": [
+                "text_normal"
+            ]
+        },
+        {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/cards_list_item_other"
+            }
+        },
+        {
+            "type": "string",
+            "enum": [
+                "button"
+            ]
+        }
+    ],
+    "definitions": {
+        "cards_list_item_other": {
+            "type": "object",
+            "properties": {
+                "index": {
+                    "type": "integer",
+                    "description": "Index of the card in the list."
+                },
+                "other_card_container": {
+                    "$ref": "#/OtherCardContainer"
+                }
+            },
+            "required": [
+                "index",
+                "other_card_container"
+            ]
+        },
+        "definitions": {
+            "other_card_container": {
+                "type": "object",
+                "description": "container which has information about the card of other people",
+                "properties": {
+                    "masked_card_pan": {
+                        "type": "string",
+                        "description": "Masked card number (e.g., **** 1234)."
+                    },
+                    "card_owner": {
+                        "type": "string",
+                        "description": "The name of the card owner."
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "The provider of the card."
+                    }
+                },
+                "required": [
+                    "masked_card_pan",
+                    "card_owner",
+                    "provider"
+                ]
+            }
+        }
+    },
+    "minItems": 3,
+    "maxItems": 3
+}
