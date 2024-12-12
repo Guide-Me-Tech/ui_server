@@ -2,6 +2,7 @@ import os
 import json
 import dataclasses
 from typing import Dict
+from typing import Tuple
 
 
 @dataclasses.dataclass
@@ -131,7 +132,7 @@ class ConfigsManager:
             os.makedirs("configs/")
         self.configs, self.idx = self.load_configs()
 
-    def load_configs(self) -> (Dict[int, ConfigPath], int):
+    def load_configs(self) -> Tuple[Dict[int, ConfigPath], int]:
         """
         Load configurations from 'configs/configs.json'.
 
@@ -260,4 +261,12 @@ class UIBuilder:
 
     @staticmethod
     def build_ui(config, data):
-        return ""
+        func_name = data.get("func_name", None)
+        if func_name is None:
+            return {"error": "No function name provided"}
+
+        widget_name = config.get("func_name_to_widget").get(func_name, None)
+        if widget_name is None:
+            return {"error": "Invalid function name"}
+
+        widget_info = config.get("widgets").get(widget_name, None)
