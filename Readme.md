@@ -28,3 +28,4 @@ This is a FastAPI application that manages configurations through a RESTful API.
 ## Running the Application
 
 To run the FastAPI application, use Uvicorn:
+
