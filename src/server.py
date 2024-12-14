@@ -12,6 +12,21 @@ from configuration_manager.configuration_manager import (
 from utils.users import get_users, get_api_keys
 from functions_to_format.mapper import Formatter, functions_mapper
 
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="https://0c23e1d3e6451476d12eacd70370083a@o4508016737714176.ingest.de.sentry.io/4508466635538512",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
+    traces_sample_rate=1.0,
+    _experiments={
+        # Set continuous_profiling_auto_start to True
+        # to automatically start the profiler on when
+        # possible.
+        "continuous_profiling_auto_start": True,
+    },
+)
+
 # Janis Rubins: Setting detailed logger, every detail at DEBUG for diagnostics, step-labeled
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)  # Janis Rubins: ensure debug level for deep insights
