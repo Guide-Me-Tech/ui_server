@@ -2,15 +2,15 @@ import logging
 import time
 import json
 import os
-from typing import Optional, Any, Dict, List, Callable
+from typing import List
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from pathlib import Path
 import importlib.util
 
 # Janis Rubins: High-Level Understanding
-# This code dynamically handles unknown data formats from API responses, 
-# builds UIs using adapters, and loads action functions from plugins. 
+# This code dynamically handles unknown data formats from API responses,
+# builds UIs using adapters, and loads action functions from plugins.
 # It also provides structured JSON errors and thorough step-by-step logging for easy debugging.
 
 # Janis Rubins: Key Concepts
@@ -19,6 +19,7 @@ import importlib.util
 # - Functions for actions are dynamically loaded from a plugins directory, allowing easy extension.
 # - Every function and endpoint logs its steps with timing, making debugging straightforward.
 # - A global exception handler returns JSON-formatted errors, simplifying error handling for consumers.
+
 
 class UIBuilder:
     # Janis Rubins: Builds UI from config and adapted data.
@@ -37,7 +38,12 @@ class ConfigsManager:
 
     def add_config(self, username: str, data: dict, name: str):
         self.idx += 1
-        self.configs[self.idx] = {"id": self.idx, "user": username, "name": name, "data": data}
+        self.configs[self.idx] = {
+            "id": self.idx,
+            "user": username,
+            "name": name,
+            "data": data,
+        }
 
     def delete_config_by_id(self, idx: int):
         if idx in self.configs:
@@ -54,9 +60,11 @@ def get_users():
     # Janis Rubins: Stub for users. In a real scenario, fetch from DB.
     return {"user1": "User One"}
 
+
 def get_api_keys():
     # Janis Rubins: Stub for API keys. Quickly verifies user identity.
     return {"test-api-key": "user1"}
+
 
 class Formatter:
     # Janis Rubins: Formats UI widgets.
@@ -68,12 +76,15 @@ class Formatter:
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler()
-formatter_logging = logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s]: %(message)s')
+formatter_logging = logging.Formatter(
+    "[%(asctime)s][%(levelname)s][%(name)s]: %(message)s"
+)
 handler.setFormatter(formatter_logging)
 logger.addHandler(handler)
 
 users = get_users()
 api_keys = get_api_keys()
+
 
 def timed(func):
     # Janis Rubins: Decorator for sync endpoints.
@@ -87,14 +98,18 @@ def timed(func):
             logger.debug(f"STEP 2: {func.__name__} result={result}")
             return result
         except Exception as e:
-            logger.debug(f"STEP X: Exception in {func.__name__} error={e}", exc_info=True)
+            logger.debug(
+                f"STEP X: Exception in {func.__name__} error={e}", exc_info=True
+            )
             return Response(status_code=500, content=str(e))
         finally:
             end = time.perf_counter()
             elapsed = end - start
             logger.debug(f"STEP FINAL: {func.__name__} done, elapsed={elapsed:.6f}s")
             logger.debug(f"--- END {func.__name__} ---\n")
+
     return wrapper
+
 
 def timed_async(func):
     # Janis Rubins: Decorator for async endpoints.
@@ -102,31 +117,44 @@ def timed_async(func):
     async def wrapper(*args, **kwargs):
         start = time.perf_counter()
         logger.debug(f"--- START {func.__name__} (async) ---")
-        logger.debug(f"STEP 1: Entering {func.__name__}(async) args={args}, kwargs={kwargs}")
+        logger.debug(
+            f"STEP 1: Entering {func.__name__}(async) args={args}, kwargs={kwargs}"
+        )
         try:
             result = await func(*args, **kwargs)
             logger.debug(f"STEP 2: {func.__name__}(async) result={result}")
             return result
         except Exception as e:
-            logger.debug(f"STEP X: Exception in {func.__name__}(async) error={e}", exc_info=True)
+            logger.debug(
+                f"STEP X: Exception in {func.__name__}(async) error={e}", exc_info=True
+            )
             return Response(status_code=500, content=str(e))
         finally:
             end = time.perf_counter()
             elapsed = end - start
-            logger.debug(f"STEP FINAL: {func.__name__}(async) done, elapsed={elapsed:.6f}s")
+            logger.debug(
+                f"STEP FINAL: {func.__name__}(async) done, elapsed={elapsed:.6f}s"
+            )
             logger.debug(f"--- END {func.__name__}(async) ---\n")
+
     return wrapper
 
+
 app = FastAPI()
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     # Janis Rubins: Global error handler.
     # Converts any uncaught exceptions into structured JSON for consistency and easier debugging.
     logger.error(f"Global Exception: {exc}", exc_info=True)
-    return JSONResponse(status_code=500, content={"error": "Internal server error", "details": str(exc)})
+    return JSONResponse(
+        status_code=500, content={"error": "Internal server error", "details": str(exc)}
+    )
+
 
 configs = ConfigsManager()
+
 
 def authorized(api_key) -> bool:
     # Janis Rubins: Simple authorization check.
@@ -135,23 +163,29 @@ def authorized(api_key) -> bool:
     logger.debug(f"STEP 2: authorized(api_key={api_key}) -> {is_auth}")
     return is_auth
 
+
 formatter = Formatter()
+
 
 class BaseDataAdapter:
     # Janis Rubins: Base adapter class.
     # Adapters attempt to recognize and adapt unknown data formats for UI building.
     def match(self, data: dict) -> bool:
         return False
+
     def adapt(self, data: dict) -> dict:
         return data
+
 
 class KnownFormatAdapter(BaseDataAdapter):
     # Janis Rubins: Example adapter for a known data format.
     # If 'expected_key' is found, adapt it into a known structure.
     def match(self, data: dict) -> bool:
         return "expected_key" in data
+
     def adapt(self, data: dict) -> dict:
         return {"type": "known_format", "content": data["expected_key"]}
+
 
 class FallbackAdapter(BaseDataAdapter):
     # Janis Rubins: Fallback adapter.
@@ -159,8 +193,9 @@ class FallbackAdapter(BaseDataAdapter):
     def adapt(self, data: dict) -> dict:
         return {
             "type": "fallback",
-            "message": "Data format not recognized. Minimal UI displayed."
+            "message": "Data format not recognized. Minimal UI displayed.",
         }
+
 
 class DataAdapterFactory:
     # Janis Rubins: Checks all adapters, picks one that matches the data, or fallback.
@@ -183,9 +218,10 @@ class DataAdapterFactory:
         logger.debug(f"STEP F: fallback_adapted_data={adapted}")
         return adapted
 
-data_adapter_factory = DataAdapterFactory()
 
-functions_mapper = {}
+data_adapter_factory = DataAdapterFactory()
+from functions_to_format.mapper import functions_mapper
+
 
 def load_functions_from_plugins(plugin_dir: str = "plugins"):
     # Janis Rubins: Dynamically loads functions for actions from external plugin files.
@@ -205,10 +241,12 @@ def load_functions_from_plugins(plugin_dir: str = "plugins"):
             logger.debug(f"STEP J: Loaded functions: {list(plugin_funcs.keys())}")
             functions_mapper.update(plugin_funcs)
 
+
 load_functions_from_plugins()
 
 # Janis Rubins: Endpoints below interact with configs, build UI, and format data/widgets.
 # They use decorators for timing/logging and rely on adapters & plugins for flexibility.
+
 
 @app.post("/config")
 @timed_async
@@ -231,11 +269,13 @@ async def new_config(request: Request, name: str):
         "id": configs.idx,
     }
 
+
 @app.put("/config/{idx}")
 @timed_async
 async def update_config_by_id(request: Request, idx: str):
     logger.debug(f"STEP 1: PUT /config/{idx}, not implemented")
     return Response(status_code=501, content="Update not implemented")
+
 
 @app.delete("/config/{idx}")
 @timed
@@ -254,6 +294,7 @@ def delete_config_by_id(request: Request, idx: str):
         "message": f"Configuration {idx} deleted",
     }
 
+
 @app.get("/config")
 @timed
 def get_all_configs(request: Request):
@@ -269,6 +310,7 @@ def get_all_configs(request: Request):
     logger.debug(f"STEP 5: configs={configs_data}")
     return configs_data
 
+
 @app.get("/config/{idx}")
 @timed
 def get_config(request: Request, idx: str):
@@ -276,6 +318,7 @@ def get_config(request: Request, idx: str):
     config_data = configs.get_config_by_id(int(idx))
     logger.debug(f"STEP 2: config_data={config_data}")
     return config_data
+
 
 @app.get("/build/ui/{idx}")
 @timed_async
@@ -291,6 +334,7 @@ async def build_ui(request: Request, idx: str):
     logger.debug(f"STEP 5: ui_result={result}")
     return result
 
+
 @app.get("/chat/v2/build_ui/text")
 @timed_async
 async def format_data(request: Request):
@@ -300,6 +344,7 @@ async def format_data(request: Request):
     result = formatter.format_widget("text_widget", data)
     logger.debug(f"STEP 3: text_result={result}")
     return result
+
 
 @app.get("/chat/v2/build_ui/actions")
 @timed_async
@@ -312,12 +357,17 @@ async def format_data_v2(request: Request):
     if not func_name:
         logger.debug("STEP 3: function_name missing")
         return Response(status_code=400, content="function_name is required")
-
+    if func_name == "unauthorized_response":
+        logger.debug("STEP 4: unauthorized function")
+        return Response(status_code=401, content="Unauthorized")
     logger.debug(f"STEP 4: looking_for_func={func_name}")
     func = functions_mapper.get(func_name)
     if func is None:
         logger.debug("STEP 5: func not found")
-        return Response(status_code=400, content=f"Function '{func_name}' not found.")
+        return Response(
+            status_code=400,
+            content=f"Function '{func_name}' not found. Send the action without building UI.",
+        )
 
     logger.debug("STEP 6: invoking_func")
     llm_output = data.get("llm_output", {})
