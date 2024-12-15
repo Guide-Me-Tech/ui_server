@@ -27,7 +27,9 @@
             "properties": {
                 "index": {
                     "type": "integer",
-                    "description": "Index of the card in the list."
+                    "description": "Index of the card in the list.",
+                    "minimum": 0,
+                    "maximum": 999999
                 },
                 "other_card_container": {
                     "$ref": "#/OtherCardContainer"
@@ -36,7 +38,8 @@
             "required": [
                 "index",
                 "other_card_container"
-            ]
+            ],
+            "additionalProperties": true
         },
         "definitions": {
             "other_card_container": {
@@ -45,23 +48,71 @@
                 "properties": {
                     "masked_card_pan": {
                         "type": "string",
-                        "description": "Masked card number (e.g., **** 1234)."
+                        "description": "Masked card number (e.g., **** 1234).",
+                        "maxLength": 19,
+                        "pattern": "^[*0-9\\s-]+$"
                     },
                     "card_owner": {
                         "type": "string",
-                        "description": "The name of the card owner."
+                        "description": "The name of the card owner.",
+                        "maxLength": 100,
+                        "pattern": "^[\\p{L}\\s\\-',.]+$"
                     },
                     "provider": {
                         "type": "string",
-                        "description": "The provider of the card."
+                        "description": "The provider of the card.",
+                        "maxLength": 50
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Additional metadata for logging, platform adaptation, and performance tuning.",
+                        "properties": {
+                            "log_level": {
+                                "type": "string",
+                                "description": "Specifies the logging level for this element (e.g. DEBUG, INFO, ERROR). This helps to control verbosity and save CPU/RAM by adjusting detail level of processing.",
+                                "enum": [
+                                    "DEBUG",
+                                    "INFO",
+                                    "WARN",
+                                    "ERROR"
+                                ]
+                            },
+                            "platform_adaptation": {
+                                "type": "object",
+                                "description": "Platform-specific UI adaptation settings to reduce resource usage and optimize rendering speed.",
+                                "properties": {
+                                    "android": {
+                                        "type": "object",
+                                        "description": "Settings specific to Android platform. For example, minimal UI components to save CPU/RAM and faster rendering over limited internet."
+                                    },
+                                    "ios": {
+                                        "type": "object",
+                                        "description": "Settings specific to iOS platform. Could define reduced textures or minimal data for lower bandwidth usage."
+                                    },
+                                    "desktop": {
+                                        "type": "object",
+                                        "description": "Settings specific to desktop environment, potentially enabling more caching or pre-rendering to save resources."
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        },
+                        "additionalProperties": true
                     }
                 },
                 "required": [
                     "masked_card_pan",
                     "card_owner",
                     "provider"
-                ]
+                ],
+                "additionalProperties": true
             }
+        },
+        "other_card_container": {
+            "$ref": "#/definitions/definitions/other_card_container"
+        },
+        "OtherCardContainer": {
+            "$ref": "#/definitions/definitions/other_card_container"
         }
     },
     "minItems": 3,
