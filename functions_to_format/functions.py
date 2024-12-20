@@ -122,26 +122,19 @@ if "text_widget" in widgets:
 
 
 def chatbot_answer(llm_output, backend_output):
-    # Janis Rubins step 9: Returns text_widget schema and data
-    # Sanitized and validated if possible
-    logger.debug("chatbot_answer called")
-    try:
-        sanitized_output = sanitize_output(llm_output)
-        if "text_widget" in widgets and schema_validator.validate(
-            "text_widget", sanitized_output
-        ):
-            return {
-                "schema": widgets["text_widget"],
-                "data": sanitized_output,
-            }
-        else:
-            logger.error(
-                "text_widget validation failed or schema not found, returning None."
-            )
-            return None
-    except Exception as e:
-        logger.error(f"Error in chatbot_answer: {e}")
-        return None
+    # Janis Rubins: logic unchanged, just returns text_widget schema and llm_output as data
+    text_widget = {
+        "name": "text_widget",
+        "type": "text_widget",
+        "order": 1,
+        "layout": "horizontal",
+        "fields": ["text"],
+        "values": [{"text": llm_output}],
+    }
+    return {
+        "widgets": [text_widget],
+        "widgets_number": 1,
+    }
 
 
 cards = [
@@ -206,42 +199,35 @@ def get_balance(llm_output, backend_output):
     for i, card_info in enumerate(backend_output):
         backend_output_processed.append(
             {
-                "index": i + 1,
-                "own_card_container": {
-                    "masked_card_pan": card_info["pan"],
-                    "card_type": card_info["processingSystem"],
-                    "balance": card_info["balance"]
-                    if type(card_info["balance"]) is int
-                    else 0,
-                    "card_name": card_info["cardDetails"]["cardName"],
-                },
+                "masked_card_pan": card_info["pan"],
+                "card_type": card_info["processingSystem"],
+                "balance": card_info["balance"]
+                if type(card_info["balance"]) is int
+                else 0,
+                "card_name": card_info["cardDetails"]["cardName"],
             }
         )
-    output = [{"text": llm_output}, backend_output_processed]
-    print("Output", output)
-    # if balance_card_validator is not None:
-    #     try:
-    #         balance_card_validator.validate(output)  # Janis Rubins: faster validation
-    #     except jsonschema.exceptions.ValidationError as e:
-    #         print(e)
-    #         return None
+    text_widget = {
+        "name": "text_widget",
+        "type": "text_widget",
+        "order": 1,
+        "layout": "horizontal",
+        "fields": ["text"],
+        "values": [{"text": llm_output}],
+    }
+    cards_list = {
+        "name": "cards_own_list_widget",
+        "order": 2,
+        "layout": "vertical",
+        "fields": ["masked_card_pan", "card_type", "balance", "card_name"],
+        "values": backend_output_processed,
+    }
 
-    # else:
-    # Janis Rubins: fallback to original validation if no precompiled validator
-    try:
-        jsonschema.validate(output, schema=widgets["balance_info"])
-    except Exception as e:
-        print(e)
-        return (
-            "Error building the widget ---- the backend output is not valid for the widget schema "
-            + str(e)
-        )
+    output = {"widgets": [text_widget, cards_list], "widgets_count": 2}
+    print("Output", output)
 
     # Janis Rubins: return schema and data if valid
-    return {
-        "schema": widgets["balance_info"],
-        "data": output,
-    }
+    return output
 
 
 def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
@@ -263,34 +249,46 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
         print(f"Card {i + 1} info: ", card_info)
         backend_output_processed.append(
             {
-                "index": i + 1,
-                "other_card_container": {
-                    "masked_card_pan": card_info["mask"],
-                    "card_owner": card_info["name"],
-                    "provider": card_info["processing"],
-                },
+                "masked_card_pan": card_info["mask"],
+                "card_owner": card_info["name"],
+                "provider": card_info["processing"],
             }
         )
 
-    output = [
-        {"text": llm_output},
-        backend_output_processed,
-        [{"text": "ok"}, {"text": "cancel"}],
-    ]
-    try:
-        jsonschema.validate(output, schema=widgets["card_other_list_widget"])
-    except Exception as e:
-        return (
-            "Error building the widget ---- the backend output is not valid for the widget schema: "
-            + str(e)
-        )
+    text_widget = {
+        "name": "text_widget",
+        "type": "text_widget",
+        "order": 1,
+        "layout": "horizontal",
+        "fields": ["text"],
+        "values": [{"text": llm_output}],
+    }
+    cards_widget = {
+        "name": "cards_other_list_widget",
+        "order": 2,
+        "layout": "vertical",
+        "fields": ["masked_card_pan", "card_owner", "provider"],
+        "values": backend_output_processed,
+    }
+    buttons = {
+        "name": "buttons_widget",
+        "align": "horizontal",
+        "order": 3,
+        "layout": "horizontal",
+        "fields": ["text"],
+        "values": "",
+    }
 
-    return {"schema": widgets["card_other_list_widget"], "data": output}
+    output = {
+        "widgets_count": 3,
+        "widgets": [text_widget, cards_widget, buttons],
+    }
+
+    return output
 
 
 def unauthorized_response(llm_output, backend_output):
     # Janis Rubins: logic unchanged, just returns text_widget schema and llm_output as data
     return {
-        "schema": widgets["text_widget"],
         "data": llm_output,
     }
