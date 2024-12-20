@@ -24,7 +24,6 @@ from utils.users import get_users, get_api_keys
 from functions_to_format.mapper import Formatter, functions_mapper
 from functions_to_format.components import widgets
 
-<<<<<<< HEAD
 import sentry_sdk
 
 sentry_sdk.init(
@@ -40,48 +39,52 @@ sentry_sdk.init(
     },
 )
 
+
 # Janis Rubins: Setting detailed logger, every detail at DEBUG for diagnostics, step-labeled
-=======
 # Janis Rubins step 1: Security and Performance Constants
 class SecurityConstants:
     MAX_PAYLOAD_SIZE = 1024 * 1024  # 1MB limit
     MAX_MEMORY_USAGE = 1024 * 1024 * 1024  # 1GB max memory (example)
     MAX_REQUEST_RATE = 100  # max requests per window
-    RATE_LIMIT_WINDOW = 60   # seconds
+    RATE_LIMIT_WINDOW = 60  # seconds
     CACHE_SIZE = 1000
-    SAFE_PATTERN = re.compile(r'^[a-zA-Z0-9_\-]{1,64}$')
+    SAFE_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]{1,64}$")
     SUSPICIOUS_PATTERNS = [
-        '__proto__', 'constructor', 'prototype', '<script',
-        'eval(', 'settimeout', 'setinterval', 'function(',
-        'javascript:', 'data:', 'vbscript:', 'onerror=', 'onload='
+        "__proto__",
+        "constructor",
+        "prototype",
+        "<script",
+        "eval(",
+        "settimeout",
+        "setinterval",
+        "function(",
+        "javascript:",
+        "data:",
+        "vbscript:",
+        "onerror=",
+        "onload=",
     ]
+
 
 # Janis Rubins step 2: Setup flexible logging system
 log_level = os.environ.get("LOG_LEVEL", "ERROR").upper()
 level = logging.DEBUG if log_level == "DEBUG" else logging.ERROR
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
 logger = logging.getLogger(__name__)
 logger.setLevel(level)
 handler = logging.StreamHandler()
-<<<<<<< HEAD
 formatter = logging.Formatter("[%(asctime)s][%(levelname)s][%(name)s]: %(message)s")
 handler.setFormatter(formatter)
-=======
-handler.setFormatter(logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s]: %(message)s'))
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
 logger.addHandler(handler)
 
 # Janis Rubins step 3: Pre-load users & api_keys once to minimize overhead
 users = get_users()
 api_keys = get_api_keys()
 
-<<<<<<< HEAD
 
-# Janis Rubins: Decorators for timing & steps
-=======
 # Janis Rubins step 4: Security and Validation Helpers
 def is_safe_identifier(value: str) -> bool:
     return bool(SecurityConstants.SAFE_PATTERN.match(value))
+
 
 def check_memory_usage() -> bool:
     # Janis Rubins step 5: Check memory usage to avoid overload
@@ -93,6 +96,7 @@ def check_memory_usage() -> bool:
         logger.error(f"Memory check error: {e}")
         return True
 
+
 def sanitize_input(data: Any) -> Optional[Any]:
     # Janis Rubins step 6: Sanitize input, check size and suspicious patterns
     try:
@@ -101,7 +105,10 @@ def sanitize_input(data: Any) -> Optional[Any]:
             logger.error("Input data exceeds size limit")
             return None
 
-        if any(pattern in data_str.lower() for pattern in SecurityConstants.SUSPICIOUS_PATTERNS):
+        if any(
+            pattern in data_str.lower()
+            for pattern in SecurityConstants.SUSPICIOUS_PATTERNS
+        ):
             logger.error("Suspicious pattern detected in input")
             return None
 
@@ -109,6 +116,7 @@ def sanitize_input(data: Any) -> Optional[Any]:
     except Exception as e:
         logger.error(f"Sanitization error: {e}")
         return None
+
 
 # Janis Rubins step 7: Rate Limiter for controlling request rates
 class RateLimiter:
@@ -122,8 +130,10 @@ class RateLimiter:
         if (now - self.last_cleanup).seconds > SecurityConstants.RATE_LIMIT_WINDOW:
             for ip in list(self.requests.keys()):
                 self.requests[ip] = [
-                    t for t in self.requests[ip]
-                    if (now - t) < timedelta(seconds=SecurityConstants.RATE_LIMIT_WINDOW)
+                    t
+                    for t in self.requests[ip]
+                    if (now - t)
+                    < timedelta(seconds=SecurityConstants.RATE_LIMIT_WINDOW)
                 ]
                 if not self.requests[ip]:
                     del self.requests[ip]
@@ -139,12 +149,15 @@ class RateLimiter:
 
         if ip not in self.requests:
             self.requests[ip] = []
-        
+
         self.requests[ip].append(now)
-        recent_requests = len([
-            t for t in self.requests[ip]
-            if (now - t) < timedelta(seconds=SecurityConstants.RATE_LIMIT_WINDOW)
-        ])
+        recent_requests = len(
+            [
+                t
+                for t in self.requests[ip]
+                if (now - t) < timedelta(seconds=SecurityConstants.RATE_LIMIT_WINDOW)
+            ]
+        )
 
         if recent_requests > SecurityConstants.MAX_REQUEST_RATE:
             self.blocked_ips.add(ip)
@@ -153,10 +166,11 @@ class RateLimiter:
 
         return True
 
+
 rate_limiter = RateLimiter()
 
+
 # Janis Rubins step 8: Timing decorators for sync and async endpoints
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
 def timed(func):
     def wrapper(*args, **kwargs):
         if not check_memory_usage():
@@ -170,13 +184,9 @@ def timed(func):
             logger.debug(f"STEP 2: {func.__name__} result={result}")
             return result
         except Exception as e:
-<<<<<<< HEAD
             logger.debug(
                 f"STEP X: Exception in {func.__name__} error={e}", exc_info=True
             )
-=======
-            logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
             return Response(status_code=500, content=str(e))
         finally:
             elapsed = time.perf_counter() - start
@@ -202,7 +212,6 @@ def timed_async(func):
             logger.debug(f"STEP 2: {func.__name__}(async) result={result}")
             return result
         except Exception as e:
-<<<<<<< HEAD
             logger.debug(
                 f"STEP X: Exception in {func.__name__}(async) error={e}", exc_info=True
             )
@@ -213,18 +222,10 @@ def timed_async(func):
             logger.debug(
                 f"STEP FINAL: {func.__name__}(async) done, elapsed={elapsed:.6f}s"
             )
-=======
-            logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
-            return Response(status_code=500, content=str(e))
-        finally:
-            elapsed = time.perf_counter() - start
-            logger.debug(f"STEP FINAL: {func.__name__}(async) done, elapsed={elapsed:.6f}s")
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
             logger.debug(f"--- END {func.__name__}(async) ---\n")
 
     return wrapper
 
-<<<<<<< HEAD
 
 app = FastAPI()  # Janis Rubins: STEP 3: FastAPI initialized
 
@@ -232,41 +233,41 @@ app = FastAPI()  # Janis Rubins: STEP 3: FastAPI initialized
 configs = ConfigsManager()  # Janis Rubins: STEP 4: ConfigsManager instance ready
 
 
-=======
-# Janis Rubins step 9: Authorization check
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
 def authorized(api_key) -> bool:
     is_auth = api_key in api_keys
     logger.debug(f"STEP 2: authorized(api_key={api_key}) -> {is_auth}")
     return is_auth
 
-<<<<<<< HEAD
 
-formatter = Formatter()  # Janis Rubins: STEP 5: Formatter ready for UI formatting
-=======
 # Janis Rubins step 10: Initialize configs manager and formatter
 configs = ConfigsManager()
 formatter = Formatter()
+
 
 # Janis Rubins step 11: Base data adapter and known/fallback adapters
 class BaseDataAdapter:
     def match(self, data: dict) -> bool:
         return False
+
     def adapt(self, data: dict) -> dict:
         return data
+
 
 class KnownFormatAdapter(BaseDataAdapter):
     def match(self, data: dict) -> bool:
         return "expected_key" in data
+
     def adapt(self, data: dict) -> dict:
         return {"type": "known_format", "content": data["expected_key"]}
+
 
 class FallbackAdapter(BaseDataAdapter):
     def adapt(self, data: dict) -> dict:
         return {
             "type": "fallback",
-            "message": "Data format not recognized. Minimal UI displayed."
+            "message": "Data format not recognized. Minimal UI displayed.",
         }
+
 
 class DataAdapterFactory:
     # Janis Rubins step 12: Adapts data using known or fallback adapters
@@ -288,9 +289,11 @@ class DataAdapterFactory:
         logger.debug(f"STEP F: fallback_adapted_data={adapted}")
         return adapted
 
+
 data_adapter_factory = DataAdapterFactory()
 
 functions_mapper = {}
+
 
 def load_functions_from_plugins(plugin_dir: str = "plugins"):
     # Janis Rubins step 13: Dynamically load functions from plugins
@@ -316,21 +319,32 @@ def load_functions_from_plugins(plugin_dir: str = "plugins"):
         if hasattr(mod, "register_functions"):
             plugin_funcs = mod.register_functions()
             # Validate function names
-            safe_funcs = {name: func for name, func in plugin_funcs.items() if is_safe_identifier(name)}
+            safe_funcs = {
+                name: func
+                for name, func in plugin_funcs.items()
+                if is_safe_identifier(name)
+            }
             if len(safe_funcs) < len(plugin_funcs):
-                logger.warning("Some plugin functions had unsafe names and were skipped.")
+                logger.warning(
+                    "Some plugin functions had unsafe names and were skipped."
+                )
             logger.debug(f"STEP J: Loaded functions: {list(safe_funcs.keys())}")
             functions_mapper.update(safe_funcs)
+
 
 load_functions_from_plugins()
 
 app = FastAPI()
 
+
 # Janis Rubins step 14: Global exception handler for structured JSON errors
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Global Exception: {exc}", exc_info=True)
-    return JSONResponse(status_code=500, content={"error": "Internal server error", "details": str(exc)})
+    return JSONResponse(
+        status_code=500, content={"error": "Internal server error", "details": str(exc)}
+    )
+
 
 # Janis Rubins step 15: Middleware for rate limiting and security checks
 @app.middleware("http")
@@ -347,7 +361,6 @@ async def security_middleware(request: Request, call_next):
         return JSONResponse(status_code=413, content={"error": "Payload too large"})
 
     return await call_next(request)
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
 
 
 @app.post("/config")
@@ -448,13 +461,10 @@ async def format_data(request: Request):
 
 @app.get("/chat/v2/build_ui/actions")
 async def format_data_v2(request: Request):
-<<<<<<< HEAD
     # Janis Rubins: call function from functions_mapper for actions
     print("BUILD UI")
     logger.debug("STEP 1: GET /chat/v2/build_ui/actions")
-=======
     # Janis Rubins step 23: Call function from functions_mapper for actions
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
     data = await request.json()
     func_name = data.get("function_name")
     if not func_name:
@@ -467,7 +477,6 @@ async def format_data_v2(request: Request):
 
     func = functions_mapper.get(func_name)
     if func is None:
-<<<<<<< HEAD
         logger.debug(f"STEP 4: No function found for {func_name}")
         return Response(status_code=400, content="Function not found.")
     print(data)
@@ -477,9 +486,4 @@ async def format_data_v2(request: Request):
     logger.debug("STEP 5: Found function, invoking now")
     result = func(data["llm_output"], data["backend_output"])
     logger.debug(f"STEP 6: actions result={result}")
-=======
-        return Response(status_code=400, content=f"Function '{func_name}' not found.")
-
-    result = func(sanitized_llm_output, sanitized_backend_output)
->>>>>>> 86c7bcd (Updated code with enhanced flexibility, logging, and conflict resolution. All changes integrated.)
     return result
