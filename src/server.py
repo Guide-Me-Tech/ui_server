@@ -26,6 +26,7 @@ from functions_to_format.components import widgets
 
 import sentry_sdk
 
+# https://www.youtbe.com/watch?v=NTP4XdTjRK0
 sentry_sdk.init(
     dsn="https://0c23e1d3e6451476d12eacd70370083a@o4508016737714176.ingest.de.sentry.io/4508466635538512",
     # Set traces_sample_rate to 1.0 to capture 100%
@@ -291,8 +292,6 @@ class DataAdapterFactory:
 
 
 data_adapter_factory = DataAdapterFactory()
-
-functions_mapper = {}
 
 
 def load_functions_from_plugins(plugin_dir: str = "plugins"):

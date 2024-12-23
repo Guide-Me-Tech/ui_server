@@ -1,7 +1,7 @@
 import os
 import sys
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 import json
 
 """
@@ -34,15 +34,21 @@ Steps are clearly logged (Janis Rubins step X).
 UI_BUILDER_LOG_LEVEL = os.environ.get("UI_BUILDER_LOG_LEVEL", "ERROR").upper()
 UI_BUILDER_OUTPUT_FORMAT = os.environ.get("UI_BUILDER_OUTPUT_FORMAT", "json").lower()
 UI_BUILDER_WIDGET_MAPPING = os.environ.get("UI_BUILDER_WIDGET_MAPPING", "")
-UI_BUILDER_ENABLE_CACHING = os.environ.get("UI_BUILDER_ENABLE_CACHING", "false").lower() == "true"
+UI_BUILDER_ENABLE_CACHING = (
+    os.environ.get("UI_BUILDER_ENABLE_CACHING", "false").lower() == "true"
+)
 UI_BUILDER_DEFAULT_WIDGET = os.environ.get("UI_BUILDER_DEFAULT_WIDGET", "text_widget")
-UI_BUILDER_RESOURCE_SAVING_MODE = os.environ.get("UI_BUILDER_RESOURCE_SAVING_MODE", "true").lower() == "true"
+UI_BUILDER_RESOURCE_SAVING_MODE = (
+    os.environ.get("UI_BUILDER_RESOURCE_SAVING_MODE", "true").lower() == "true"
+)
 
 # Janis Rubins step 2: Setup logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.getLevelName(UI_BUILDER_LOG_LEVEL))
 handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s]: %(message)s'))
+handler.setFormatter(
+    logging.Formatter("[%(asctime)s][%(levelname)s][%(name)s]: %(message)s")
+)
 if not logger.handlers:
     logger.addHandler(handler)
 
@@ -51,7 +57,9 @@ if not logger.handlers:
 try:
     from functions_to_format.components import widgets
 except ImportError:
-    logger.warning("Could not import widgets from functions_to_format.components. Using empty widgets dict.")
+    logger.warning(
+        "Could not import widgets from functions_to_format.components. Using empty widgets dict."
+    )
     widgets = {}  # fallback, but normally we should have widgets defined.
 
 # Janis Rubins step 4: Parse UI_BUILDER_WIDGET_MAPPING
@@ -72,6 +80,7 @@ if UI_BUILDER_WIDGET_MAPPING.strip():
 # Janis Rubins step 5: Caching mechanism (if enabled)
 # We could keep a cache of final UI structures keyed by a hash of input data.
 ui_cache = {}
+
 
 def cache_key_for_data(data: Dict[str, Any]) -> str:
     # Minimal overhead hash: convert to JSON string and hash it
@@ -95,7 +104,9 @@ class DynamicUIBuilder:
         # Janis Rubins step 7: Any initialization if needed
         # For now, just confirm configuration
         logger.debug("DynamicUIBuilder initialized with the following configuration:")
-        logger.debug(f"OUTPUT_FORMAT={UI_BUILDER_OUTPUT_FORMAT}, MAPPING={mapping}, CACHING={UI_BUILDER_ENABLE_CACHING}, DEFAULT_WIDGET={UI_BUILDER_DEFAULT_WIDGET}, RESOURCE_SAVING_MODE={UI_BUILDER_RESOURCE_SAVING_MODE}")
+        logger.debug(
+            f"OUTPUT_FORMAT={UI_BUILDER_OUTPUT_FORMAT}, MAPPING={mapping}, CACHING={UI_BUILDER_ENABLE_CACHING}, DEFAULT_WIDGET={UI_BUILDER_DEFAULT_WIDGET}, RESOURCE_SAVING_MODE={UI_BUILDER_RESOURCE_SAVING_MODE}"
+        )
 
     def build_ui(self, data: Dict[str, Any]) -> Union[str, Dict[str, Any]]:
         # Janis Rubins step 8: Log start of UI build process
@@ -105,7 +116,9 @@ class DynamicUIBuilder:
         if UI_BUILDER_ENABLE_CACHING:
             ck = cache_key_for_data(data)
             if ck in ui_cache:
-                logger.debug("DynamicUIBuilder: Returning UI from cache to save resources.")
+                logger.debug(
+                    "DynamicUIBuilder: Returning UI from cache to save resources."
+                )
                 return ui_cache[ck]
 
         # Janis Rubins step 10: Construct UI structure.
@@ -155,28 +168,26 @@ class DynamicUIBuilder:
             widget = widgets.get(widget_name)
             if widget is None:
                 # If no widget found, fallback to some minimal representation
-                logger.debug(f"No widget found for {widget_name}, using default text_widget-like structure.")
-                ui_elements.append({
-                    "widget": widget_name,
-                    "data": data[key]
-                })
+                logger.debug(
+                    f"No widget found for {widget_name}, using default text_widget-like structure."
+                )
+                ui_elements.append({"widget": widget_name, "data": data[key]})
             else:
                 # Janis Rubins step 15: If widget found, we could call some widget logic (if defined)
                 # For now, we just attach data to widget_info.
                 # In a real scenario, widget might be a schema or function. We'll just store data.
-                ui_elements.append({
-                    "widget": widget_name,
-                    "data": data[key]
-                })
+                ui_elements.append({"widget": widget_name, "data": data[key]})
                 logger.debug(f"Assigned widget {widget_name} to key '{key}'.")
-        
+
         # Janis Rubins step 16: The final UI structure
         # Could be more complex if ENV says so.
         ui_structure = {"ui": ui_elements}
         logger.debug("UI structure built successfully.")
         return ui_structure
 
-    def _format_output(self, ui_structure: Dict[str, Any]) -> Union[str, Dict[str, Any]]:
+    def _format_output(
+        self, ui_structure: Dict[str, Any]
+    ) -> Union[str, Dict[str, Any]]:
         """
         Janis Rubins step 17: Format output according to UI_BUILDER_OUTPUT_FORMAT.
         Supported: "json", "dict", future "html" or other.
@@ -193,8 +204,11 @@ class DynamicUIBuilder:
             return ui_structure
         else:
             # Janis Rubins step 20: If unknown format, fallback to dict
-            logger.warning(f"Unknown UI_BUILDER_OUTPUT_FORMAT={UI_BUILDER_OUTPUT_FORMAT}, returning dict.")
+            logger.warning(
+                f"Unknown UI_BUILDER_OUTPUT_FORMAT={UI_BUILDER_OUTPUT_FORMAT}, returning dict."
+            )
             return ui_structure
+
 
 # Janis Rubins step 21: Example usage (commented out):
 # builder = DynamicUIBuilder()

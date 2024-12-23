@@ -265,6 +265,7 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
     }
     cards_widget = {
         "name": "cards_other_list_widget",
+        "type": "cards_other_list_widget",
         "order": 2,
         "layout": "vertical",
         "fields": ["masked_card_pan", "card_owner", "provider"],
@@ -272,11 +273,11 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
     }
     buttons = {
         "name": "buttons_widget",
-        "align": "horizontal",
+        "type": "buttons_widget",
         "order": 3,
         "layout": "horizontal",
         "fields": ["text"],
-        "values": "",
+        "values": [],
     }
 
     output = {
