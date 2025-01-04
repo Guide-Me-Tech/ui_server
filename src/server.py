@@ -481,7 +481,10 @@ async def format_data_v2(request: Request):
     print(data)
     if data["llm_output"] == "finish":
         return {"schema": "finish", "data": "finish"}
-    data["backend_output"] = json.loads(data["backend_output"])
+    try:
+        data["backend_output"] = json.loads(data["backend_output"])
+    except Exception as e:
+        data["backend_output"] == ""
     logger.debug("STEP 5: Found function, invoking now")
     result = func(data["llm_output"], data["backend_output"])
     logger.debug(f"STEP 6: actions result={result}")
