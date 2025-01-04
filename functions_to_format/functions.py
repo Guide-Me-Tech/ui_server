@@ -277,7 +277,7 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
         "order": 3,
         "layout": "horizontal",
         "fields": ["text"],
-        "values": [],
+        "values": [  {"text":"cancel"}  ],
     }
 
     output = {
