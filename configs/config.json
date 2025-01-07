@@ -1,0 +1,137 @@
+{
+    "components": [
+        {
+            "name": "button",
+            "fields": [
+                {
+                    "name": "text",
+                    "type": "string",
+                    "default": "Click me"
+                }
+            ]
+        },
+        {
+            "name": "text_container",
+            "fields": [
+                {
+                    "name": "text",
+                    "type": "string",
+                    "default": ""
+                }
+            ]
+        },
+        {
+            "name": "list",
+            "fields": [
+                {
+                    "name": "item",
+                    "type": [
+                        "information_item"
+                    ],
+                    "default": "None"
+                }
+            ]
+        },
+        {
+            "name": "information_item",
+            "fields": [
+                {
+                    "name": "index",
+                    "type": "int",
+                    "default": 1
+                },
+                {
+                    "name": "header",
+                    "type": "string",
+                    "default": "header"
+                },
+                {
+                    "name": "body",
+                    "type": "string",
+                    "default": "body text"
+                }
+            ]
+        },
+        {
+            "name": "table",
+            "fields": [
+                {
+                    "name": "header",
+                    "type": "list",
+                    "default": "header",
+                    "required": false
+                },
+                {
+                    "name": "body",
+                    "type": "list",
+                    "default": "body",
+                    "required": false
+                }
+            ]
+        }
+    ],
+    "widgets": {
+        "info_list": {
+            "name": "info_list",
+            "header": [
+                {
+                    "text_container": {}
+                }
+            ],
+            "body": [
+                {
+                    "list": {
+                        "components": []
+                    }
+                }
+            ],
+            "footer": [
+                {
+                    "list": {
+                        "components": [
+                            {
+                                "button": {
+                                    "text": "cancel"
+                                }
+                            },
+                            {
+                                "button": {
+                                    "text": "edit"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "balance": {
+            "header": [],
+            "body": [],
+            "footer": [],
+            "name": "balance"
+        },
+        "succesfull_info": {
+            "header": [],
+            "body": [
+                "text_container"
+            ],
+            "footer": [],
+            "name": "succesfull_info"
+        },
+        "unsuccesfull_info": {
+            "header": [],
+            "body": [
+                "text_container"
+            ],
+            "footer": [],
+            "name": "unsuccesfull_info"
+        }
+    },
+    "func_name_to_widget": {
+        "transfer": "info_list",
+        "show_contacts": "info_list",
+        "balance": "balance",
+        "succesfull_transfer": "succesfull_info",
+        "bad_transfer": "unsuccesfull_info"
+    }
+}
