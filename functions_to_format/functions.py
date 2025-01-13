@@ -240,11 +240,12 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
     #     #     "processing": "uzcard",
     #     #     "mask": "561468******9682"
     #     # },
-    print(backend_output)
+    print(type(backend_output))
     # if type(backend_output) is str:
     #     backend_output = json.loads(backend_output)
     # for i in backend_output:
     #     print(i)
+    logger.debug(backend_output)
     for i, card_info in enumerate(backend_output):
         print(f"Card {i + 1} info: ", card_info)
         backend_output_processed.append(
