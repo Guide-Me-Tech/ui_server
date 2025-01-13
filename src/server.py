@@ -468,23 +468,30 @@ async def format_data_v2(request: Request):
     func_name = data.get("function_name")
     if not func_name:
         return Response(status_code=400, content="function_name is required")
-
+    with open("logs.json", "w") as f:
+        json.dump(data, f)
     sanitized_llm_output = sanitize_input(data.get("llm_output", {}))
-    sanitized_backend_output = sanitize_input(data.get("backend_output", {}))
-    if sanitized_llm_output is None or sanitized_backend_output is None:
-        return Response(status_code=400, content="Invalid data")
+    # sanitized_backend_output = sanitize_input(data.get("backend_output", {}))
+    # if sanitized_llm_output is None or sanitized_backend_output is None:
+    #     return Response(status_code=400, content="Invalid data")
 
     func = functions_mapper.get(func_name)
     if func is None:
         logger.debug(f"STEP 4: No function found for {func_name}")
         return Response(status_code=400, content="Function not found.")
     print(data)
+    #
+    if isinstance(json.loads(data["backend_output"]), str):
+        data["backend_output"] = data["backend_output"].replace("'", '"').strip('"')
     if data["llm_output"] == "finish":
         return {"schema": "finish", "data": "finish"}
     try:
         data["backend_output"] = json.loads(data["backend_output"])
     except Exception as e:
-        data["backend_output"] == ""
+        print(str(e))
+        data["backend_output"] = ""
+        print(type(data))
+        logger.error("Backend output set to empty")
     logger.debug("STEP 5: Found function, invoking now")
     result = func(data["llm_output"], data["backend_output"])
     logger.debug(f"STEP 6: actions result={result}")
