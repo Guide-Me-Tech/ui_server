@@ -289,6 +289,313 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
     return output
 
 
+# "get_fields_of_supplier": get_fields_of_supplier,
+# "get_suppliers_by_category": get_suppliers_by_category,
+# "get_categories": get_categories,
+#  [
+#         {
+#             "id": 1,
+#             "name": "Мобильные операторы",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056545-57d63349-cdc1-4438-982f-23ae508dd782",
+#         },
+#         {
+#             "id": 2,
+#             "name": "Домашний телефон",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056505-ad89d454-3f47-4e68-bc26-74fd2d32c5e2",
+#         },
+#         {
+#             "id": 3,
+#             "name": "Интернет",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056578-a950e105-f0f2-4b8f-af05-766d730593e9",
+#         },
+#         {
+#             "id": 4,
+#             "name": "Услуги",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056264-e1c665dc-ed0e-4617-9835-ddac232a1ffe",
+#         },
+#         {
+#             "id": 5,
+#             "name": "Телевидение",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056745-0899c2dc-f194-41e2-9a30-b1c16d45ef3e",
+#         },
+#         {
+#             "id": 6,
+#             "name": "Такси",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056657-eb712c52-a9ee-4293-b6ff-38eaaa052401",
+#         },
+#         {
+#             "id": 7,
+#             "name": "Коммунальные услуги",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056712-902ee66f-9ad1-4d73-940a-c5f174b01ae0",
+#         },
+#         {
+#             "id": 9,
+#             "name": "Онлайн площадки",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671057830-ef6d3711-ff17-44b3-9107-1a3e8f6085aa",
+#         },
+#         {
+#             "id": 11,
+#             "name": "Образование",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671058625-3b117d55-22a0-42e6-aed0-a48c995586c3",
+#         },
+#         {
+#             "id": 18,
+#             "name": "Благотворительность",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056624-ea0e5f25-4998-4e49-9129-f8f6fed1fe94",
+#         },
+#         {
+#             "id": 23,
+#             "name": "Погашение рассрочек",
+#             "imagePath": None,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671057272-e9da9dfc-c49b-47eb-9592-a201866ab5fe",
+#         },
+#     ]
+#
+
+
+def get_categories(llm_output, backend_output):
+    backend_output_processed = []
+    for i, category in enumerate(backend_output):
+        backend_output_processed.append(
+            {
+                "id": category["id"],
+                "name": category["name"],
+                "image_url": category["s3Url"],
+            }
+        )
+    text_widget = {
+        "name": "text_widget",
+        "type": "text_widget",
+        "order": 1,
+        "layout": "horizontal",
+        "fields": ["text"],
+        "values": [{"text": llm_output}],
+    }
+    categories_widget = {
+        "name": "payments_list_item_widget",
+        "type": "payments_list_item_widget",
+        "order": 2,
+        "layout": "vertical",
+        "fields": ["id", "name", "image_url"],
+        "values": backend_output_processed,
+    }
+    buttons = {
+        "name": "buttons_widget",
+        "type": "buttons_widget",
+        "order": 3,
+        "layout": "horizontal",
+        "fields": ["text", "action"],
+        "values": [
+            {"text": "Cancel", "action": "cancel"},
+        ],
+    }
+    return {
+        "widgets_count": 3,
+        "widgets": [text_widget, categories_widget, buttons],
+    }
+
+
+#  [
+#         {
+#             "id": 1014,
+#             "name": "Crediton.uz",
+#             "categoryId": 23,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671093787-252daee5-82ac-4fb4-ba5c-03787fe386f8",
+#         },
+#         {
+#             "id": 1015,
+#             "name": "Creditexpress.uz",
+#             "categoryId": 23,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671093824-47a839b9-e505-4b41-aac7-a3c93cf052a4",
+#         },
+#         {
+#             "id": 1016,
+#             "name": "Smart Credit",
+#             "categoryId": 23,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671094187-ebb454f8-45b5-4a94-85ec-d1ee5b6fa3f8",
+#         },
+#         {
+#             "id": 1020,
+#             "name": "Olcha.uz",
+#             "categoryId": 23,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671094219-7c7e4bd0-75ca-471e-a122-9d780d780165",
+#         },
+#         {
+#             "id": 1021,
+#             "name": "FORTA",
+#             "categoryId": 23,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671094258-7eb6a2ac-6c51-4ebf-816b-f98dc9fb7b37",
+#         },
+#         {
+#             "id": 1022,
+#             "name": "Imkon savdo",
+#             "categoryId": 23,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671095537-ba0218a0-5aa5-4df8-b039-82c71b7063a1",
+#         },
+#         {
+#             "id": 1033,
+#             "name": "Amir Finans",
+#             "categoryId": 23,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671095632-354819f4-0cbc-4d4d-87ab-75af0eaba01a",
+#         },
+#         {
+#             "id": 1049,
+#             "name": "IT BILIM",
+#             "categoryId": 23,
+#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671095770-09905b0c-d184-443c-8e5e-22aa2429fc2f",
+#         },
+#     ],
+# }
+
+
+def get_suppliers_by_category(llm_output, backend_output):
+    backend_output_processed = []
+    for i, supplier in enumerate(backend_output):
+        backend_output_processed.append(
+            {
+                "id": supplier["id"],
+                "name": supplier["name"],
+                "image_url": supplier["s3Url"],
+            }
+        )
+
+    text_widget = {
+        "name": "text_widget",
+        "type": "text_widget",
+        "order": 1,
+        "layout": "horizontal",
+        "fields": ["text"],
+        "values": [{"text": llm_output}],
+    }
+    suppliers_widget = {
+        "name": "payments_list_item_widget",
+        "type": "payments_list_item_widget",
+        "order": 2,
+        "layout": "vertical",
+        "fields": ["id", "name", "image_url"],
+        "values": backend_output_processed,
+    }
+    buttons_widget = {
+        "name": "buttons_widget",
+        "type": "buttons_widget",
+        "order": 3,
+        "layout": "horizontal",
+        "fields": ["text", "action"],
+        "values": [
+            {"text": "Cancel", "action": "cancel"},
+        ],
+    }
+
+    return {
+        "widgets_count": 3,
+        "widgets": [text_widget, suppliers_widget, buttons_widget],
+    }
+
+
+# {'code': '0',
+#  'description': 'Success',
+#  'payload': {'checkUp': True,
+#   'checkUpWithResponse': True,
+#   'checkUpAfterPayment': False,
+#   'fieldList': [{'identName': 'amount',
+#     'name': 'Сумма',
+#     'order': 2,
+#     'type': 'MONEY',
+#     'pattern': None,
+#     'minValue': 500,
+#     'maxValue': 10000000,
+#     'fieldSize': 12,
+#     'isMain': None,
+#     'valueList': []},
+#    {'identName': 'paymentNo',
+#     'name': 'Номер счёта',
+#     'order': 1,
+#     'type': 'STRING',
+#     'pattern': None,
+#     'minValue': None,
+#     'maxValue': None,
+#     'fieldSize': 15,
+#     'isMain': True,
+#     'valueList': []}]}}
+
+
+def get_fields_of_supplier(llm_output, backend_output):
+    backend_output_processed = []
+    for i, field in enumerate(backend_output["fieldList"]):
+        backend_output_processed.append(
+            {
+                "identName": field["identName"],
+                "name": field["name"],
+                "order": field["order"],
+                "type": field["type"],
+                "pattern": field["pattern"],
+                "minValue": field["minValue"],
+                "maxValue": field["maxValue"],
+                "fieldSize": field["fieldSize"],
+                "isMain": field["isMain"],
+                "valueList": field["valueList"],
+            }
+        )
+    if llm_output:
+        text_widget = {
+            "name": "text_widget",
+            "type": "text_widget",
+            "order": 1,
+            "layout": "horizontal",
+            "fields": ["text"],
+            "values": [{"text": llm_output}],
+        }
+    fields_widget = {
+        "name": "fields_widget",
+        "type": "fields_widget",
+        "order": 2,
+        "layout": "vertical",
+        "fields": [
+            "identName",
+            "name",
+            "order",
+            "type",
+            "pattern",
+            "minValue",
+            "maxValue",
+            "fieldSize",
+            "isMain",
+            "valueList",
+        ],
+        "values": backend_output_processed,
+    }
+    button_widget = {
+        "name": "buttons_widget",
+        "type": "buttons_widget",
+        "order": 3,
+        "layout": "horizontal",
+        "fields": ["text", "action"],
+        "values": [
+            {"text": "Cancel", "action": "cancel"},
+        ],
+    }
+    if len(llm_output) > 0:
+        return {
+            "widgets_count": 3,
+            "widgets": [text_widget, fields_widget, button_widget],
+        }
+    else:
+        return {
+            "widgets_count": 2,
+            "widgets": [fields_widget, button_widget],
+        }
+
+
 def unauthorized_response(llm_output, backend_output):
     # Janis Rubins: logic unchanged, just returns text_widget schema and llm_output as data
     return {
