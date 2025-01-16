@@ -8,6 +8,9 @@ from functions_to_format.functions import (
     chatbot_answer,
     unauthorized_response,
     get_receiver_id_by_reciver_phone_number,
+    get_categories,
+    get_fields_of_supplier,
+    get_suppliers_by_category,
 )
 
 # Janis Rubins changes:
@@ -39,6 +42,9 @@ functions_mapper = {
     "chatbot_answer": chatbot_answer,
     "unauthorized_response": unauthorized_response,
     "get_receiver_id_by_reciver_phone_number": get_receiver_id_by_reciver_phone_number,
+    "get_categories": get_categories,
+    "get_fields_of_supplier": get_fields_of_supplier,
+    "get_suppliers_by_category": get_suppliers_by_category,
 }
 
 
