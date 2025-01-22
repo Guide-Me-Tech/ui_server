@@ -468,8 +468,8 @@ async def format_data_v2(request: Request):
     func_name = data.get("function_name")
     if not func_name:
         return Response(status_code=400, content="function_name is required")
-    with open("logs.json", "w") as f:
-        json.dump(data, f)
+    #with open("logs.json", "w") as f:
+    #    json.dump(data, f)
     sanitized_llm_output = sanitize_input(data.get("llm_output", {}))
     # sanitized_backend_output = sanitize_input(data.get("backend_output", {}))
     # if sanitized_llm_output is None or sanitized_backend_output is None:
