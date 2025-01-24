@@ -216,7 +216,8 @@ def get_balance(llm_output, backend_output):
         "values": [{"text": llm_output}],
     }
     cards_list = {
-        "name": "cards_own_list_widget",
+        "name": "cards_own_list_widget_balance",
+        "type":"cards_own_list_widget_balance",
         "order": 2,
         "layout": "vertical",
         "fields": ["masked_card_pan", "card_type", "balance", "card_name"],
