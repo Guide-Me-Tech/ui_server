@@ -479,9 +479,9 @@ async def format_data_v2(request: Request):
     func = functions_mapper.get(func_name)
     if func is None:
         logger.debug(f"STEP 4: No function found for {func_name}")
-        return Response(status_code=400, content="Function not found.")
+        # return chatbot answer
+        func = functions_mapper.get("chatbot_answer")
     print(data)
-    #
     if func_name == "chatbot_answer":
         logger.debug("STEP 5: Found function, invoking now")
         result = func([data["llm_output"], ""])
