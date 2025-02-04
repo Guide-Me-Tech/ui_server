@@ -205,6 +205,7 @@ def get_balance(llm_output, backend_output):
                 if type(card_info["balance"]) is int
                 else 0,
                 "card_name": card_info["cardDetails"]["cardName"],
+                "cardColor":card_info["cardDetails"]["cardColor"]
             }
         )
     text_widget = {
