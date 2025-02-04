@@ -484,7 +484,7 @@ async def format_data_v2(request: Request):
     print(data)
     if func_name == "chatbot_answer":
         logger.debug("STEP 5: Found function, invoking now")
-        result = func([data["llm_output"], ""])
+        result = func(data["llm_output"], "")
         logger.debug(f"STEP 6: actions result={result}")
         return result
     if isinstance(json.loads(data["backend_output"]), str):
