@@ -18,7 +18,7 @@ COPY . .
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-EXPOSE 8000
+#EXPOSE 8000
 
 # Healthcheck to detect issues early
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
