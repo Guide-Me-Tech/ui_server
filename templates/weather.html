@@ -1,42 +1,56 @@
-<div class="w-full max-w-xs mx-auto bg-white rounded-xl shadow-lg overflow-hidden font-sans border border-gray-200">
-    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="text-lg font-semibold">{{city}}</div>
-                <div class="text-sm text-indigo-100">{{time}}</div>
-            </div>
-            {% if sky_icon == "cloudy" %}
-            <div class="text-5xl">☁️</div>
-            {% elif sky_icon == "clear" %}
-            <div class="text-5xl">🌤️</div>
-            {%endif%}
-        </div>
-        <div class="flex justify-between items-center mt-4">
-            <div class="text-5xl font-bold">{{temperature}}</div>
-            <div class="text-sm text-right">
-                <div>Feels like {{feels_like_temperature}}</div>
-                <div>Humidity: {{humidity_percent}}</div>
-            </div>
-        </div>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
 
-    <div class="p-4 bg-white text-gray-700">
-        <div class="flex justify-between text-sm">
-            <div class="flex flex-col items-center">
-                <span>🌅</span>
-                <span>Sunrise</span>
-                <span class="font-semibold">{{sunrise_time}}</span>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Widget</title>
+    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 p-6 flex justify-center">
+    <div class="w-full max-w-xs mx-auto bg-white rounded-xl shadow-lg overflow-hidden font-sans border border-gray-200">
+        <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-lg font-semibold">{{city}}</div>
+                    <div class="text-sm text-indigo-100">{{time}}</div>
+                </div>
+                {% if sky_icon == "cloudy" %}
+                <div class="text-5xl">☁️</div>
+                {% elif sky_icon == "clear" %}
+                <div class="text-5xl">🌤️</div>
+                {%endif%}
             </div>
-            <div class="flex flex-col items-center">
-                <span>💨</span>
-                <span>Wind</span>
-                <span class="font-semibold">{{wind_speed}}</span>
+            <div class="flex justify-between items-center mt-4">
+                <div class="text-5xl font-bold">{{temperature}}</div>
+                <div class="text-sm text-right">
+                    <div>Feels like {{feels_like_temperature}}</div>
+                    <div>Humidity: {{humidity_percent}}</div>
+                </div>
             </div>
-            <div class="flex flex-col items-center">
-                <span>🌇</span>
-                <span>Sunset</span>
-                <span class="font-semibold">{{sunset_time}}</span>
+        </div>
+
+        <div class="p-4 bg-white text-gray-700">
+            <div class="flex justify-between text-sm">
+                <div class="flex flex-col items-center">
+                    <span>🌅</span>
+                    <span>Sunrise</span>
+                    <span class="font-semibold">{{sunrise_time}}</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <span>💨</span>
+                    <span>Wind</span>
+                    <span class="font-semibold">{{wind_speed}}</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <span>🌇</span>
+                    <span>Sunset</span>
+                    <span class="font-semibold">{{sunset_time}}</span>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</body>
+
+</html>

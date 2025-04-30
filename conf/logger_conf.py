@@ -17,7 +17,7 @@ LOG_BACKUP_COUNT = 3
 dotenv.load_dotenv(".env")
 
 
-logfire.configure(token=os.getenv("LOGFIRE_TOKEN"))
+# logfire.configure(token=os.getenv("LOGFIRE_TOKEN"))
 
 
 def setup_logging(logfile: str) -> logging.Logger:
