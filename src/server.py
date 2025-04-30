@@ -1,3 +1,4 @@
+from conf import logger
 import logging
 import time
 import json
@@ -28,7 +29,7 @@ import sentry_sdk
 
 # https://www.youtbe.com/watch?v=NTP4XdTjRK0
 sentry_sdk.init(
-    dsn="https://0c23e1d3e6451476d12eacd70370083a@o4508016737714176.ingest.de.sentry.io/4508466635538512",
+    dsn=os.getenv("SENTRY_DSN"),
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for tracing.
     traces_sample_rate=1.0,
@@ -68,14 +69,14 @@ class SecurityConstants:
 
 
 # Janis Rubins step 2: Setup flexible logging system
-log_level = os.environ.get("LOG_LEVEL", "ERROR").upper()
-level = logging.DEBUG if log_level == "DEBUG" else logging.ERROR
-logger = logging.getLogger(__name__)
-logger.setLevel(level)
-handler = logging.StreamHandler()
-formatter = logging.Formatter("[%(asctime)s][%(levelname)s][%(name)s]: %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+# log_level = os.environ.get("LOG_LEVEL", "ERROR").upper()
+# level = logging.DEBUG if log_level == "DEBUG" else logging.ERROR
+# logger = logging.getLogger(__name__)
+# logger.setLevel(level)
+# handler = logging.StreamHandler()
+# formatter = logging.Formatter("[%(asctime)s][%(levelname)s][%(name)s]: %(message)s")
+# handler.setFormatter(formatter)
+# logger.addHandler(handler)
 
 # Janis Rubins step 3: Pre-load users & api_keys once to minimize overhead
 users = get_users()
@@ -446,6 +447,11 @@ async def build_ui(request: Request, idx: str):
     return result
 
 
+@app.get("/health")
+async def health():
+    return "Ok"
+
+
 @app.get("/chat/v2/build_ui/text")
 @timed_async
 async def format_data(request: Request):
@@ -468,14 +474,13 @@ async def format_data_v2(request: Request):
     func_name = data.get("function_name")
     if not func_name:
         return Response(status_code=400, content="function_name is required")
-    #with open("logs.json", "w") as f:
+    # with open("logs.json", "w") as f:
     #    json.dump(data, f)
     sanitized_llm_output = sanitize_input(data.get("llm_output", {}))
     # sanitized_backend_output = sanitize_input(data.get("backend_output", {}))
     # if sanitized_llm_output is None or sanitized_backend_output is None:
     #     return Response(status_code=400, content="Invalid data")
 
-    
     func = functions_mapper.get(func_name)
     if func is None:
         logger.debug(f"STEP 4: No function found for {func_name}")
