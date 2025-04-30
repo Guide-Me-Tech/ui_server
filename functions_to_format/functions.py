@@ -201,11 +201,11 @@ def get_balance(llm_output, backend_output):
             {
                 "masked_card_pan": card_info["pan"],
                 "card_type": card_info["processingSystem"],
-                "balance": card_info["balance"]
-                if type(card_info["balance"]) is int
-                else 0,
+                "balance": (
+                    card_info["balance"] if type(card_info["balance"]) is int else 0
+                ),
                 "card_name": card_info["cardDetails"]["cardName"],
-                "cardColor":card_info["cardDetails"]["cardColor"]
+                "cardColor": card_info["cardDetails"]["cardColor"],
             }
         )
     text_widget = {
@@ -218,7 +218,7 @@ def get_balance(llm_output, backend_output):
     }
     cards_list = {
         "name": "cards_own_list_widget_balance",
-        "type":"cards_own_list_widget_balance",
+        "type": "cards_own_list_widget_balance",
         "order": 2,
         "layout": "vertical",
         "fields": ["masked_card_pan", "card_type", "balance", "card_name"],
@@ -230,6 +230,9 @@ def get_balance(llm_output, backend_output):
 
     # Janis Rubins: return schema and data if valid
     return output
+
+
+# def get_number_by_receiver_name(llm_output, backend_output):
 
 
 def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
@@ -280,7 +283,7 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output):
         "order": 3,
         "layout": "horizontal",
         "fields": ["text"],
-        "values": [  {"text":"cancel"}  ],
+        "values": [{"text": "cancel"}],
     }
 
     output = {
