@@ -22,7 +22,7 @@ def notifications(*args, **kwargs):
 
 def balance(*args, **kwargs):
     logger.info("Balance widget")
-    logger.info("Kwargs:", kwarg=kwargs)
+    # logger.info("Kwargs:", kwarg=kwargs)
     template = env.get_template("balance.html")
     return template.render(**kwargs)
 
