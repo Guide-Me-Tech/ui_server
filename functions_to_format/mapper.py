@@ -47,8 +47,9 @@ functions_mapper = {
     "get_suppliers_by_category": get_suppliers_by_category,
 }
 
+functions_mapper_v3 = {}
 
-# Janis Rubins step 4: Check if identifiers are safe to prevent malicious keys
+
 def is_safe_identifier(value: str) -> bool:
     return bool(SAFE_PATTERN.match(value))
 

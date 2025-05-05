@@ -1,0 +1,223 @@
+{
+    "templates": {},
+    "card": {
+        "log_id": "card",
+        "states": [
+            {
+                "div": {
+                    "type": "container",
+                    "alignment_horizontal": "center",
+                    "background": [
+                        {
+                            "type": "solid",
+                            "color": "#FFFFFF"
+                        }
+                    ],
+                    "border": {
+                        "corner_radius": 20,
+                        "stroke": {
+                            "color": "#E5E7EB"
+                        }
+                    },
+                    "items": [
+                        {
+                            "type": "container",
+                            "alignment_horizontal": "center",
+                            "background": [
+                                {
+                                    "type": "gradient",
+                                    "angle": 135,
+                                    "colors": [
+                                        "#3B82F6",
+                                        "#6366F1"
+                                    ]
+                                }
+                            ],
+                            "items": [
+                                {
+                                    "type": "container",
+                                    "items": [
+                                        {
+                                            "type": "container",
+                                            "items": [
+                                                {
+                                                    "type": "text",
+                                                    "font_size": 18,
+                                                    "font_weight": "bold",
+                                                    "text": "Tashkent",
+                                                    "text_color": "#FFFFFF"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "font_size": 13,
+                                                    "text": "Partly cloudy",
+                                                    "text_color": "#E0E7FF"
+                                                }
+                                            ],
+                                            "orientation": "vertical",
+                                            "width": {
+                                                "type": "match_parent"
+                                            }
+                                        }
+                                    ],
+                                    "orientation": "horizontal"
+                                },
+                                {
+                                    "type": "container",
+                                    "alignment_horizontal": "center",
+                                    "items": [
+                                        {
+                                            "type": "text",
+                                            "font_size": 48,
+                                            "font_weight": "bold",
+                                            "text": "32°",
+                                            "text_color": "#FFFFFF"
+                                        },
+                                        {
+                                            "type": "container",
+                                            "alignment_horizontal": "right",
+                                            "items": [
+                                                {
+                                                    "type": "text",
+                                                    "font_size": 13,
+                                                    "text": "Feels like 28°",
+                                                    "text_color": "#E0E7FF"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "font_size": 13,
+                                                    "text": "Humidity: 45%",
+                                                    "text_color": "#E0E7FF"
+                                                }
+                                            ],
+                                            "orientation": "vertical"
+                                        }
+                                    ],
+                                    "margins": {
+                                        "top": 12
+                                    },
+                                    "orientation": "horizontal"
+                                }
+                            ],
+                            "orientation": "vertical",
+                            "paddings": {
+                                "bottom": 16,
+                                "left": 16,
+                                "right": 16,
+                                "top": 16
+                            }
+                        },
+                        {
+                            "type": "container",
+                            "background": [
+                                {
+                                    "type": "solid",
+                                    "color": "#FFFFFF"
+                                }
+                            ],
+                            "items": [
+                                {
+                                    "type": "container",
+                                    "alignment_horizontal": "center",
+                                    "items": [
+                                        {
+                                            "type": "text",
+                                            "font_size": 20,
+                                            "text": "🌅"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "font_size": 12,
+                                            "text": "Sunrise",
+                                            "text_color": "#374151"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "font_size": 13,
+                                            "font_weight": "bold",
+                                            "text": "6:10"
+                                        }
+                                    ],
+                                    "orientation": "vertical",
+                                    "width": {
+                                        "type": "fixed",
+                                        "value": 80
+                                    }
+                                },
+                                {
+                                    "type": "container",
+                                    "alignment_horizontal": "center",
+                                    "items": [
+                                        {
+                                            "type": "text",
+                                            "font_size": 20,
+                                            "text": "💨"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "font_size": 12,
+                                            "text": "Wind",
+                                            "text_color": "#374151"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "font_size": 13,
+                                            "font_weight": "bold",
+                                            "text": "12 km/h"
+                                        }
+                                    ],
+                                    "orientation": "vertical",
+                                    "width": {
+                                        "type": "fixed",
+                                        "value": 80
+                                    }
+                                },
+                                {
+                                    "type": "container",
+                                    "alignment_horizontal": "center",
+                                    "items": [
+                                        {
+                                            "type": "text",
+                                            "font_size": 20,
+                                            "text": "🌇"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "font_size": 12,
+                                            "text": "Sunset",
+                                            "text_color": "#374151"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "font_size": 13,
+                                            "font_weight": "bold",
+                                            "text": "18:45"
+                                        }
+                                    ],
+                                    "orientation": "vertical",
+                                    "width": {
+                                        "type": "fixed",
+                                        "value": 80
+                                    }
+                                }
+                            ],
+                            "orientation": "horizontal",
+                            "paddings": {
+                                "bottom": 16,
+                                "left": 16,
+                                "right": 16,
+                                "top": 16
+                            }
+                        }
+                    ],
+                    "orientation": "vertical",
+                    "width": {
+                        "type": "fixed",
+                        "value": 320
+                    }
+                },
+                "state_id": 0
+            }
+        ]
+    }
+}
