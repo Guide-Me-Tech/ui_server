@@ -1,0 +1,223 @@
+{
+  "templates": {},
+  "card": {
+    "log_id": "card",
+    "states": [
+      {
+        "div": {
+          "type": "container",
+          "background": [
+            {
+              "type": "solid",
+              "color": "#1F2937"
+            }
+          ],
+          "border": {
+            "corner_radius": 16
+          },
+          "items": [
+            {
+              "type": "container",
+              "items": [
+                {
+                  "type": "text",
+                  "font_size": 12,
+                  "font_weight": "bold",
+                  "letter_spacing": 0.5,
+                  "text": "TOP NEWS",
+                  "text_color": "#9CA3AF"
+                }
+              ],
+              "orientation": "horizontal"
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "open-news",
+                "url": "https://a3n.uz"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "container",
+                  "items": [
+                    {
+                      "type": "text",
+                      "font_size": 14,
+                      "font_weight": "medium",
+                      "max_lines": 1,
+                      "text": "Tramp Chris Wright kompaniyasi rahbarini tanladi...",
+                      "text_color": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "font_size": 12,
+                      "margins": {
+                        "top": 2
+                      },
+                      "max_lines": 1,
+                      "text": "Kun.uz · 1s",
+                      "text_color": "#D1D5DB"
+                    }
+                  ],
+                  "orientation": "vertical"
+                },
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 8
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 36
+                  },
+                  "image_url": "https://humocard.uz/bitrix/templates/main/img/card2.png",
+                  "margins": {
+                    "left": 12
+                  },
+                  "scale": "fill",
+                  "width": {
+                    "type": "fixed",
+                    "value": 36
+                  }
+                }
+              ],
+              "margins": {
+                "top": 12
+              },
+              "orientation": "horizontal"
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "open-news",
+                "url": "https://a3n.uz"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "container",
+                  "items": [
+                    {
+                      "type": "text",
+                      "font_size": 14,
+                      "font_weight": "medium",
+                      "max_lines": 1,
+                      "text": "Soliqchilar endi soliqdan qocha olmaydi.",
+                      "text_color": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "font_size": 12,
+                      "margins": {
+                        "top": 2
+                      },
+                      "max_lines": 1,
+                      "text": "Daryo · 2s",
+                      "text_color": "#D1D5DB"
+                    }
+                  ],
+                  "orientation": "vertical"
+                },
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 8
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 36
+                  },
+                  "image_url": "https://humocard.uz/bitrix/templates/main/img/card2.png",
+                  "margins": {
+                    "left": 12
+                  },
+                  "scale": "fill",
+                  "width": {
+                    "type": "fixed",
+                    "value": 36
+                  }
+                }
+              ],
+              "margins": {
+                "top": 12
+              },
+              "orientation": "horizontal"
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "open-news",
+                "url": "https://a3n.uz"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "container",
+                  "items": [
+                    {
+                      "type": "text",
+                      "font_size": 14,
+                      "font_weight": "medium",
+                      "max_lines": 1,
+                      "text": "O'zbekistonda yangi soliq tizimi joriy etilmoqda...",
+                      "text_color": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "font_size": 12,
+                      "margins": {
+                        "top": 2
+                      },
+                      "max_lines": 1,
+                      "text": "Gazeta.uz · 3s",
+                      "text_color": "#D1D5DB"
+                    }
+                  ],
+                  "orientation": "vertical"
+                },
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 8
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 36
+                  },
+                  "image_url": "https://humocard.uz/bitrix/templates/main/img/card2.png",
+                  "margins": {
+                    "left": 12
+                  },
+                  "scale": "fill",
+                  "width": {
+                    "type": "fixed",
+                    "value": 36
+                  }
+                }
+              ],
+              "margins": {
+                "top": 12
+              },
+              "orientation": "horizontal"
+            }
+          ],
+          "margins": {
+            "bottom": 8,
+            "left": 12,
+            "right": 12,
+            "top": 8
+          },
+          "orientation": "vertical",
+          "paddings": {
+            "bottom": 12,
+            "left": 16,
+            "right": 16,
+            "top": 12
+          }
+        },
+        "state_id": 0
+      }
+    ]
+  }
+}

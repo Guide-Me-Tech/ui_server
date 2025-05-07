@@ -3,6 +3,7 @@ import sys
 import logging
 from typing import Any, Dict, List, Optional, Union
 import json
+from conf import logger
 
 """
 Why this code is needed:
@@ -41,16 +42,6 @@ UI_BUILDER_DEFAULT_WIDGET = os.environ.get("UI_BUILDER_DEFAULT_WIDGET", "text_wi
 UI_BUILDER_RESOURCE_SAVING_MODE = (
     os.environ.get("UI_BUILDER_RESOURCE_SAVING_MODE", "true").lower() == "true"
 )
-
-# Janis Rubins step 2: Setup logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.getLevelName(UI_BUILDER_LOG_LEVEL))
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(
-    logging.Formatter("[%(asctime)s][%(levelname)s][%(name)s]: %(message)s")
-)
-if not logger.handlers:
-    logger.addHandler(handler)
 
 # Janis Rubins step 3: Attempt to import widgets from functions_to_format.components
 # If not found, fallback to empty dict or handle gracefully.

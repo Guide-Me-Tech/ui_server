@@ -19,11 +19,13 @@ ADAPTER_LOG_LEVEL = os.environ.get("ADAPTER_LOG_LEVEL", "ERROR").upper()
 
 # Janis Rubins step 2: Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.getLevelName(ADAPTER_LOG_LEVEL))
 handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s]: %(message)s'))
+handler.setFormatter(
+    logging.Formatter("[%(asctime)s][%(levelname)s][%(name)s]: %(message)s")
+)
 if not logger.handlers:
     logger.addHandler(handler)
+
 
 class BaseAdapter(abc.ABC):
     """
@@ -52,7 +54,9 @@ class BaseAdapter(abc.ABC):
 
     def log_match_attempt(self, data: dict):
         # Janis Rubins step 5: Log attempts to match.
-        logger.debug(f"Attempting to match {self.__class__.__name__} for data keys: {list(data.keys())}")
+        logger.debug(
+            f"Attempting to match {self.__class__.__name__} for data keys: {list(data.keys())}"
+        )
 
     def log_adapt_start(self, data: dict):
         # Janis Rubins step 6: Log start of adaptation.

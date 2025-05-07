@@ -34,11 +34,12 @@ Save resources by stopping early if a solution is found, and only making network
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
-    format='[%(asctime)s][%(levelname)s]: %(message)s',
-    stream=sys.stdout
+    format="[%(asctime)s][%(levelname)s]: %(message)s",
+    stream=sys.stdout,
 )
 
 logger = logging.getLogger(__name__)
+
 
 def ensure_pipreqs_installed() -> bool:
     """
@@ -49,6 +50,7 @@ def ensure_pipreqs_installed() -> bool:
     logger.debug("Checking if pipreqs is installed.")
     try:
         import pipreqs  # noqa: F401
+
         logger.debug("pipreqs already installed.")
         return True
     except ImportError:
@@ -56,11 +58,13 @@ def ensure_pipreqs_installed() -> bool:
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "pipreqs"])
             import pipreqs  # noqa: F401
+
             logger.debug("pipreqs installation successful.")
             return True
         except Exception as e:
             logger.error(f"Failed to install pipreqs automatically: {e}", exc_info=True)
             return False
+
 
 def run_pipreqs(output_file: str) -> bool:
     """
@@ -75,6 +79,7 @@ def run_pipreqs(output_file: str) -> bool:
     except subprocess.CalledProcessError as e:
         logger.error(f"pipreqs failed with error: {e}", exc_info=True)
         return False
+
 
 def parse_requirements(file_path: str) -> Dict[str, str]:
     """
@@ -104,7 +109,10 @@ def parse_requirements(file_path: str) -> Dict[str, str]:
     logger.debug(f"Parsed {file_path}: {reqs}")
     return reqs
 
-def merge_requirements(old_reqs: Dict[str, str], new_reqs: Dict[str, str]) -> Dict[str, str]:
+
+def merge_requirements(
+    old_reqs: Dict[str, str], new_reqs: Dict[str, str]
+) -> Dict[str, str]:
     """
     Janis Rubins step 4: Merge new_reqs with old pinned versions.
     - If old has pinned version, keep it.
@@ -120,6 +128,7 @@ def merge_requirements(old_reqs: Dict[str, str], new_reqs: Dict[str, str]) -> Di
     logger.debug(f"Merged requirements: {merged}")
     return merged
 
+
 def try_install_requirements(reqs: Dict[str, str]) -> bool:
     """
     Janis Rubins step 5: Test installing given reqs to check for conflicts.
@@ -128,13 +137,14 @@ def try_install_requirements(reqs: Dict[str, str]) -> bool:
     - Run `pip install -r temp_file` in a subprocess
     - Check exit code
     For now, return False to simulate a conflict scenario.
-    
+
     Replace with real logic as needed.
     """
     logger.debug("Mock: Checking installation of current requirements (fake logic).")
     # TODO: Implement real installation check logic here.
     # For demonstration, return False to show conflict resolution attempts.
     return False
+
 
 def write_requirements(file_path: str, reqs: Dict[str, str]) -> None:
     """
@@ -147,6 +157,7 @@ def write_requirements(file_path: str, reqs: Dict[str, str]) -> None:
                 line += reqs[pkg]
             f.write(line + "\n")
     logger.debug(f"Updated {file_path} with merged requirements: {reqs}")
+
 
 def attempt_conflict_resolution(merged: Dict[str, str]) -> Dict[str, str]:
     """
@@ -161,7 +172,9 @@ def attempt_conflict_resolution(merged: Dict[str, str]) -> Dict[str, str]:
     logger.debug("Attempting conflict resolution by adjusting pinned versions.")
     operators_priority = ["==", ">=", "<=", "~=", "!="]
 
-    def test_and_return(test_reqs: Dict[str, str], msg: str) -> Optional[Dict[str, str]]:
+    def test_and_return(
+        test_reqs: Dict[str, str], msg: str
+    ) -> Optional[Dict[str, str]]:
         logger.debug(msg)
         if try_install_requirements(test_reqs):
             logger.info("Conflict resolved: " + msg)
@@ -170,7 +183,9 @@ def attempt_conflict_resolution(merged: Dict[str, str]) -> Dict[str, str]:
             logger.debug("Attempt failed: " + msg)
             return None
 
-    def try_unpin_packages(current_reqs: Dict[str, str], operator: str, all_at_once: bool = False) -> Optional[Dict[str, str]]:
+    def try_unpin_packages(
+        current_reqs: Dict[str, str], operator: str, all_at_once: bool = False
+    ) -> Optional[Dict[str, str]]:
         pkgs_with_op = [p for p, v in current_reqs.items() if operator in v]
         if not pkgs_with_op:
             logger.debug(f"No packages pinned with {operator}, skipping.")
@@ -189,7 +204,9 @@ def attempt_conflict_resolution(merged: Dict[str, str]) -> Dict[str, str]:
                 test_reqs = dict(current_reqs)
                 logger.debug(f"Trying to remove {operator} pin from {pkg}.")
                 test_reqs[pkg] = ""
-                result = test_and_return(test_reqs, f"Removing {operator} pin from {pkg}")
+                result = test_and_return(
+                    test_reqs, f"Removing {operator} pin from {pkg}"
+                )
                 if result is not None:
                     return result
             return None
@@ -226,6 +243,7 @@ def attempt_conflict_resolution(merged: Dict[str, str]) -> Dict[str, str]:
     # Step 4: If still fail, log final error
     logger.error("Failed to resolve conflicts even after multiple strategies.")
     return merged
+
 
 def main():
     logger.debug("Starting dynamic requirements update process.")
@@ -272,6 +290,7 @@ def main():
             if os.path.exists(temp_req_file):
                 os.remove(temp_req_file)
             sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

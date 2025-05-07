@@ -6,6 +6,7 @@ import json
 import hashlib
 from typing import Dict, Any, List
 from functools import lru_cache
+from conf import logger
 
 """
 - Prepares sets of schemas for analytics, machine learning training, or other processing tasks.
@@ -21,17 +22,6 @@ MAX_SCHEMA_SIZE = 1024 * 1024  # 1MB max schema size
 MAX_STEPS_HISTORY = 1000  # Limit step records to avoid memory overhead
 CACHE_SIZE = 100  # LRU cache size for schema validations
 SAFE_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]{1,64}$")  # Pattern for safe identifiers
-
-# Janis Rubins step 2: Configure a flexible logging system
-log_level = os.environ.get("LOG_LEVEL", "ERROR").upper()
-level = logging.DEBUG if log_level == "DEBUG" else logging.ERROR
-logger = logging.getLogger(__name__)
-logger.setLevel(level)
-handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter("[%(asctime)s][%(levelname)s][%(name)s]: %(message)s")
-)
-logger.addHandler(handler)
 
 
 # Janis Rubins step 3: StepsTracker for deep debugging and schema integrity checks

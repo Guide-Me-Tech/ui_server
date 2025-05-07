@@ -17,7 +17,7 @@ LOG_BACKUP_COUNT = 3
 dotenv.load_dotenv(".env")
 
 
-logfire.configure(token=os.getenv("LOGFIRE_TOKEN"))
+# logfire.configure(token=os.getenv("LOGFIRE_TOKEN"))
 
 
 def setup_logging(logfile: str) -> logging.Logger:
@@ -46,7 +46,7 @@ def setup_logging(logfile: str) -> logging.Logger:
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
+            # structlog.processors.format_exc_info,
             logfire.StructlogProcessor(),
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
@@ -78,7 +78,7 @@ def setup_logging(logfile: str) -> logging.Logger:
     return get_logger()
 
 
-logfile_path = "/var/ui_server/"
+logfile_path = "./"  # "/var/ui_server/"
 logfile = "ui_server.log"
 if not os.path.exists(logfile_path):
     os.mkdir(logfile_path)

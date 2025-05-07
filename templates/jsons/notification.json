@@ -1,0 +1,54 @@
+{
+  "templates": {},
+  "card": {
+    "log_id": "card",
+    "states": [
+      {
+        "div": {
+          "type": "container",
+          "background": [
+            {
+              "type": "solid",
+              "color": "#EFF6FF"
+            }
+          ],
+          "border": {
+            "corner_radius": 12,
+            "stroke": {
+              "color": "#BFDBFE"
+            }
+          },
+          "items": [
+            {
+              "type": "text",
+              "font_size": 14,
+              "font_weight": "bold",
+              "text": "Alert",
+              "text_color": "#1E3A8A"
+            },
+            {
+              "type": "text",
+              "font_size": 13,
+              "margins": {
+                "top": 4
+              },
+              "text": "Fraudalent transaction",
+              "text_color": "#374151"
+            }
+          ],
+          "orientation": "vertical",
+          "paddings": {
+            "bottom": 16,
+            "left": 16,
+            "right": 16,
+            "top": 16
+          },
+          "width": {
+            "type": "match_parent"
+          }
+        },
+        "state_id": 0
+      }
+    ]
+  }
+}
