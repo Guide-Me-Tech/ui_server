@@ -1,11 +1,10 @@
 import os
-import sys
 import time
-import logging
 import functools
 import threading
 from typing import Any, Callable, Dict, Optional, Tuple
 from collections import OrderedDict
+from conf import logger
 
 """
 This code provides:
@@ -28,22 +27,12 @@ REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 REDIS_DB = int(os.environ.get("REDIS_DB", 0))
 
-# Step 2: Set up logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.getLevelName(CACHE_LOG_LEVEL))
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s]: %(message)s'))
-logger.addHandler(handler)
 
 # Step 3: Metrics for cache operations
 # These counters help track the efficiency of the cache.
 # They can be integrated with external monitoring by a simple export or endpoint.
-cache_metrics = {
-    "hits": 0,
-    "misses": 0,
-    "evictions": 0,
-    "expires": 0
-}
+cache_metrics = {"hits": 0, "misses": 0, "evictions": 0, "expires": 0}
+
 
 # Step 4: LRU in-memory cache class
 class LRUCache:
@@ -102,19 +91,22 @@ try:
 except ImportError:
     redis = None
 
+
 class RedisCache:
     def __init__(self, maxsize: int, expiry: int, host: str, port: int, db: int):
         self.maxsize = maxsize
         self.expiry = expiry
         if redis is None:
             logger.error("redis-py not installed, cannot use RedisCache.")
-            raise RuntimeError("Redis backend requested but redis library not installed.")
+            raise RuntimeError(
+                "Redis backend requested but redis library not installed."
+            )
         self.client = redis.StrictRedis(host=host, port=port, db=db)
         # We do not implement an LRU in Redis easily. This example uses a simple hash + TTL.
         # For full LRU in Redis, we'd need a more complex strategy.
         # We'll store items as key=hash(key), value=serialized data with timestamp.
         # For demonstration, store JSON or repr. No real LRU eviction here, just TTL-based expiry.
-    
+
     def get(self, key: Any) -> Optional[Any]:
         skey = self._serialize_key(key)
         data = self.client.get(skey)
@@ -125,7 +117,7 @@ class RedisCache:
         # Data is stored as bytes; we can just eval or decode.
         # For safety, assume data is repr(value).
         try:
-            value = eval(data.decode('utf-8'))
+            value = eval(data.decode("utf-8"))
             cache_metrics["hits"] += 1
             logger.debug(f"Redis cache hit for key: {key}")
             return value
@@ -136,7 +128,7 @@ class RedisCache:
     def set(self, key: Any, value: Any):
         skey = self._serialize_key(key)
         # Store repr(value) for simplicity. Could use JSON if safer.
-        val_str = repr(value).encode('utf-8')
+        val_str = repr(value).encode("utf-8")
         self.client.set(skey, val_str)
         if self.expiry > 0:
             self.client.expire(skey, self.expiry)
@@ -157,29 +149,41 @@ class RedisCache:
         # Just repr key, then hash.
         return "cache:" + str(hash(key))
 
+
 # Step 6: No-operation cache for disabled caching scenario
 class NoOpCache:
     def get(self, key: Any) -> Optional[Any]:
         logger.debug(f"Caching disabled, miss for key: {key}")
         cache_metrics["misses"] += 1
         return None
+
     def set(self, key: Any, value: Any):
         logger.debug("Caching disabled, not storing value.")
+
     def clear(self):
         logger.debug("Caching disabled, clear does nothing.")
+
 
 # Step 7: Choose the appropriate cache backend
 if not CACHE_ENABLED:
     global_cache = NoOpCache()
 elif CACHE_BACKEND.lower() == "redis":
     # Redis cache
-    global_cache = RedisCache(CACHE_MAXSIZE, CACHE_EXPIRY, REDIS_HOST, REDIS_PORT, REDIS_DB)
+    global_cache = RedisCache(
+        CACHE_MAXSIZE, CACHE_EXPIRY, REDIS_HOST, REDIS_PORT, REDIS_DB
+    )
 else:
     # Default LRU in-memory
     global_cache = LRUCache(CACHE_MAXSIZE, CACHE_EXPIRY)
 
+
 # Step 8: Decorator for caching function results
-def cache_function(maxsize: Optional[int] = None, expiry: Optional[int] = None, enabled: Optional[bool] = None, backend: Optional[str] = None):
+def cache_function(
+    maxsize: Optional[int] = None,
+    expiry: Optional[int] = None,
+    enabled: Optional[bool] = None,
+    backend: Optional[str] = None,
+):
     """
     Decorator for caching function results.
     Parameters:
@@ -204,10 +208,14 @@ def cache_function(maxsize: Optional[int] = None, expiry: Optional[int] = None, 
     else:
         if backend.lower() == "redis":
             if redis is None:
-                logger.error("redis library not installed, cannot use Redis backend for this function.")
+                logger.error(
+                    "redis library not installed, cannot use Redis backend for this function."
+                )
                 func_cache = NoOpCache()
             else:
-                func_cache = RedisCache(maxsize, expiry, REDIS_HOST, REDIS_PORT, REDIS_DB)
+                func_cache = RedisCache(
+                    maxsize, expiry, REDIS_HOST, REDIS_PORT, REDIS_DB
+                )
         else:
             func_cache = LRUCache(maxsize, expiry)
 
@@ -218,14 +226,21 @@ def cache_function(maxsize: Optional[int] = None, expiry: Optional[int] = None, 
             key = (func.__name__, args, tuple(sorted(kwargs.items())))
             result = func_cache.get(key)
             if result is not None:
-                logger.debug(f"Used cached result for {func.__name__}, args={args}, kwargs={kwargs}")
+                logger.debug(
+                    f"Used cached result for {func.__name__}, args={args}, kwargs={kwargs}"
+                )
                 return result
             result = func(*args, **kwargs)
             func_cache.set(key, result)
-            logger.debug(f"Computed and cached result for {func.__name__}, args={args}, kwargs={kwargs}")
+            logger.debug(
+                f"Computed and cached result for {func.__name__}, args={args}, kwargs={kwargs}"
+            )
             return result
+
         return wrapper
+
     return decorator
+
 
 # Step 9: Provide a function to get global cache metrics
 def get_cache_metrics() -> Dict[str, int]:
@@ -235,9 +250,11 @@ def get_cache_metrics() -> Dict[str, int]:
     """
     return dict(cache_metrics)
 
+
 # Step 10: Provide a function to clear the global cache
 def clear_global_cache():
     global_cache.clear()
+
 
 # Step 11: Integration with CLI or admin endpoint
 # For an admin endpoint, assume we have access to a FastAPI app.
@@ -247,17 +264,19 @@ def register_admin_endpoint(app, cache_instance):
     Registers an admin endpoint /admin/flush_cache to flush the cache and return metrics.
     This integrates with the rest of the application that uses FastAPI.
     """
+
     @app.post("/admin/flush_cache")
     def flush_cache():
         cache_instance.clear()
         return {
             "message": "Cache flushed successfully.",
-            "metrics": get_cache_metrics()
+            "metrics": get_cache_metrics(),
         }
 
     @app.get("/admin/cache_metrics")
     def cache_metrics_endpoint():
         return get_cache_metrics()
+
 
 # Step 12: Code is now flexible, easy to integrate with other modules:
 # - Switch backend from memory to redis by changing CACHE_BACKEND
