@@ -7,11 +7,20 @@ import pytest
 import unittest
 from fastapi.testclient import TestClient
 from src.server import app
+import httpx
 
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, base_url="http://localhost:8003")
+
+
+# BASE_URL = "http://localhost:8003"
+
+
+# @pytest.fixture
+# def client():
+#     return httpx.Client(base_url=BASE_URL, timeout=10.0)
 
 
 def test_get_balance(client):
