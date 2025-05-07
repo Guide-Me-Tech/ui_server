@@ -70,7 +70,7 @@ def get_balance(llm_output, backend_output, version="v2"):
                 ),
                 card_name=card_info["cardDetails"]["cardName"],
                 cardColor=card_info["cardDetails"]["cardColor"],
-                image_url=card_info["image_url"],
+                image_url=card_info.get("image_url", ""),
             )
         )
     text_widget = TextWidget(
@@ -83,7 +83,9 @@ def get_balance(llm_output, backend_output, version="v2"):
         order=2,
         layout="vertical",
         fields=["masked_card_pan", "card_type", "balance", "card_name"],
-        values=[card.model_dump() for card in backend_output_processed],
+        values=[
+            card.model_dump(exclude_none=True) for card in backend_output_processed
+        ],
     )
     widgets = add_ui_to_widget(
         {
@@ -102,7 +104,10 @@ def get_balance(llm_output, backend_output, version="v2"):
         },
         version,
     )
-    output = {"widgets": widgets, "widgets_count": 2}
+    output = {
+        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
+        "widgets_count": len(widgets),
+    }
     print("Output", output)
 
     return output

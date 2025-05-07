@@ -7,24 +7,16 @@ from .general import (
     ButtonsWidget,
     build_text_widget,
     build_buttons_row,
+    WidgetInput,
 )
+from pydantic import BaseModel
+from typing import List, Dict, Any, Optional
 
 
 def get_receiver_id_by_reciver_phone_number(llm_output, backend_output, version="v2"):
     output = []
     backend_output_processed = []
-    # process backed_output
-    #  {
-    #     #     "pan": "3b1cdf68-cd9f-496a-b756-cd7884b5b9f9",
-    #     #     "name": "A. H",
-    #     #     "processing": "uzcard",
-    #     #     "mask": "561468******9682"
-    #     # },
     print(type(backend_output))
-    # if type(backend_output) is str:
-    #     backend_output = json.loads(backend_output)
-    # for i in backend_output:
-    #     print(i)
     logger.debug(backend_output)
     for i, card_info in enumerate(backend_output):
         print(f"Card {i + 1} info: ", card_info)
@@ -62,13 +54,11 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output, version=
             build_text_widget: text_widget,
         },
         version,
-        llm_output,
-        backend_output,
     )
 
     output = {
         "widgets_count": 3,
-        "widgets": [widget.model_dump_json() for widget in widgets],
+        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
     }
 
     return output
@@ -92,15 +82,21 @@ def get_receiver_id_by_reciver_phone_number_ui(llm_output, backend_output):
 #
 
 
+class Category(BaseModel):
+    id: int
+    name: str
+    image_url: str
+
+
 def get_categories(llm_output, backend_output, version="v2"):
-    backend_output_processed = []
+    backend_output_processed: List[Category] = []
     for i, category in enumerate(backend_output):
         backend_output_processed.append(
-            {
-                "id": category["id"],
-                "name": category["name"],
-                "image_url": category["s3Url"],
-            }
+            Category(
+                id=category["id"],
+                name=category["name"],
+                image_url=category["s3Url"],
+            )
         )
 
     text_widget = TextWidget(
@@ -114,7 +110,7 @@ def get_categories(llm_output, backend_output, version="v2"):
         order=2,
         layout="vertical",
         fields=["id", "name", "image_url"],
-        values=backend_output_processed,
+        values=[category.model_dump() for category in backend_output_processed],
     )
 
     buttons = ButtonsWidget(
@@ -126,21 +122,28 @@ def get_categories(llm_output, backend_output, version="v2"):
 
     widgets = add_ui_to_widget(
         {
-            build_get_categories_ui: categories_widget,
-            build_buttons_row: buttons,
-            build_text_widget: text_widget,
+            build_get_categories_ui: WidgetInput(
+                widget=categories_widget,
+                args={"categories": backend_output_processed},
+            ),
+            build_buttons_row: WidgetInput(
+                widget=buttons,
+                args={"buttons": [{"text": "Cancel", "action": "cancel"}]},
+            ),
+            build_text_widget: WidgetInput(
+                widget=text_widget,
+                args={"text": llm_output},
+            ),
         },
         version,
-        llm_output,
-        backend_output,
     )
     return {
         "widgets_count": 3,
-        "widgets": [widget.model_dump_json() for widget in widgets],
+        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
     }
 
 
-def build_get_categories_ui(llm_output, backend_output):
+def build_get_categories_ui(categories: List[Category]):
     raise NotImplementedError
 
 
@@ -155,15 +158,21 @@ def build_get_categories_ui(llm_output, backend_output):
 # }
 
 
+class Supplier(BaseModel):
+    id: int
+    name: str
+    image_url: str
+
+
 def get_suppliers_by_category(llm_output, backend_output, version="v2"):
-    backend_output_processed = []
+    backend_output_processed: List[Supplier] = []
     for i, supplier in enumerate(backend_output):
         backend_output_processed.append(
-            {
-                "id": supplier["id"],
-                "name": supplier["name"],
-                "image_url": supplier["s3Url"],
-            }
+            Supplier(
+                id=supplier["id"],
+                name=supplier["name"],
+                image_url=supplier["s3Url"],
+            )
         )
 
     text_widget = TextWidget(
@@ -177,33 +186,39 @@ def get_suppliers_by_category(llm_output, backend_output, version="v2"):
         order=2,
         layout="vertical",
         fields=["id", "name", "image_url"],
-        values=backend_output_processed,
+        values=[supplier.model_dump() for supplier in backend_output_processed],
     )
     buttons_widget = ButtonsWidget(
+        order=3,
         values=[
             {"text": "Cancel", "action": "cancel"},
-        ]
+        ],
     )
-    buttons_widget.order = 3
-    buttons_widget.fields = ["text", "action"]
 
     widgets = add_ui_to_widget(
         {
-            get_suppliers_by_category_ui: suppliers_widget,
-            build_buttons_row: buttons_widget,
-            build_text_widget: text_widget,
+            get_suppliers_by_category_ui: WidgetInput(
+                widget=suppliers_widget,
+                args={"suppliers": backend_output_processed},
+            ),
+            build_buttons_row: WidgetInput(
+                widget=buttons_widget,
+                args={"buttons": [{"text": "Cancel", "action": "cancel"}]},
+            ),
+            build_text_widget: WidgetInput(
+                widget=text_widget,
+                args={"text": llm_output},
+            ),
         },
         version,
-        llm_output,
-        backend_output,
     )
     return {
         "widgets_count": 3,
-        "widgets": [widget.model_dump_json() for widget in widgets],
+        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
     }
 
 
-def get_suppliers_by_category_ui(llm_output, backend_output):
+def get_suppliers_by_category_ui(suppliers: List[Supplier]):
     raise NotImplementedError
 
 
@@ -234,22 +249,35 @@ def get_suppliers_by_category_ui(llm_output, backend_output):
 #     'valueList': []}]}}
 
 
+class Field(BaseModel):
+    identName: Optional[str] = None
+    name: Optional[str] = None
+    order: Optional[int] = None
+    type: Optional[str] = None
+    pattern: Optional[str] = None
+    minValue: Optional[int] = None
+    maxValue: Optional[int] = None
+    fieldSize: Optional[int] = None
+    isMain: Optional[bool] = None
+    valueList: List[str] = []
+
+
 def get_fields_of_supplier(llm_output, backend_output, version="v2"):
-    backend_output_processed = []
+    backend_output_processed: List[Field] = []
     for i, field in enumerate(backend_output["fieldList"]):
         backend_output_processed.append(
-            {
-                "identName": field["identName"],
-                "name": field["name"],
-                "order": field["order"],
-                "type": field["type"],
-                "pattern": field["pattern"],
-                "minValue": field["minValue"],
-                "maxValue": field["maxValue"],
-                "fieldSize": field["fieldSize"],
-                "isMain": field["isMain"],
-                "valueList": field["valueList"],
-            }
+            Field(
+                identName=field["identName"],
+                name=field["name"],
+                order=field["order"],
+                type=field["type"],
+                pattern=field["pattern"],
+                minValue=field["minValue"],
+                maxValue=field["maxValue"],
+                fieldSize=field["fieldSize"],
+                isMain=field["isMain"],
+                valueList=field["valueList"],
+            )
         )
     if llm_output:
         text_widget = TextWidget(
@@ -274,10 +302,11 @@ def get_fields_of_supplier(llm_output, backend_output, version="v2"):
             "isMain",
             "valueList",
         ],
-        values=backend_output_processed,
+        values=[field.model_dump() for field in backend_output_processed],
     )
 
     button_widget = ButtonsWidget(
+        order=3,
         values=[
             {"text": "Cancel", "action": "cancel"},
         ],
@@ -285,25 +314,39 @@ def get_fields_of_supplier(llm_output, backend_output, version="v2"):
 
     widgets = add_ui_to_widget(
         {
-            get_fields_of_supplier_ui: fields_widget,
-            build_buttons_row: button_widget,
-            build_text_widget: text_widget,
+            get_fields_of_supplier_ui: WidgetInput(
+                widget=fields_widget,
+                args={"fields": backend_output_processed},
+            ),
+            build_buttons_row: WidgetInput(
+                widget=button_widget,
+                args={
+                    "buttons": [
+                        {
+                            "text": "Cancel",
+                            "action": "cancel",
+                        }
+                    ]
+                },
+            ),
+            build_text_widget: WidgetInput(
+                widget=text_widget,
+                args={"text": llm_output},
+            ),
         },
         version,
-        llm_output,
-        backend_output,
     )
     if len(llm_output) > 0:
         return {
             "widgets_count": 3,
-            "widgets": [widget.model_dump_json() for widget in widgets],
+            "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
         }
     else:
         return {
             "widgets_count": 2,
-            "widgets": [widget.model_dump_json() for widget in widgets[:2]],
+            "widgets": [widget.model_dump(exclude_none=True) for widget in widgets[:2]],
         }
 
 
-def get_fields_of_supplier_ui(llm_output, backend_output):
+def get_fields_of_supplier_ui(fields: List[Field]):
     raise NotImplementedError

@@ -30,6 +30,7 @@ def test_get_notifications(client):
     print(response.json())
     assert response.status_code == 200
     assert "widgets" in response.json()
+    assert "'ui'" in str(response.json())
 
 
 def test_get_balance(client):
@@ -75,6 +76,7 @@ def test_get_balance(client):
     print(response.json())
     assert response.status_code == 200
     assert "widgets" in response.json()
+    assert "'ui'" in str(response.json())
 
 
 def test_get_weather(client):
@@ -98,6 +100,7 @@ def test_get_weather(client):
     print(response.json())
     assert response.status_code == 200
     assert "widgets" in response.json()
+    assert "'ui'" in str(response.json())
 
 
 def test_get_news(client):
@@ -137,6 +140,7 @@ def test_get_news(client):
     print(response.json())
     assert response.status_code == 200
     assert "widgets" in response.json()
+    assert "'ui'" in str(response.json())
 
 
 def test_get_products(client):
@@ -185,6 +189,7 @@ def test_get_products(client):
     print(response.json())
     assert response.status_code == 200
     assert "widgets" in response.json()
+    assert "'ui'" in str(response.json())
 
 
 def test_chatbot_answer(client):
@@ -199,95 +204,7 @@ def test_chatbot_answer(client):
     print(response.json())
     assert response.status_code == 200
     assert "widgets" in response.json()
-
-
-# def test_get_contact(client):
-#     response = client.post(
-#         "/chat/v3/build_ui",
-#         json={
-#             "function_name": "get_contact",
-#             "llm_output": "Test LLM output",
-#             "backend_output": {
-#                 "contacts": [{"name": "Test Name", "phone": "1234567890"}]
-#             },
-#         },
-#     )
-#     print(response.json())
-#     assert response.status_code == 200
-#     assert "widgets" in response.json()
-
-
-# def test_get_categories(client):
-#     response = client.post(
-#         "/chat/v3/build_ui",
-#         json={
-#             "function_name": "get_categories",
-#             "llm_output": "Test LLM output",
-#             "backend_output": {"categories": [{"id": "1", "name": "Test Category"}]},
-#         },
-#     )
-#     print(response.json())
-#     assert response.status_code == 200
-#     assert "widgets" in response.json()
-
-
-# def test_get_fields_of_supplier(client):
-#     response = client.post(
-#         "/chat/v3/build_ui",
-#         json={
-#             "function_name": "get_fields_of_supplier",
-#             "llm_output": "Test LLM output",
-#             "backend_output": {"fields": [{"id": "1", "name": "Test Field"}]},
-#         },
-#     )
-#     print(response.json())
-#     assert response.status_code == 200
-#     assert "widgets" in response.json()
-
-
-# def test_get_suppliers_by_category(client):
-#     response = client.post(
-#         "/chat/v3/build_ui",
-#         json={
-#             "function_name": "get_suppliers_by_category",
-#             "llm_output": "Test LLM output",
-#             "backend_output": {"suppliers": [{"id": "1", "name": "Test Supplier"}]},
-#         },
-#     )
-#     print(response.json())
-#     assert response.status_code == 200
-#     assert "widgets" in response.json()
-
-
-# def test_get_receiver_id_by_reciver_phone_number(client):
-#     response = client.post(
-#         "/chat/v3/build_ui",
-#         json={
-#             "function_name": "get_receiver_id_by_reciver_phone_number",
-#             "llm_output": "Test LLM output",
-#             "backend_output": {
-#                 "receiver_id": "1234",
-#                 "receiver_name": "Test Name",
-#             },
-#         },
-#     )
-#     print(response.json())
-#     assert response.status_code == 200
-#     assert "widgets" in response.json()
-
-
-# def test_unauthorized_response(client):
-#     response = client.post(
-#         "/chat/v3/build_ui",
-#         json={
-#             "function_name": "unauthorized_response",
-#             "llm_output": "Test LLM output",
-#             "backend_output": {"message": "Unauthorized"},
-#         },
-#     )
-#     print(response.json())
-#     assert response.status_code == 200
-#     assert "widgets" in response.json()
+    assert "'ui'" in str(response.json())
 
 
 # def test_get_receiver_id_by_reciver_phone_number(self):
@@ -305,6 +222,7 @@ def test_chatbot_answer(client):
 #     print(response.json())
 #     self.assertEqual(response.status_code, 200)
 #     self.assertIn("widgets", response.json())
+#     assert "'ui'" in str(response.json())
 
 
 # def test_invalid_function_name(self):

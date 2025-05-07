@@ -34,6 +34,12 @@ class InputV3(BaseModel):
     backend_output: Union[Dict, List]
 
 
+class InputV2(BaseModel):
+    function_name: str
+    llm_output: str
+    backend_output: Union[Dict, List]
+
+
 @app.get("/health")
 async def health():
     return "Ok"
@@ -80,13 +86,13 @@ async def format_data_v3(input_data: InputV3):
 
 @app.get("/chat")
 @app.get("/chat/v2/build_ui/actions")
-async def format_data_v2(request: Request):
+@app.post("/chat/v2/build_ui/actions")
+async def format_data_v2(input_data: InputV2):
     version = "v2"
     # Janis Rubins: call function from functions_mapper for actions
     print("BUILD UI")
     logger.debug("STEP 1: GET /chat/v2/build_ui/actions")
-    data = await request.json()
-    func_name = data.get("function_name")
+    func_name = input_data.function_name
     if not func_name:
         return Response(status_code=400, content="function_name is required")
     # with open("logs.json", "w") as f:
@@ -100,24 +106,15 @@ async def format_data_v2(request: Request):
         logger.debug(f"STEP 4: No function found for {func_name}")
         # return chatbot answer
         func = functions_mapper.get("chatbot_answer")
-    print(data)
+    print(input_data)
     if func_name == "chatbot_answer":
         logger.debug("STEP 5: Found function, invoking now")
-        result = func(data["llm_output"], "")
+        result = func(input_data.llm_output, "")
         logger.debug(f"STEP 6: actions result={result}")
         return result
-    if isinstance(json.loads(data["backend_output"]), str):
-        data["backend_output"] = data["backend_output"].replace("'", '"').strip('"')
-    if data["llm_output"] == "finish":
+    if input_data.llm_output == "finish":
         return {"schema": "finish", "data": "finish"}
-    try:
-        data["backend_output"] = json.loads(data["backend_output"])
-    except Exception as e:
-        print(str(e))
-        data["backend_output"] = ""
-        print(type(data))
-        logger.error("Backend output set to empty")
     logger.debug("STEP 5: Found function, invoking now")
-    result = func(data["llm_output"], data["backend_output"], version)
+    result = func(input_data.llm_output, input_data.backend_output, version)
     logger.debug(f"STEP 6: actions result={result}")
     return result

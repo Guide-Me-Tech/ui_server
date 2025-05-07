@@ -38,7 +38,7 @@ def chatbot_answer(llm_output: str, backend_output, version="v2"):
 
     return {
         "widgets_count": 1,
-        "widgets": [widget.model_dump_json() for widget in widgets],
+        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
     }
 
 

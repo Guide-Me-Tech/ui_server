@@ -30,7 +30,7 @@ def get_notifications(llm_output: str, backend_output: dict, version: str = "v3"
     )
     return {
         "widgets_count": 1,
-        "widgets": [widget.model_dump_json() for widget in widgets],
+        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
     }
 
 
