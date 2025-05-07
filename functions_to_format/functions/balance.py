@@ -108,8 +108,6 @@ def get_balance(llm_output, backend_output, version="v2"):
         "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
         "widgets_count": len(widgets),
     }
-    print("Output", output)
-
     return output
 
 

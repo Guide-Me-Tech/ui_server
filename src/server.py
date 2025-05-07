@@ -55,6 +55,7 @@ async def format_data(request: Request):
 @app.get("/chat/v3/build_ui")
 async def format_data_v3(input_data: InputV3):
     version = "v3"
+    logger.debug("BUILD UI V3")
     try:
         logger.debug("Step 1: Entering /chat/v3/build_ui")
         func_name = input_data.function_name
@@ -90,7 +91,7 @@ async def format_data_v3(input_data: InputV3):
 async def format_data_v2(input_data: InputV2):
     version = "v2"
     # Janis Rubins: call function from functions_mapper for actions
-    print("BUILD UI")
+    logger.debug("BUILD UI V2")
     logger.debug("STEP 1: GET /chat/v2/build_ui/actions")
     func_name = input_data.function_name
     if not func_name:
@@ -106,7 +107,7 @@ async def format_data_v2(input_data: InputV2):
         logger.debug(f"STEP 4: No function found for {func_name}")
         # return chatbot answer
         func = functions_mapper.get("chatbot_answer")
-    print(input_data)
+    logger.debug(f"input_data: {input_data}")
     if func_name == "chatbot_answer":
         logger.debug("STEP 5: Found function, invoking now")
         result = func(input_data.llm_output, "")

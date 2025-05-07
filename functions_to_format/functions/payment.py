@@ -16,10 +16,11 @@ from typing import List, Dict, Any, Optional
 def get_receiver_id_by_reciver_phone_number(llm_output, backend_output, version="v2"):
     output = []
     backend_output_processed = []
-    print(type(backend_output))
     logger.debug(backend_output)
     for i, card_info in enumerate(backend_output):
-        print(f"Card {i + 1} info: ", card_info)
+        logger.info(
+            f"Card {i + 1} info: {card_info}",
+        )
         backend_output_processed.append(
             {
                 "masked_card_pan": card_info["mask"],
