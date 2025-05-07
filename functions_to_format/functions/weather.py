@@ -2,6 +2,15 @@ import pydivkit as dv
 import json
 from pydantic import BaseModel
 from typing import Optional
+from .general import (
+    Widget,
+    TextWidget,
+    build_text_widget,
+    add_ui_to_widget,
+    ButtonsWidget,
+    build_buttons_row,
+    WidgetInput,
+)
 
 
 class WeatherData(BaseModel):
@@ -13,6 +22,40 @@ class WeatherData(BaseModel):
     sunrise: str
     wind_speed: int
     sunset: str
+
+
+def get_weather(llm_output: str, backend_output: dict, version: str = "v3"):
+    weather_data = WeatherData(**backend_output)
+    widget = Widget(
+        name="weather_widget",
+        type="weather_widget",
+        order=1,
+        layout="vertical",
+        fields=[
+            "city",
+            "condition",
+            "temperature",
+            "feels_like",
+            "humidity",
+            "sunrise",
+            "wind_speed",
+            "sunset",
+        ],
+    )
+
+    widgets = add_ui_to_widget(
+        {
+            build_weather_widget: WidgetInput(
+                widget=widget,
+                args={"weather_data": weather_data},
+            ),
+        },
+        version,
+    )
+    return {
+        "widgets_count": 1,
+        "widgets": [widget.model_dump_json() for widget in widgets],
+    }
 
 
 def weather_widget(data: WeatherData):
@@ -132,10 +175,7 @@ def weather_widget(data: WeatherData):
     )
 
 
-def build_weather_widget(backend_output: dict, llm_output: str):
-    # Parse input data
-    weather_data = WeatherData(**backend_output)
-
+def build_weather_widget(weather_data: WeatherData):
     # Create weather widget
     widget = weather_widget(weather_data)
 

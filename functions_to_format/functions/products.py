@@ -5,7 +5,7 @@ from datetime import timedelta
 import json, sys
 from pydantic import BaseModel
 from typing import List, Optional
-
+from .general import Widget, add_ui_to_widget, WidgetInput
 
 # -------------------------------------------------------------------
 #  Функция-шаблон: возвращает dv.DivState с двумя состояниями — collapsed
@@ -29,6 +29,29 @@ class Product(BaseModel):
 class ProductsListInput(BaseModel):
     products: List[Product]
     title: Optional[str] = "Products"
+
+
+def get_products(llm_output: str, backend_output: dict, version: str = "v3"):
+    widget = Widget(
+        name="products_list_widget",
+        type="products_list_widget",
+        order=1,
+        layout="vertical",
+        fields=["products", "title"],
+    )
+    widgets = add_ui_to_widget(
+        {
+            build_products_list_widget: WidgetInput(
+                widget=widget,
+                args={"products_list_input": ProductsListInput(**backend_output)},
+            ),
+        },
+        version,
+    )
+    return {
+        "widgets_count": 1,
+        "widgets": [widget.model_dump_json() for widget in widgets],
+    }
 
 
 def make_product_state(p: Product):
@@ -156,12 +179,13 @@ def make_product_state(p: Product):
     )
 
 
-def build_products_list_widget(backend_output: dict, llm_output: str):
+def build_products_list_widget(products_list_input: ProductsListInput):
     # Parse input data
-    input_data = ProductsListInput(**backend_output)
 
     # Create product state widgets
-    div_states = [make_product_state(product) for product in input_data.products]
+    div_states = [
+        make_product_state(product) for product in products_list_input.products
+    ]
 
     # Create data states
     data_states = [

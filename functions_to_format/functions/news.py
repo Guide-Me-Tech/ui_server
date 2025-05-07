@@ -2,6 +2,44 @@ import pydivkit as dv
 import json
 from pydantic import BaseModel
 from typing import List
+from .general import Widget, add_ui_to_widget, WidgetInput
+
+
+class NewsItem(BaseModel):
+    title: str
+    source: str
+    time: str
+    image_url: str
+    url: str
+
+
+class NewsWidgetInput(BaseModel):
+    news_items: List[NewsItem]
+    header_text: str = "TOP NEWS"
+
+
+def get_news(llm_output: str, backend_output: dict, version: str = "v3"):
+    news_widget_input = NewsWidgetInput(**backend_output)
+    widget = Widget(
+        name="news_widget",
+        type="news_widget",
+        order=1,
+        layout="vertical",
+        fields=["news_items", "header_text"],
+    )
+    widgets = add_ui_to_widget(
+        {
+            build_news_widget: WidgetInput(
+                widget=widget,
+                args={"news_widget_input": news_widget_input},
+            ),
+        },
+        version,
+    )
+    return {
+        "widgets_count": 1,
+        "widgets": [widget.model_dump_json() for widget in widgets],
+    }
 
 
 def news_item(title, source, time, image_url, url):
@@ -45,22 +83,8 @@ def news_item(title, source, time, image_url, url):
     )
 
 
-class NewsItem(BaseModel):
-    title: str
-    source: str
-    time: str
-    image_url: str
-    url: str
-
-
-class NewsWidgetInput(BaseModel):
-    news_items: List[NewsItem]
-    header_text: str = "TOP NEWS"
-
-
-def build_news_widget(backend_output: dict, llm_output: str):
+def build_news_widget(news_widget_input: NewsWidgetInput):
     # Parse input data
-    input_data = NewsWidgetInput(**backend_output)
 
     # Create news items
     news = [
@@ -71,7 +95,7 @@ def build_news_widget(backend_output: dict, llm_output: str):
             image_url=item.image_url,
             url=item.url,
         )
-        for item in input_data.news_items
+        for item in news_widget_input.news_items
     ]
 
     items = [
@@ -80,7 +104,7 @@ def build_news_widget(backend_output: dict, llm_output: str):
             orientation="horizontal",
             items=[
                 dv.DivText(
-                    text=input_data.header_text,
+                    text=news_widget_input.header_text,
                     font_size=12,
                     font_weight="bold",
                     text_color="#9CA3AF",

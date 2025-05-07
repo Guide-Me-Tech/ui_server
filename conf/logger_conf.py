@@ -46,7 +46,7 @@ def setup_logging(logfile: str) -> logging.Logger:
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
+            # structlog.processors.format_exc_info,
             logfire.StructlogProcessor(),
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],

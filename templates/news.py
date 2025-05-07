@@ -47,16 +47,23 @@ if __name__ == "__main__":
 
     news = [
         news_item(
-            title="Trump elige a Chris Wright, CEO de...",
-            source="CNN en Español",
-            time="1h",
+            title="Tramp Chris Wright kompaniyasi rahbarini tanladi...",
+            source="Kun.uz",
+            time="1s",
             image_url="https://humocard.uz/bitrix/templates/main/img/card2.png",
             url="https://a3n.uz",
         ),
         news_item(
-            title="Matt Gaetz será el fiscal general...",
-            source="El Nacional",
-            time="2h",
+            title="Soliqchilar endi soliqdan qocha olmaydi.",
+            source="Daryo",
+            time="2s",
+            image_url="https://humocard.uz/bitrix/templates/main/img/card2.png",
+            url="https://a3n.uz",
+        ),
+        news_item(
+            title="O'zbekistonda yangi soliq tizimi joriy etilmoqda...",
+            source="Gazeta.uz",
+            time="3s",
             image_url="https://humocard.uz/bitrix/templates/main/img/card2.png",
             url="https://a3n.uz",
         ),

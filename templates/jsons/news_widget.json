@@ -46,7 +46,7 @@
                       "font_size": 14,
                       "font_weight": "medium",
                       "max_lines": 1,
-                      "text": "Trump elige a Chris Wright, CEO de...",
+                      "text": "Tramp Chris Wright kompaniyasi rahbarini tanladi...",
                       "text_color": "#FFFFFF"
                     },
                     {
@@ -56,7 +56,7 @@
                         "top": 2
                       },
                       "max_lines": 1,
-                      "text": "CNN en Español · 1h",
+                      "text": "Kun.uz · 1s",
                       "text_color": "#D1D5DB"
                     }
                   ],
@@ -103,7 +103,7 @@
                       "font_size": 14,
                       "font_weight": "medium",
                       "max_lines": 1,
-                      "text": "Matt Gaetz será el fiscal general...",
+                      "text": "Soliqchilar endi soliqdan qocha olmaydi.",
                       "text_color": "#FFFFFF"
                     },
                     {
@@ -113,7 +113,64 @@
                         "top": 2
                       },
                       "max_lines": 1,
-                      "text": "El Nacional · 2h",
+                      "text": "Daryo · 2s",
+                      "text_color": "#D1D5DB"
+                    }
+                  ],
+                  "orientation": "vertical"
+                },
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 8
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 36
+                  },
+                  "image_url": "https://humocard.uz/bitrix/templates/main/img/card2.png",
+                  "margins": {
+                    "left": 12
+                  },
+                  "scale": "fill",
+                  "width": {
+                    "type": "fixed",
+                    "value": 36
+                  }
+                }
+              ],
+              "margins": {
+                "top": 12
+              },
+              "orientation": "horizontal"
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "open-news",
+                "url": "https://a3n.uz"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "container",
+                  "items": [
+                    {
+                      "type": "text",
+                      "font_size": 14,
+                      "font_weight": "medium",
+                      "max_lines": 1,
+                      "text": "O'zbekistonda yangi soliq tizimi joriy etilmoqda...",
+                      "text_color": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "font_size": 12,
+                      "margins": {
+                        "top": 2
+                      },
+                      "max_lines": 1,
+                      "text": "Gazeta.uz · 3s",
                       "text_color": "#D1D5DB"
                     }
                   ],

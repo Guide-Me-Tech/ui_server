@@ -2,6 +2,25 @@ import pydivkit as dv
 import json
 from pydantic import BaseModel
 from typing import List
+from .general import Widget, add_ui_to_widget
+
+
+def get_contact(llm_output: str, backend_output: dict, version: str = "v3"):
+    widget = Widget(
+        type="contact_widget",
+        layout="horizontal",
+        fields=["name", "avatar_url", "subtitle"],
+    )
+    widgets = add_ui_to_widget(
+        {
+            build_contact_widget: widget,
+        },
+        version,
+    )
+    return {
+        "widgets_count": 1,
+        "widgets": [widget.model_dump_json() for widget in widgets],
+    }
 
 
 def contact_widget(name, avatar_url, subtitle):

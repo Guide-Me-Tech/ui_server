@@ -1,36 +1,37 @@
 from conf import logger
 import json
 import os
-from typing import Optional, Any, Dict, List, Callable, Set
+from typing import Optional, Any, Dict, List, Callable, Set, Union
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # from src.config_router import router
 from functions_to_format.mapper import functions_mapper
-from functions_to_format.sdui_functions import sdui_function_map
 import sentry_sdk
 
 app = FastAPI()
 
 # https://www.youtbe.com/watch?v=NTP4XdTjRK0
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for tracing.
-    traces_sample_rate=1.0,
-    _experiments={
-        # Set continuous_profiling_auto_start to True
-        # to automatically start the profiler on when
-        # possible.
-        "continuous_profiling_auto_start": True,
-    },
-)
+if os.getenv("ENVIRONMENT") == "production":
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for tracing.
+        traces_sample_rate=1.0,
+        _experiments={
+            # Set continuous_profiling_auto_start to True
+            # to automatically start the profiler on when
+            # possible.
+            "continuous_profiling_auto_start": True,
+        },
+    )
 
 
 class InputV3(BaseModel):
     function_name: str
     llm_output: str
-    backend_output: Dict
+    backend_output: Union[Dict, List]
 
 
 @app.get("/health")
@@ -44,8 +45,10 @@ async def format_data(request: Request):
     return ""
 
 
+@app.post("/chat/v3/build_ui")
 @app.get("/chat/v3/build_ui")
 async def format_data_v3(input_data: InputV3):
+    version = "v3"
     try:
         logger.debug("Step 1: Entering /chat/v3/build_ui")
         func_name = input_data.function_name
@@ -54,24 +57,31 @@ async def format_data_v3(input_data: InputV3):
         logger.debug(
             f"Received function_name={func_name} llm_output={llm_output} backend_output={backend_output} "
         )
-        if not func_name or func_name not in sdui_function_map:
+        if not func_name or func_name not in functions_mapper:
             logger.warning(f"Invalid or missing function_name: {func_name}")
-            return ""
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Invalid or missing function_name: {func_name}"},
+            )
 
         logger.debug(f"Step 2: Found function {func_name}, invoking now")
-        result = sdui_function_map[func_name](
-            llm_output=llm_output, backend_output=backend_output
+        result = functions_mapper[func_name](
+            llm_output=llm_output, backend_output=backend_output, version=version
         )
         logger.debug(f"Step 3: Function result={result}")
         return result
     except Exception as e:
         logger.exception(f"Exception in /chat/v3/build_ui: {str(e)}")
-        return {"error": str(e), "traceback": str(e.__traceback__)}
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e), "traceback": str(e.__traceback__)},
+        )
 
 
 @app.get("/chat")
 @app.get("/chat/v2/build_ui/actions")
 async def format_data_v2(request: Request):
+    version = "v2"
     # Janis Rubins: call function from functions_mapper for actions
     print("BUILD UI")
     logger.debug("STEP 1: GET /chat/v2/build_ui/actions")
@@ -108,6 +118,6 @@ async def format_data_v2(request: Request):
         print(type(data))
         logger.error("Backend output set to empty")
     logger.debug("STEP 5: Found function, invoking now")
-    result = func(data["llm_output"], data["backend_output"])
+    result = func(data["llm_output"], data["backend_output"], version)
     logger.debug(f"STEP 6: actions result={result}")
     return result

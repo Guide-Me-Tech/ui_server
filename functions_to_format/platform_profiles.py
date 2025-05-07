@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 from typing import Dict, Any, List
+from conf import logger
 
 """
 - Different platforms (mobile, desktop, voice assistant, smart TV, car dashboard, AR/VR) may require different UI adjustments.
@@ -29,15 +30,10 @@ This is flexible and scenario-based. Logging steps as "Janis Rubins step X".
 # Janis Rubins step 1: Load environment vars
 PROFILE_LOG_LEVEL = os.environ.get("PROFILE_LOG_LEVEL", "ERROR").upper()
 PLATFORM_PROFILES_LIST = os.environ.get("PLATFORM_PROFILES_LIST", "")
-PROFILE_RESOURCE_SAVING_MODE = os.environ.get("PROFILE_RESOURCE_SAVING_MODE", "true").lower() == "true"
+PROFILE_RESOURCE_SAVING_MODE = (
+    os.environ.get("PROFILE_RESOURCE_SAVING_MODE", "true").lower() == "true"
+)
 
-# Janis Rubins step 2: Setup logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.getLevelName(PROFILE_LOG_LEVEL))
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s]: %(message)s'))
-if not logger.handlers:
-    logger.addHandler(handler)
 
 # Janis Rubins step 3: Base class for profiles
 class PlatformProfile:
@@ -45,13 +41,16 @@ class PlatformProfile:
     Abstract base profile:
     Each profile implements apply_profile(ui_data: dict) -> dict
     """
+
     def apply_profile(self, ui_data: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError("apply_profile must be implemented by subclasses")
 
     def log_application_start(self):
         logger.debug(f"Applying {self.__class__.__name__} profile.")
 
+
 # Janis Rubins step 4: Define each profile class
+
 
 class MobileProfile(PlatformProfile):
     """
@@ -59,10 +58,13 @@ class MobileProfile(PlatformProfile):
     - Adjust UI for small screens: reduce image sizes, maybe shorten text.
     - Example: for each 'ui' element, if it has 'image', reduce resolution.
     """
+
     def apply_profile(self, ui_data: Dict[str, Any]) -> Dict[str, Any]:
         self.log_application_start()
         if PROFILE_RESOURCE_SAVING_MODE:
-            logger.debug("MobileProfile: Resource saving mode on, minimal transformations.")
+            logger.debug(
+                "MobileProfile: Resource saving mode on, minimal transformations."
+            )
         ui_list = ui_data.get("ui", [])
         for element in ui_list:
             if "widget" in element and "image" in element.get("data", {}):
@@ -70,21 +72,30 @@ class MobileProfile(PlatformProfile):
                 element["data"]["image_size"] = "small"
         return ui_data
 
+
 class DesktopProfile(PlatformProfile):
     """
     Janis Rubins step 6: DesktopProfile
     - Larger displays: we can add navigation menus, more complex layouts.
     - Example: add a "sidebar" if not present.
     """
+
     def apply_profile(self, ui_data: Dict[str, Any]) -> Dict[str, Any]:
         self.log_application_start()
         if PROFILE_RESOURCE_SAVING_MODE:
             # minimal overhead: Just add a simple sidebar placeholder
-            ui_data["sidebar"] = {"type": "nav_menu", "items": ["Home", "Settings", "Help"]}
+            ui_data["sidebar"] = {
+                "type": "nav_menu",
+                "items": ["Home", "Settings", "Help"],
+            }
         else:
             # If not resource saving, add more detailed menus
-            ui_data["sidebar"] = {"type": "nav_menu", "items": ["Home", "Settings", "Help", "Advanced Options"]}
+            ui_data["sidebar"] = {
+                "type": "nav_menu",
+                "items": ["Home", "Settings", "Help", "Advanced Options"],
+            }
         return ui_data
+
 
 class VoiceAssistantProfile(PlatformProfile):
     """
@@ -92,6 +103,7 @@ class VoiceAssistantProfile(PlatformProfile):
     - Voice friendly: remove visuals, keep text prompts short.
     - Example: For each UI element, if it has text, keep only essential text and remove images.
     """
+
     def apply_profile(self, ui_data: Dict[str, Any]) -> Dict[str, Any]:
         self.log_application_start()
         ui_list = ui_data.get("ui", [])
@@ -108,12 +120,14 @@ class VoiceAssistantProfile(PlatformProfile):
                     element["data"]["text"] = text[:50] + "..."
         return ui_data
 
+
 class SmartTVProfile(PlatformProfile):
     """
     Janis Rubins step 8: SmartTVProfile
     - Large fonts, highlight remote navigation cues.
     - Example: Add a field "tv_optimized"=True to help front-end know to increase fonts.
     """
+
     def apply_profile(self, ui_data: Dict[str, Any]) -> Dict[str, Any]:
         self.log_application_start()
         # Mark the whole UI as tv_optimized
@@ -124,12 +138,14 @@ class SmartTVProfile(PlatformProfile):
             ui_data["navigation_hints"] = "Use arrow keys to navigate, OK to select"
         return ui_data
 
+
 class CarDashboardProfile(PlatformProfile):
     """
     Janis Rubins step 9: CarDashboardProfile
     - Minimal distractions, large buttons, reduce text.
     - Example: Make all text short, large buttons, remove complex layouts.
     """
+
     def apply_profile(self, ui_data: Dict[str, Any]) -> Dict[str, Any]:
         self.log_application_start()
         ui_list = ui_data.get("ui", [])
@@ -143,12 +159,14 @@ class CarDashboardProfile(PlatformProfile):
             element["data"]["button_size"] = "large_button"
         return ui_data
 
+
 class ARVRProfile(PlatformProfile):
     """
     Janis Rubins step 10: ARVRProfile
     - UI adapted for AR/VR: maybe add depth info, simplify overlays.
     - Example: add a "depth" field to each element, remove complicated backgrounds.
     """
+
     def apply_profile(self, ui_data: Dict[str, Any]) -> Dict[str, Any]:
         self.log_application_start()
         ui_list = ui_data.get("ui", [])
@@ -159,8 +177,9 @@ class ARVRProfile(PlatformProfile):
                 element["data"].pop("background_pattern", None)
         return ui_data
 
+
 # Janis Rubins step 11: Profile registry
-# We define a map from profile name to class. 
+# We define a map from profile name to class.
 # If needed, can load dynamically or from ENV. For now, statically defined:
 PROFILE_CLASSES = {
     "mobile": MobileProfile,
@@ -168,8 +187,9 @@ PROFILE_CLASSES = {
     "voice_assistant": VoiceAssistantProfile,
     "smart_tv": SmartTVProfile,
     "car_dashboard": CarDashboardProfile,
-    "ar_vr": ARVRProfile
+    "ar_vr": ARVRProfile,
 }
+
 
 def apply_platform_profiles(ui_data: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -182,7 +202,9 @@ def apply_platform_profiles(ui_data: Dict[str, Any]) -> Dict[str, Any]:
         logger.debug("No platform profiles specified, returning UI data unchanged.")
         return ui_data
 
-    profiles_to_apply = [p.strip() for p in PLATFORM_PROFILES_LIST.split(",") if p.strip()]
+    profiles_to_apply = [
+        p.strip() for p in PLATFORM_PROFILES_LIST.split(",") if p.strip()
+    ]
 
     for profile_name in profiles_to_apply:
         profile_cls = PROFILE_CLASSES.get(profile_name)
@@ -196,6 +218,7 @@ def apply_platform_profiles(ui_data: Dict[str, Any]) -> Dict[str, Any]:
 
     logger.debug("All specified platform profiles applied.")
     return ui_data
+
 
 # Janis Rubins step 13: Example usage (commented out)
 # Suppose we have a ui_data from dynamic_ui_builder:
