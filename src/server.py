@@ -105,6 +105,7 @@ async def format_data_v2(input_data: InputV2):
     func = functions_mapper.get(func_name)
     if func is None:
         logger.debug(f"STEP 4: No function found for {func_name}")
+        raise ValueError(f"No function found for {func_name}")
         # return chatbot answer
         func = functions_mapper.get("chatbot_answer")
     logger.debug(f"input_data: {input_data}")

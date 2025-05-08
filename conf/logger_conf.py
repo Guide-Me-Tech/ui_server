@@ -25,16 +25,16 @@ def setup_logging(logfile: str) -> logging.Logger:
 
     # --- 1. Create handlers ---
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(logging.Formatter(fmt="%(message)s"))
 
     file_handler = logging.FileHandler(logfile)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(logging.Formatter(fmt="%(message)s"))
 
     # --- 2. Set up root logger ---
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
+    root_logger.setLevel(logging.DEBUG)
     root_logger.handlers = []  # clear default handlers
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
@@ -51,7 +51,7 @@ def setup_logging(logfile: str) -> logging.Logger:
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+        wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG),
         cache_logger_on_first_use=True,
     )
 
