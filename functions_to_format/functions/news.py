@@ -3,6 +3,7 @@ import json
 from pydantic import BaseModel
 from typing import List
 from .general import Widget, add_ui_to_widget, WidgetInput
+from models.build import BuildOutput
 
 
 class NewsItem(BaseModel):
@@ -36,10 +37,10 @@ def get_news(llm_output: str, backend_output: dict, version: str = "v3"):
         },
         version,
     )
-    return {
-        "widgets_count": 1,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    return BuildOutput(
+        widgets_count=1,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
 
 def news_item(title, source, time, image_url, url):

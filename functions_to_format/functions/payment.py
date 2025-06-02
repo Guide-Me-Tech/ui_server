@@ -1,5 +1,4 @@
 import json
-from conf import logger
 from .general import (
     add_ui_to_widget,
     Widget,
@@ -11,36 +10,68 @@ from .general import (
 )
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
+from models.build import BuildOutput
+import pydivkit as dv
+from tool_call_models.cards import CardsByPhoneNumberResponse, CardInfoByPhoneNumber
+from tool_call_models.paynet import (
+    CategoriesResponse,
+    SupplierByCategoryResponse,
+    SupplierFieldsResponse,
+    Supplier,
+    Category,
+    SuppliersField,
+    FieldOptions,
+)
 
 
-def get_receiver_id_by_reciver_phone_number(llm_output, backend_output, version="v2"):
+def send_money_to_someone_via_card(llm_output: str, backend_output, version="v2"):
+    backend_output = {
+        "amount": 1000,
+        "card_owner_name": "John Doe",
+        "marked_card_pan": "*XXXX",
+        "processingSystem": "SmartBank",
+        "to_card_id": "12345",
+    }
+    widgets = [
+        Widget(
+            name="send_money_to_someone_via_card",
+            type="send_money_to_someone_via_card",
+            order=1,
+            layout="vertical",
+            fields=[
+                "amount",
+                "card_owner_name",
+                "marked_card_pan",
+                "processingSystem",
+                "to_card_id",
+            ],
+            values=[{k: v} for k, v in backend_output.items()],
+            ui=backend_output,
+        )
+    ]
+    return BuildOutput(
+        widgets_count=1,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
+
+
+def get_number_by_receiver_name(
+    llm_output, backend_output, version="v2"
+) -> BuildOutput:
     output = []
-    backend_output_processed = []
-    logger.debug(backend_output)
-    for i, card_info in enumerate(backend_output):
-        logger.info(
-            f"Card {i + 1} info: {card_info}",
-        )
-        backend_output_processed.append(
-            {
-                "masked_card_pan": card_info["mask"],
-                "card_owner": card_info["name"],
-                "provider": card_info["processing"],
-            }
-        )
-
+    # backend_output_processed = []
     text_widget = TextWidget(
         order=1,
         values=[{"text": llm_output}],
     )
 
-    cards_widget = Widget(
-        name="cards_other_list_widget",
-        type="cards_other_list_widget",
+    get_contacts_widget = Widget(
+        name="get_contacts_widget",
+        type="get_contacts_widget",
         order=2,
         layout="vertical",
-        fields=["masked_card_pan", "card_owner", "provider"],
-        values=backend_output_processed,
+        fields=["receiver_name"],
+        values=[{"receiver_name": backend_output["receiver_name"]}],
     )
 
     buttons = ButtonsWidget(
@@ -50,55 +81,243 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output, version=
 
     widgets = add_ui_to_widget(
         {
-            get_receiver_id_by_reciver_phone_number_ui: cards_widget,
-            build_buttons_row: buttons,
-            build_text_widget: text_widget,
+            get_number_by_reciver_number_ui: WidgetInput(
+                widget=get_contacts_widget,
+                args={"receiver_name": backend_output["receiver_name"]},
+            ),
+            build_buttons_row: WidgetInput(
+                widget=buttons,
+                args={"button_texts": ["cancel"]},
+            ),
+            build_text_widget: WidgetInput(
+                widget=text_widget,
+                args={"text": llm_output},
+            ),
         },
         version,
     )
 
-    output = {
-        "widgets_count": 3,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    output = BuildOutput(
+        widgets_count=len(widgets),
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
     return output
 
 
-def get_receiver_id_by_reciver_phone_number_ui(llm_output, backend_output):
-    raise NotImplementedError
+def get_number_by_reciver_number_ui(receiver_name: str):
+    search_contact_action = dv.DivAction(
+        log_id="search_contact",
+        url=f"divkit://search_contact?name={receiver_name}",  # Custom scheme the iOS app will catch
+        payload={"name": receiver_name},  # Optional: structured access
+    )
+
+    # Main container
+    main_container = dv.DivContainer(
+        orientation=dv.DivContainerOrientation.VERTICAL,
+        width=dv.DivMatchParentSize(),
+        height=dv.DivWrapContentSize(),
+        background=[dv.DivSolidBackground(color="#ffffff")],
+        items=[
+            dv.DivText(
+                text="Contacts List",
+                font_size=24,
+                font_weight=dv.DivFontWeight(value="bold"),
+                margins=dv.DivEdgeInsets(
+                    **{"bottom": 16, "left": 16, "top": 16},
+                ),
+                actions=[search_contact_action],
+            ),
+        ],
+    )
+    return dv.make_div(main_container)
 
 
-# "get_fields_of_supplier": get_fields_of_supplier,
-# "get_suppliers_by_category": get_suppliers_by_category,
-# "get_categories": get_categories,
-#  [
-#         {
-#             "id": 1,
-#             "name": "Мобильные операторы",
-#             "imagePath": None,
-#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671056545-57d63349-cdc1-4438-982f-23ae508dd782",
-#         },
-#     ]
-#
+def get_receiver_id_by_receiver_phone_number(
+    llm_output, backend_output, version="v2"
+) -> BuildOutput:
+    output = []
+    # backend_output_processed = []
+    backend_output = CardsByPhoneNumberResponse(**backend_output)
+
+    text_widget = TextWidget(
+        order=1,
+        values=[{"text": llm_output}],
+    )
+
+    get_contacts_widget = Widget(
+        name="get_contacts_widget",
+        type="get_contacts_widget",
+        order=2,
+        layout="vertical",
+        fields=["receiver_name"],
+        values=[x.model_dump() for x in backend_output.cards],
+    )
+
+    buttons = ButtonsWidget(
+        order=3,
+        values=[{"text": "cancel"}],
+    )
+
+    widgets = add_ui_to_widget(
+        {
+            get_receiver_id_by_receiver_phone_number_ui: WidgetInput(
+                widget=get_contacts_widget,
+                args={"cards": backend_output.cards},
+            ),
+            build_buttons_row: WidgetInput(
+                widget=buttons,
+                args={"button_texts": ["cancel"]},
+            ),
+            build_text_widget: WidgetInput(
+                widget=text_widget,
+                args={"text": llm_output},
+            ),
+        },
+        version,
+    )
+
+    output = BuildOutput(
+        widgets_count=len(widgets),
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
+
+    return output
 
 
-class Category(BaseModel):
-    id: int
-    name: str
-    image_url: str
+def get_receiver_id_by_receiver_phone_number_ui(
+    cards: List[CardInfoByPhoneNumber],
+) -> BuildOutput:
+    """
+    Builds a UI similar to the provided image, showing a list of cards for a receiver.
+    Expects backend_output to be a dict with a "cards" key containing a list of cards,
+    each with fields: "name", "processing", "mask".
+    """
+    # Example backend_output:
+    # {
+    #   "cards": [
+    #       {"name": "ROMAN GORBUNOV", "processing": "HUMO", "mask": "2269"},
+    #       {"name": "ROMAN GORBUNOV", "processing": "HUMO", "mask": "3525"},
+    #   ]
+    # }
 
-
-def get_categories(llm_output, backend_output, version="v2"):
-    backend_output_processed: List[Category] = []
-    for i, category in enumerate(backend_output):
-        backend_output_processed.append(
-            Category(
-                id=category["id"],
-                name=category["name"],
-                image_url=category["s3Url"],
+    card_items = []
+    for idx, card in enumerate(cards, 1):
+        card_items.append(
+            dv.DivContainer(
+                orientation="horizontal",
+                items=[
+                    dv.DivContainer(
+                        width=dv.DivFixedSize(value=36),
+                        height=dv.DivFixedSize(value=36),
+                        background=[dv.DivSolidBackground(color="#F3F6FA")],
+                        border=dv.DivBorder(
+                            stroke=dv.DivStroke(
+                                color="#E5E7EB",
+                                width=1,
+                            ),
+                            corner_radius=18,
+                        ),
+                        items=[
+                            dv.DivContainer(
+                                width=dv.DivFixedSize(value=36),
+                                height=dv.DivFixedSize(value=36),
+                                alignment_horizontal="center",
+                                alignment_vertical="center",
+                                items=[
+                                    dv.DivText(
+                                        text=str(idx),
+                                        font_size=18,
+                                        font_weight="medium",
+                                        text_color="#3B82F6",
+                                        alignment_horizontal="center",
+                                        alignment_vertical="center",
+                                        margins=dv.DivEdgeInsets(
+                                            top=7, left=12, right=12, bottom=7
+                                        ),
+                                    )
+                                ],
+                            )
+                        ],
+                        alignment_horizontal="center",
+                        alignment_vertical="center",
+                        margins=dv.DivEdgeInsets(right=12),
+                    ),
+                    dv.DivContainer(
+                        orientation="vertical",
+                        items=[
+                            dv.DivText(
+                                text=card.name,
+                                font_size=16,
+                                font_weight="medium",
+                                text_color="#222222",
+                                line_height=20,
+                            ),
+                            dv.DivContainer(
+                                orientation="horizontal",
+                                items=[
+                                    dv.DivText(
+                                        text=card.processing,
+                                        font_size=15,
+                                        font_weight="bold",
+                                        text_color="#1976D2",
+                                        line_height=18,
+                                        letter_spacing=0.2,
+                                    ),
+                                    dv.DivText(
+                                        text="  ••  " + str(card.mask),
+                                        font_size=15,
+                                        text_color="#374151",
+                                        line_height=18,
+                                        margins=dv.DivEdgeInsets(left=4),
+                                    ),
+                                ],
+                                margins=dv.DivEdgeInsets(top=2),
+                            ),
+                        ],
+                    ),
+                ],
+                paddings=dv.DivEdgeInsets(bottom=16, left=16, right=16, top=16),
+                background=[dv.DivSolidBackground(color="#FFFFFF")],
+                margins=dv.DivEdgeInsets(bottom=0 if idx == len(cards) else 8),
             )
         )
+        # Add divider except after last item
+        if idx < len(cards):
+            card_items.append(
+                dv.DivSeparator(
+                    delimiter_style=dv.DivSeparatorDelimiterStyle(
+                        color="#F3F6FA",
+                    ),
+                    width=dv.DivFixedSize(value=1),
+                    margins=dv.DivEdgeInsets(left=52, right=0),
+                )
+            )
+
+    main_container = dv.DivContainer(
+        orientation="vertical",
+        items=card_items,
+        background=[dv.DivSolidBackground(color="#F9FAFB")],
+        border=dv.DivBorder(
+            stroke=dv.DivStroke(
+                color="#E5E7EB",
+                width=1,
+            ),
+            corner_radius=16,
+        ),
+        paddings=dv.DivEdgeInsets(bottom=0, left=0, right=0, top=0),
+        margins=dv.DivEdgeInsets(bottom=12, left=12, right=12, top=12),
+    )
+
+    div = dv.make_div(main_container)
+    with open("get_receiver_id_by_receiver_phone_number_ui.json", "w") as f:
+        json.dump(div, f, ensure_ascii=False, indent=2)
+    return div
+
+
+def get_categories(llm_output, backend_output, version="v2") -> BuildOutput:
+    backend_output = CategoriesResponse(**backend_output)
+    backend_output_processed: List[Category] = backend_output.payload
 
     text_widget = TextWidget(
         order=1,
@@ -129,7 +348,7 @@ def get_categories(llm_output, backend_output, version="v2"):
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons,
-                args={"buttons": [{"text": "Cancel", "action": "cancel"}]},
+                args={"button_texts": ["cancel", "submit"]},
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
@@ -138,43 +357,77 @@ def get_categories(llm_output, backend_output, version="v2"):
         },
         version,
     )
-    return {
-        "widgets_count": 3,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    return BuildOutput(
+        widgets_count=3,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
 
 def build_get_categories_ui(categories: List[Category]):
-    raise NotImplementedError
-
-
-#  [
-#         {
-#             "id": 1014,
-#             "name": "Crediton.uz",
-#             "categoryId": 23,
-#             "s3Url": "https://s3.smartbank.uz/mobile-ui/1691671093787-252daee5-82ac-4fb4-ba5c-03787fe386f8",
-#         },
-#     ],
-# }
-
-
-class Supplier(BaseModel):
-    id: int
-    name: str
-    image_url: str
-
-
-def get_suppliers_by_category(llm_output, backend_output, version="v2"):
-    backend_output_processed: List[Supplier] = []
-    for i, supplier in enumerate(backend_output):
-        backend_output_processed.append(
-            Supplier(
-                id=supplier["id"],
-                name=supplier["name"],
-                image_url=supplier["s3Url"],
-            )
+    category_items = []
+    for idx, category in enumerate(categories):
+        item_container = dv.DivContainer(
+            orientation=dv.DivContainerOrientation.HORIZONTAL,
+            width=dv.DivMatchParentSize(),
+            height=dv.DivWrapContentSize(),
+            alignment_vertical=dv.DivAlignmentVertical.CENTER,
+            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=16, right=16),
+            items=[
+                dv.DivImage(
+                    image_url=category.s3Url,
+                    width=dv.DivFixedSize(value=24),
+                    height=dv.DivFixedSize(value=24),
+                    margins=dv.DivEdgeInsets(right=12),
+                ),
+                dv.DivText(
+                    text=category.name,
+                    font_size=16,
+                    font_weight=dv.DivFontWeight.REGULAR,  # Assuming regular weight
+                    text_color="#000000",  # Assuming black color
+                ),
+            ],
+            action=dv.DivAction(
+                log_id=f"category_{category.id}_selected",
+                payload={"category_id": category.id, "category_name": category.name},
+                url=f"divkit://action?type=select_category&id={category.id}&name={category.name}",  # Example action
+            ),
         )
+        category_items.append(item_container)
+
+        # Add separator, except for the last item
+        if idx < len(categories) - 1:
+            category_items.append(
+                dv.DivSeparator(
+                    delimiter_style=dv.DivSeparatorDelimiterStyle(
+                        color="#E0E0E0"  # A light gray color for the separator
+                    ),
+                    margins=dv.DivEdgeInsets(left=16, right=16),  # Indent separator
+                )
+            )
+
+    main_container = dv.DivContainer(
+        orientation=dv.DivContainerOrientation.VERTICAL,
+        width=dv.DivMatchParentSize(),
+        height=dv.DivWrapContentSize(),
+        background=[
+            dv.DivSolidBackground(color="#FFFFFF")
+        ],  # White background for the list
+        items=category_items,
+        # Optional: add rounded corners and margins if needed, similar to other UIs
+        # border=dv.DivBorder(corner_radius=12),
+        # margins=dv.DivEdgeInsets(all=8),
+    )
+
+    div = dv.make_div(main_container)
+    # For debugging or inspection, you can save the JSON output
+    with open("build_get_categories_ui.json", "w") as f:
+        json.dump(div, f, ensure_ascii=False, indent=2)
+    return div
+
+
+def get_suppliers_by_category(llm_output, backend_output, version="v2") -> BuildOutput:
+    backend_output = SupplierByCategoryResponse(**backend_output)
+    backend_output_processed: List[Supplier] = backend_output.payload
 
     text_widget = TextWidget(
         order=1,
@@ -186,7 +439,7 @@ def get_suppliers_by_category(llm_output, backend_output, version="v2"):
         type="payments_list_item_widget",
         order=2,
         layout="vertical",
-        fields=["id", "name", "image_url"],
+        fields=["id", "name", "image_url", "category_id"],
         values=[supplier.model_dump() for supplier in backend_output_processed],
     )
     buttons_widget = ButtonsWidget(
@@ -204,7 +457,7 @@ def get_suppliers_by_category(llm_output, backend_output, version="v2"):
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons_widget,
-                args={"buttons": [{"text": "Cancel", "action": "cancel"}]},
+                args={"button_texts": ["cancel", "submit"]},
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
@@ -213,41 +466,74 @@ def get_suppliers_by_category(llm_output, backend_output, version="v2"):
         },
         version,
     )
-    return {
-        "widgets_count": 3,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    return BuildOutput(
+        widgets_count=3,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
 
 def get_suppliers_by_category_ui(suppliers: List[Supplier]):
-    raise NotImplementedError
+    supplier_items = []
+    for idx, supplier in enumerate(suppliers):
+        item_container = dv.DivContainer(
+            orientation=dv.DivContainerOrientation.HORIZONTAL,
+            width=dv.DivMatchParentSize(),
+            height=dv.DivWrapContentSize(),
+            alignment_vertical=dv.DivAlignmentVertical.CENTER,
+            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=16, right=16),
+            items=[
+                dv.DivImage(
+                    image_url=supplier.s3Url,  # Assuming supplier object has an image_url or similar field
+                    width=dv.DivFixedSize(
+                        value=40
+                    ),  # Icon size from image appears to be a bit larger
+                    height=dv.DivFixedSize(value=40),
+                    margins=dv.DivEdgeInsets(
+                        right=16
+                    ),  # Increased margin for larger icon
+                    scale=dv.DivImageScale.FIT,
+                    border=dv.DivBorder(corner_radius=20),  # Circular border for icon
+                ),
+                dv.DivText(
+                    text=supplier.name,
+                    font_size=16,
+                    font_weight=dv.DivFontWeight.REGULAR,
+                    text_color="#000000",
+                ),
+            ],
+            action=dv.DivAction(
+                log_id=f"supplier_{supplier.id}_selected",
+                payload={"supplier_id": supplier.id, "supplier_name": supplier.name},
+                url=f"divkit://action?type=select_supplier&id={supplier.id}&name={supplier.name}",  # Example action
+            ),
+        )
+        supplier_items.append(item_container)
 
+        # if idx < len(suppliers) - 1:
+        #     supplier_items.append(
+        #         dv.DivSeparator(
+        #             delimiter_style=dv.DivSeparatorDelimiterStyle(color="#E0E0E0"),
+        #             margins=dv.DivEdgeInsets(
+        #                 left=72, right=16
+        #             ),  # Adjusted for larger icon + text area
+        #         )
+        #     )
 
-# {'code': '0',
-#  'description': 'Success',
-#  'payload': {'checkUp': True,
-#   'checkUpWithResponse': True,
-#   'checkUpAfterPayment': False,
-#   'fieldList': [{'identName': 'amount',
-#     'name': 'Сумма',
-#     'order': 2,
-#     'type': 'MONEY',
-#     'pattern': None,
-#     'minValue': 500,
-#     'maxValue': 10000000,
-#     'fieldSize': 12,
-#     'isMain': None,
-#     'valueList': []},
-#    {'identName': 'paymentNo',
-#     'name': 'Номер счёта',
-#     'order': 1,
-#     'type': 'STRING',
-#     'pattern': None,
-#     'minValue': None,
-#     'maxValue': None,
-#     'fieldSize': 15,
-#     'isMain': True,
-#     'valueList': []}]}}
+    main_container = dv.DivContainer(
+        orientation=dv.DivContainerOrientation.VERTICAL,
+        width=dv.DivMatchParentSize(),
+        height=dv.DivWrapContentSize(),
+        background=[dv.DivSolidBackground(color="#FFFFFF")],
+        items=supplier_items,
+        border=dv.DivBorder(corner_radius=12),
+        margins=dv.DivEdgeInsets(top=8, bottom=8, left=8, right=8),
+    )
+
+    div = dv.make_div(main_container)
+    # For debugging or inspection, you can save the JSON output
+    with open("get_suppliers_by_category_ui.json", "w") as f:
+        json.dump(div, f, ensure_ascii=False, indent=2)
+    return div
 
 
 class Field(BaseModel):
@@ -263,7 +549,7 @@ class Field(BaseModel):
     valueList: List[str] = []
 
 
-def get_fields_of_supplier(llm_output, backend_output, version="v2"):
+def get_fields_of_supplier(llm_output, backend_output, version="v2") -> BuildOutput:
     backend_output_processed: List[Field] = []
     for i, field in enumerate(backend_output["fieldList"]):
         backend_output_processed.append(
@@ -322,7 +608,7 @@ def get_fields_of_supplier(llm_output, backend_output, version="v2"):
             build_buttons_row: WidgetInput(
                 widget=button_widget,
                 args={
-                    "buttons": [
+                    "button_texts": [
                         {
                             "text": "Cancel",
                             "action": "cancel",
@@ -338,16 +624,53 @@ def get_fields_of_supplier(llm_output, backend_output, version="v2"):
         version,
     )
     if len(llm_output) > 0:
-        return {
-            "widgets_count": 3,
-            "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-        }
+        return BuildOutput(
+            widgets_count=3,
+            widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+        )
     else:
-        return {
-            "widgets_count": 2,
-            "widgets": [widget.model_dump(exclude_none=True) for widget in widgets[:2]],
-        }
+        return BuildOutput(
+            widgets_count=2,
+            widgets=[widget.model_dump(exclude_none=True) for widget in widgets[:2]],
+        )
 
 
 def get_fields_of_supplier_ui(fields: List[Field]):
     raise NotImplementedError
+
+
+if __name__ == "__main__":
+    # check get_contacts with action first
+    # output = get_receiver_id_by_receiver_phone_number(
+    #     llm_output="", backend_output={"receiver_name": "Aslon"}, version="v3"
+    # )
+    # with open("test_response.json", "w") as f:
+    #     json.dump(output.model_dump(), f)
+    output = get_receiver_id_by_receiver_phone_number(
+        llm_output="Hello world",
+        backend_output=CardsByPhoneNumberResponse(
+            [
+                {
+                    "pan": "kkkkkkxxxxxxyyyyyy",
+                    "name": "Aslon",
+                    "processing": "HUMO",
+                    "mask": "*************1234",
+                },
+                {
+                    "pan": "kkkkkkxxxxxxyyasdfafsdfyyyy",
+                    "name": "Aslon",
+                    "processing": "HUMO",
+                    "mask": "*************1235",
+                },
+                {
+                    "pan": "kkkkkkxxxxxxyyasdfafsdfyyyy",
+                    "name": "Aslon",
+                    "processing": "HUMO",
+                    "mask": "*************1236",
+                },
+            ]
+        ).model_dump(),
+        version="v3",
+    )
+    with open("test_response.json", "w") as f:
+        json.dump(output.model_dump(), f, ensure_ascii=False, indent=2)

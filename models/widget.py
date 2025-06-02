@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Callable, Optional, Dict
+from typing import Callable, Optional, Dict, Any, Union
 import json
 
 
@@ -10,7 +10,7 @@ class Widget(BaseModel):
     layout: str
     fields: list[str]
     values: Optional[list[Dict]] = None
-    ui: Optional[str] = None
+    ui: Optional[Union[Dict[str, Any], str]] = None
 
     def build_ui(self, function: Callable, **kwargs):
-        self.ui = json.dumps(function(**kwargs))
+        self.ui = function(**kwargs)

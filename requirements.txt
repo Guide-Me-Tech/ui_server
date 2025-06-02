@@ -13,3 +13,4 @@ sentry-sdk
 logfire
 structlog
 pydivkit
+tool_call_models

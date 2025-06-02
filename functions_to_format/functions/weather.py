@@ -11,6 +11,7 @@ from .general import (
     build_buttons_row,
     WidgetInput,
 )
+from models.build import BuildOutput
 
 
 class WeatherData(BaseModel):
@@ -52,10 +53,10 @@ def get_weather(llm_output: str, backend_output: dict, version: str = "v3"):
         },
         version,
     )
-    return {
-        "widgets_count": 1,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    return BuildOutput(
+        widgets_count=1,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
 
 def weather_widget(data: WeatherData):
