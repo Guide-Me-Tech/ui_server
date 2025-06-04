@@ -78,7 +78,7 @@ def setup_logging(logfile: str) -> logging.Logger:
     return get_logger()
 
 
-logfile_path = "./"  # "/var/ui_server/"
+logfile_path = "/var/ui_server"  # "/var/ui_server/"
 logfile = "ui_server.log"
 if not os.path.exists(logfile_path):
     os.mkdir(logfile_path)
