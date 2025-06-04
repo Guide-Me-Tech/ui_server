@@ -5,9 +5,10 @@ from typing import Optional, Any, Dict, List, Callable, Set, Union
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from models.build import BuildOutput, ErrorResponse
 
 # from src.config_router import router
-from functions_to_format.mapper import functions_mapper
+from functions_to_format.functions import functions_mapper
 import sentry_sdk
 
 app = FastAPI()
@@ -30,14 +31,14 @@ if os.getenv("ENVIRONMENT") == "production":
 
 class InputV3(BaseModel):
     function_name: str
-    llm_output: str
-    backend_output: Union[Dict, List]
+    llm_output: Optional[str] = None
+    backend_output: Union[Dict, List, None] = None
 
 
 class InputV2(BaseModel):
     function_name: str
-    llm_output: str
-    backend_output: Union[Dict, List]
+    llm_output: Optional[str] = None
+    backend_output: Union[Dict, List, None] = None
 
 
 @app.get("/health")
@@ -51,8 +52,10 @@ async def format_data(request: Request):
     return ""
 
 
-@app.post("/chat/v3/build_ui")
-@app.get("/chat/v3/build_ui")
+@app.post(
+    "/chat/v3/build_ui",
+    responses={200: {"model": BuildOutput}, 500: {"model": ErrorResponse}},
+)
 async def format_data_v3(input_data: InputV3):
     version = "v3"
     logger.debug("BUILD UI V3")
@@ -68,11 +71,14 @@ async def format_data_v3(input_data: InputV3):
             logger.warning(f"Invalid or missing function_name: {func_name}")
             return JSONResponse(
                 status_code=400,
-                content={"error": f"Invalid or missing function_name: {func_name}"},
+                content=ErrorResponse(
+                    error=f"Invalid or missing function_name: {func_name}",
+                    traceback="",
+                ).model_dump(),
             )
 
         logger.debug(f"Step 2: Found function {func_name}, invoking now")
-        result = functions_mapper[func_name](
+        result: BuildOutput = functions_mapper[func_name](
             llm_output=llm_output, backend_output=backend_output, version=version
         )
         logger.debug(f"Step 3: Function result={result}")
@@ -81,13 +87,17 @@ async def format_data_v3(input_data: InputV3):
         logger.exception(f"Exception in /chat/v3/build_ui: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"error": str(e), "traceback": str(e.__traceback__)},
+            content=ErrorResponse(
+                error=str(e), traceback=str(e.__traceback__)
+            ).model_dump(),
         )
 
 
 @app.get("/chat")
-@app.get("/chat/v2/build_ui/actions")
-@app.post("/chat/v2/build_ui/actions")
+@app.post(
+    "/chat/v2/build_ui/actions",
+    responses={200: {"model": BuildOutput}, 500: {"model": ErrorResponse}},
+)
 async def format_data_v2(input_data: InputV2):
     version = "v2"
     # Janis Rubins: call function from functions_mapper for actions
@@ -95,7 +105,10 @@ async def format_data_v2(input_data: InputV2):
     logger.debug("STEP 1: GET /chat/v2/build_ui/actions")
     func_name = input_data.function_name
     if not func_name:
-        return Response(status_code=400, content="function_name is required")
+        return JSONResponse(
+            status_code=400,
+            content=ErrorResponse(error="function_name is required", traceback=""),
+        )
     # with open("logs.json", "w") as f:
     #    json.dump(data, f)
     # sanitized_backend_output = sanitize_input(data.get("backend_output", {}))

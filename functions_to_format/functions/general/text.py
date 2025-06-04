@@ -1,4 +1,4 @@
-from .widget import Widget
+from models.widget import Widget
 import pydivkit as dv
 
 
@@ -33,6 +33,8 @@ def text_widget(
 
 def build_text_widget(text: str):
     # raise NotImplementedError
+    if len(text) == 0:
+        return None
     return dv.make_div(text_widget(text))
 
 

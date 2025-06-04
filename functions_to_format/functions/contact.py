@@ -3,9 +3,12 @@ import json
 from pydantic import BaseModel
 from typing import List
 from .general import Widget, add_ui_to_widget
+from models.build import BuildOutput
 
 
-def get_contact(llm_output: str, backend_output: dict, version: str = "v3"):
+def get_contact(
+    llm_output: str, backend_output: dict, version: str = "v3"
+) -> BuildOutput:
     widget = Widget(
         type="contact_widget",
         layout="horizontal",
@@ -17,10 +20,10 @@ def get_contact(llm_output: str, backend_output: dict, version: str = "v3"):
         },
         version,
     )
-    return {
-        "widgets_count": 1,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    return BuildOutput(
+        widgets_count=1,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
 
 def contact_widget(name, avatar_url, subtitle):

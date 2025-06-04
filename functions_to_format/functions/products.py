@@ -6,7 +6,9 @@ import json, sys
 from pydantic import BaseModel
 from typing import List, Optional
 from .general import Widget, add_ui_to_widget, WidgetInput
-
+from models.build import BuildOutput
+from conf import logger
+from tool_call_models.smartbazar import SearchProductsResponse
 # -------------------------------------------------------------------
 #  Функция-шаблон: возвращает dv.DivState с двумя состояниями — collapsed
 #  и expanded. Переключение реализовано через dv.DivAction -> SetState.
@@ -31,7 +33,15 @@ class ProductsListInput(BaseModel):
     title: Optional[str] = "Products"
 
 
-def get_products(llm_output: str, backend_output: dict, version: str = "v3"):
+def search_products(*args, **kwargs) -> BuildOutput:
+    return get_products(*args, **kwargs)
+
+
+def get_products(
+    llm_output: str, backend_output: dict, version: str = "v3"
+) -> BuildOutput:
+    backend_output: SearchProductsResponse = SearchProductsResponse(**backend_output)
+    logger.info(backend_output)
     widget = Widget(
         name="products_list_widget",
         type="products_list_widget",
@@ -39,19 +49,38 @@ def get_products(llm_output: str, backend_output: dict, version: str = "v3"):
         layout="vertical",
         fields=["products", "title"],
     )
+
+    products = ProductsListInput(
+        title="Products",
+        products=[
+            Product(
+                id=x.id,
+                title=x.name_ru if x.name_ru else x.name_uz,
+                price=x.offers[0].price if x.offers else "0",
+                img=x.main_image["mobile"]
+                if "mobile" in x.main_image
+                else x.main_image["desktop"],
+                desc=x.name_ru if x.name_ru else x.name_uz,
+                rating=f"⭐ {x.rate}",
+                primary_button="Good",
+            )
+            for x in backend_output.items
+        ],
+    )
+
     widgets = add_ui_to_widget(
         {
             build_products_list_widget: WidgetInput(
                 widget=widget,
-                args={"products_list_input": ProductsListInput(**backend_output)},
+                args={"products_list_input": products},
             ),
         },
         version,
     )
-    return {
-        "widgets_count": 1,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    return BuildOutput(
+        widgets_count=1,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
 
 def make_product_state(p: Product):
@@ -200,7 +229,6 @@ def build_products_list_widget(products_list_input: ProductsListInput):
 
 
 if __name__ == "__main__":
-
     # ----------------------------------
     #  Данные товаров (можно брать из БД)
     # ----------------------------------

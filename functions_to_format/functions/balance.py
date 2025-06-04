@@ -11,6 +11,8 @@ from .general import (
 from pydantic import BaseModel
 from typing import List
 from conf import logger
+from models.build import BuildOutput
+from tool_call_models.cards import CardsBalanceResponse
 
 
 class CardInfo(BaseModel):
@@ -58,19 +60,22 @@ def get_balance(llm_output, backend_output, version="v2"):
     output = [
         llm_output,
     ]
+    backend_output: CardsBalanceResponse = CardsBalanceResponse(**backend_output)
     backend_output_processed: List[CardInfo] = []
     logger.info(f"backend_output {backend_output} ----- type:{type(backend_output)}")
-    for i, card_info in enumerate(backend_output):
+    for i, card_info in enumerate(backend_output.cardList):
         backend_output_processed.append(
             CardInfo(
-                masked_card_pan=card_info["pan"],
-                card_type=card_info["processingSystem"],
+                masked_card_pan=card_info.pan,
+                card_type=card_info.processingSystem,
                 balance=(
-                    card_info["balance"] if type(card_info["balance"]) is int else 0
+                    card_info.cardBalance.balance
+                    if type(card_info.cardBalance.balance) is int
+                    else 0
                 ),
-                card_name=card_info["cardDetails"]["cardName"],
-                cardColor=card_info["cardDetails"]["cardColor"],
-                image_url=card_info.get("image_url", ""),
+                card_name=card_info.cardDetails.cardName,
+                cardColor=card_info.cardDetails.cardColor,
+                image_url=card_info.bankIcon.bankLogoMini,
             )
         )
     text_widget = TextWidget(
@@ -87,6 +92,7 @@ def get_balance(llm_output, backend_output, version="v2"):
             card.model_dump(exclude_none=True) for card in backend_output_processed
         ],
     )
+
     widgets = add_ui_to_widget(
         {
             build_text_widget: WidgetInput(
@@ -104,10 +110,10 @@ def get_balance(llm_output, backend_output, version="v2"):
         },
         version,
     )
-    output = {
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-        "widgets_count": len(widgets),
-    }
+    output = BuildOutput(
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+        widgets_count=len(widgets),
+    )
     return output
 
 
@@ -290,7 +296,11 @@ def build_balance_ui(balance_input: BalanceInput):
         paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
     )
 
-    return dv.make_div(root)
+    output = dv.make_div(root)
+    with open("build_balance_ui.json", "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
+    return output
 
 
 if __name__ == "__main__":

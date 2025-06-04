@@ -1,0 +1,28 @@
+{
+  "templates": {},
+  "card": {
+    "log_id": "card",
+    "states": [
+      {
+        "div": {
+          "type": "container",
+          "background": [
+            {
+              "type": "solid",
+              "color": "#FFFFFF"
+            }
+          ],
+          "height": {
+            "type": "wrap_content"
+          },
+          "items": [],
+          "orientation": "vertical",
+          "width": {
+            "type": "match_parent"
+          }
+        },
+        "state_id": 0
+      }
+    ]
+  }
+}
