@@ -3,9 +3,12 @@ import json
 from pydantic import BaseModel
 from typing import List
 from .general import Widget, add_ui_to_widget, WidgetInput
+from models.build import BuildOutput
 
 
-def get_notifications(llm_output: str, backend_output: dict, version: str = "v3"):
+def get_notifications(
+    llm_output: str, backend_output: dict, version: str = "v3"
+) -> BuildOutput:
     notifications_widget = Widget(
         name="notifications_widget",
         type="notifications_widget",
@@ -28,10 +31,10 @@ def get_notifications(llm_output: str, backend_output: dict, version: str = "v3"
         },
         version,
     )
-    return {
-        "widgets_count": 1,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    return BuildOutput(
+        widgets_count=1,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
 
 def notification_widget(title, description):

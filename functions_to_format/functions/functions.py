@@ -1,6 +1,5 @@
 import jsonschema
 import jsonschema.exceptions
-from functions_to_format.components import widgets
 import json
 import re
 import hashlib
@@ -16,9 +15,10 @@ from .general import (
     build_text_widget,
     WidgetInput,
 )
+from models.build import BuildOutput
 
 
-def chatbot_answer(llm_output: str, backend_output, version="v2"):
+def chatbot_answer(llm_output: str, backend_output, version="v2") -> BuildOutput:
     # Janis Rubins: logic unchanged, just returns text_widget schema and llm_output as data
 
     text_widget = TextWidget(
@@ -36,10 +36,10 @@ def chatbot_answer(llm_output: str, backend_output, version="v2"):
         version,
     )
 
-    return {
-        "widgets_count": 1,
-        "widgets": [widget.model_dump(exclude_none=True) for widget in widgets],
-    }
+    return BuildOutput(
+        widgets_count=1,
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
 
 
 def unauthorized_response(llm_output, backend_output, version="v2"):
@@ -78,12 +78,6 @@ def unauthorized_response(llm_output, backend_output, version="v2"):
 ########################################################
 ######### LEGACY UNUSED CODE #########
 # Janis Rubins: precompile validator to avoid repeated schema parsing
-balance_card_schema = widgets.get("balance_card", None)
-balance_card_validator = None
-if balance_card_schema is not None:
-    balance_card_validator = jsonschema.Draft7Validator(
-        balance_card_schema
-    )  # Janis Rubins: validator created once
 
 # Janis Rubins step 1: Security and Performance Constants
 MAX_PAYLOAD_SIZE = 1024 * 1024  # 1MB limit for input/data size
@@ -168,9 +162,3 @@ class SchemaValidator:
 
 # Initialize schema validator and prepare validators if available
 schema_validator = SchemaValidator()
-
-if "balance_card" in widgets:
-    schema_validator.prepare_validator("balance_card", widgets["balance_card"])
-
-if "text_widget" in widgets:
-    schema_validator.prepare_validator("text_widget", widgets["text_widget"])
