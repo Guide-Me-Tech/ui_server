@@ -50,9 +50,11 @@ def get_receiver_id_by_reciver_phone_number(llm_output, backend_output, version=
 
     widgets = add_ui_to_widget(
         {
-            get_receiver_id_by_reciver_phone_number_ui: cards_widget,
-            build_buttons_row: buttons,
-            build_text_widget: text_widget,
+            get_receiver_id_by_reciver_phone_number_ui: WidgetInput(
+                widget=cards_widget, args={"cards": backend_output_processed}
+            ),
+            build_buttons_row: WidgetInput(widget=buttons, args={"buttons": ["cancel"]}),
+            build_text_widget: WidgetInput(widget=text_widget, args={"text": llm_output}),
         },
         version,
     )
@@ -129,7 +131,7 @@ def get_categories(llm_output, backend_output, version="v2"):
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons,
-                args={"buttons": [{"text": "Cancel", "action": "cancel"}]},
+                args={"buttons": ["Cancel", "cancel"]},
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
@@ -204,7 +206,7 @@ def get_suppliers_by_category(llm_output, backend_output, version="v2"):
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons_widget,
-                args={"buttons": [{"text": "Cancel", "action": "cancel"}]},
+                args={"buttons": ["Cancel", "cancel"]},
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
@@ -322,12 +324,7 @@ def get_fields_of_supplier(llm_output, backend_output, version="v2"):
             build_buttons_row: WidgetInput(
                 widget=button_widget,
                 args={
-                    "buttons": [
-                        {
-                            "text": "Cancel",
-                            "action": "cancel",
-                        }
-                    ]
+                    "buttons":["cancel"]
                 },
             ),
             build_text_widget: WidgetInput(

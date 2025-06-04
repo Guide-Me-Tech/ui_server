@@ -16,12 +16,15 @@ COPY . .
 
 # Adjust permissions for non-root
 RUN chown -R appuser:appgroup /app
-USER appuser
+
+# Grant root access to the user
+USER root
 
 #EXPOSE 8000
 
 # Healthcheck to detect issues early
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
+RUN mkdir /var/ui_server
 
 CMD ["fastapi", "run", "src/server.py"]

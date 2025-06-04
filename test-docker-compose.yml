@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  ui_server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: ui_server
+    ports:
+      - "8003:8000"
+    volumes:
+      - .:/app
+      - type: bind
+        source: /var/ui_server
+        target: /var/ui_server
+    restart: unless-stopped
+    networks:
+      - consultant_ai
+      - monitoring
+
+networks:
+  consultant_ai:
+    external: true
+  monitoring:
+    external: true
