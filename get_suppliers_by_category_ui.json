@@ -18,7 +18,205 @@
           "height": {
             "type": "wrap_content"
           },
-          "items": [],
+          "items": [
+            {
+              "type": "container",
+              "action": {
+                "log_id": "supplier_85_selected",
+                "payload": {
+                  "supplier_id": 85,
+                  "supplier_name": "Mili"
+                },
+                "url": "divkit://open_supplier?id=85&name=Mili"
+              },
+              "alignment_vertical": "center",
+              "background": [
+                {
+                  "type": "solid",
+                  "color": "#EBF2FA"
+                }
+              ],
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 16
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 32
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671057578-de6f75ba-30ed-4e16-9638-6f8cfaf89e06",
+                  "margins": {
+                    "right": 12
+                  },
+                  "scale": "fit",
+                  "width": {
+                    "type": "fixed",
+                    "value": 32
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Mili",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 16,
+                "left": 16,
+                "right": 16,
+                "top": 16
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "left": 60,
+                "right": 16
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "supplier_86_selected",
+                "payload": {
+                  "supplier_id": 86,
+                  "supplier_name": "XMED"
+                },
+                "url": "divkit://open_supplier?id=86&name=XMED"
+              },
+              "alignment_vertical": "center",
+              "background": [
+                {
+                  "type": "solid",
+                  "color": "#EBF2FA"
+                }
+              ],
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 16
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 32
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671057616-cba0e1b9-2651-4009-aba7-dfc50a41f4c5",
+                  "margins": {
+                    "right": 12
+                  },
+                  "scale": "fit",
+                  "width": {
+                    "type": "fixed",
+                    "value": 32
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "XMED",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 16,
+                "left": 16,
+                "right": 16,
+                "top": 16
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "left": 60,
+                "right": 16
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "supplier_51_selected",
+                "payload": {
+                  "supplier_id": 51,
+                  "supplier_name": "Cyfral.uz"
+                },
+                "url": "divkit://open_supplier?id=51&name=Cyfral.uz"
+              },
+              "alignment_vertical": "center",
+              "background": [
+                {
+                  "type": "solid",
+                  "color": "#EBF2FA"
+                }
+              ],
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 16
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 32
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671061256-b967cff7-ee2a-4f2b-91ed-f9dd02421f5c",
+                  "margins": {
+                    "right": 12
+                  },
+                  "scale": "fit",
+                  "width": {
+                    "type": "fixed",
+                    "value": 32
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Cyfral.uz",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 16,
+                "left": 16,
+                "right": 16,
+                "top": 16
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            }
+          ],
           "margins": {
             "bottom": 8,
             "left": 8,

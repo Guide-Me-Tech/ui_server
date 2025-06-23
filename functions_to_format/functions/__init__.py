@@ -2,7 +2,7 @@ from .functions import (
     chatbot_answer,
     unauthorized_response,
 )
-from .balance import get_balance, build_balance_ui
+from .balance import get_balance, build_balance_ui, get_home_balances
 from .payment import (
     get_receiver_id_by_receiver_phone_number,
     get_categories,
@@ -53,4 +53,5 @@ functions_mapper = {
     "get_suppliers_by_category": get_suppliers_by_category,  # done
     "start_page_widget": start_page_widget,  # partially
     "send_money_to_someone_via_card": send_money_to_someone_via_card,  # not done yet
+    "get_home_balances": get_home_balances,  # not done yet
 }

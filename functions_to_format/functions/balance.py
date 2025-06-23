@@ -13,6 +13,7 @@ from typing import List
 from conf import logger
 from models.build import BuildOutput
 from tool_call_models.cards import CardsBalanceResponse
+from tool_call_models.home_balance import HomeBalance
 
 
 class CardInfo(BaseModel):
@@ -43,6 +44,177 @@ class BalanceInput(BaseModel):
     accounts: list[Account] = []
 
 
+def format_balance(balance: int):
+    """
+    Format balance to include commas as thousand separators.
+
+    Args:
+        balance (int): The balance amount to format
+
+    Returns:
+        str: Formatted balance with commas (e.g. 100,000)
+    """
+    return f"{balance:,}"
+
+
+def build_balances_part(home_balance: HomeBalance):
+    # Services list
+    print(home_balance.services)
+    service_icons = {
+        "electricity": "https://smarty-test.smartbank.uz/ui_server/static/electricity.png",
+        "gas": "https://smarty-test.smartbank.uz/ui_server/static/gas.png",
+        "internet": "https://smarty-test.smartbank.uz/ui_server/static/trash.png",
+        "water": "https://smarty-test.smartbank.uz/ui_server/static/water.png",
+        "mobile": "https://smarty-test.smartbank.uz/ui_server/static/mobile.png",
+        "garbage": "https://smarty-test.smartbank.uz/ui_server/static/trash.png",
+        "coldWater": "https://smarty-test.smartbank.uz/ui_server/static/water.png",
+        "hotWater": "https://smarty-test.smartbank.uz/ui_server/static/water.png",
+        "heating": "https://smarty-test.smartbank.uz/ui_server/static/heating.png",
+    }
+
+    items = []
+    for service_name, icon_url in service_icons.items():
+        if service_name not in home_balance.services:
+            continue
+        try:
+            items.append(
+                dv.DivContainer(
+                    orientation="horizontal",
+                    width=dv.DivFixedSize(value=150)
+                    if service_name == "electricity"
+                    else None,
+                    height=dv.DivFixedSize(value=24),
+                    items=[
+                        dv.DivImage(
+                            image_url=icon_url,
+                            width=dv.DivFixedSize(value=24),
+                            height=dv.DivFixedSize(value=24),
+                        ),
+                        dv.DivText(
+                            text=format_balance(
+                                home_balance.services[service_name].balance
+                            ),
+                            font_size=16,
+                            text_color="#666666",
+                            margins=dv.DivEdgeInsets(
+                                left=8 if service_name == "electricity" else 12
+                            ),
+                        ),
+                    ],
+                )
+            )
+        except KeyError:
+            pass
+        # Add separator after each service except the last one
+        if service_name != "internet":
+            items.append(
+                dv.DivContainer(
+                    height=dv.DivFixedSize(value=1),
+                    background=[dv.DivSolidBackground(color="#E5E5E5")],
+                    margins=dv.DivEdgeInsets(bottom=4, top=4),
+                )
+            )
+
+    return dv.DivContainer(
+        orientation="vertical",
+        margins=dv.DivEdgeInsets(top=8),
+        items=items,
+    )
+
+
+def build_home_balance_main_container(home_balance: HomeBalance):
+    return dv.DivContainer(
+        orientation="horizontal",
+        width=dv.DivFixedSize(value=361),
+        height=dv.DivFixedSize(value=150),
+        background=[dv.DivSolidBackground(color="#EBF2FA")],
+        border=dv.DivBorder(corner_radius=20),
+        paddings=dv.DivEdgeInsets(left=16, right=16, top=12, bottom=12),
+        margins=dv.DivEdgeInsets(left=15),  # Added left margin to move card right
+        items=[
+            dv.DivContainer(
+                orientation="vertical",
+                items=[
+                    dv.DivText(
+                        text="Мой дом",
+                        font_size=20,
+                        font_weight="medium",
+                        text_color="#000000",
+                        margins=dv.DivEdgeInsets(bottom=8),
+                    ),
+                    dv.DivImage(
+                        image_url="https://smarty-test.smartbank.uz/ui_server/static/home.png",
+                        width=dv.DivFixedSize(value=60),
+                        height=dv.DivFixedSize(value=60),
+                    ),
+                ],
+            ),
+            dv.DivContainer(
+                orientation="vertical",
+                margins=dv.DivEdgeInsets(left=64),
+                items=[
+                    build_balances_part(home_balance),
+                ],
+            ),
+        ],
+    )
+
+
+def build_home_balances_ui(home_balance: HomeBalance):
+    """
+    Build home balances UI using Yandex DivKit SDK.
+    Creates a card with house icon and utility service options.
+    """
+    container = build_home_balance_main_container(home_balance)
+    output = dv.make_div(container)
+    with open("build_home_balances_ui.json", "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    return output
+
+
+def get_home_balances(llm_output, backend_output, version="v2"):
+    """
+    Get home balances.
+    """
+    for k, v in backend_output["services"].items():
+        backend_output[k] = v
+    del backend_output["services"]
+
+    backend_output: HomeBalance = HomeBalance(**backend_output)
+
+    text_widget = TextWidget(
+        order=1,
+        values=[{"text": llm_output}],
+    )
+    home_Balance_Widget = Widget(
+        name="home_balance_widget",
+        type="home_balance_widget",
+        order=2,
+        layout="vertical",
+        fields=["homeName", "services"],
+        values=[backend_output.model_dump(exclude_none=True)],
+    )
+
+    widgets = add_ui_to_widget(
+        {
+            build_text_widget: WidgetInput(
+                widget=text_widget,
+                args={"text": llm_output},
+            ),
+            build_home_balances_ui: WidgetInput(
+                widget=home_Balance_Widget,
+                args={"home_balance": backend_output},
+            ),
+        },
+        version,
+    )
+    output = BuildOutput(
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+        widgets_count=len(widgets),
+    )
+    return output
+
+
 def get_balance(llm_output, backend_output, version="v2"):
     """
     Process balance information and create UI widgets.
@@ -62,7 +234,7 @@ def get_balance(llm_output, backend_output, version="v2"):
     ]
     backend_output: CardsBalanceResponse = CardsBalanceResponse(**backend_output)
     backend_output_processed: List[CardInfo] = []
-    logger.info(f"backend_output {backend_output} ----- type:{type(backend_output)}")
+    # logger.info(f"backend_output {backend_output} ----- type:{type(backend_output)}")
     for i, card_info in enumerate(backend_output.cardList):
         backend_output_processed.append(
             CardInfo(
@@ -233,9 +405,8 @@ def build_balance_ui(balance_input: BalanceInput):
     Returns:
         dict: Complete UI definition in DivKit format
     """
-    # Convert backend_output to Pydantic models
+    logger.info("Build balance ui")
     cards = balance_input.cards
-    accounts = balance_input.accounts
 
     # Parse LLM output for text and actions
     text = "Вы можете пополнить счёт или перевести средства на другую карту."
@@ -255,24 +426,11 @@ def build_balance_ui(balance_input: BalanceInput):
         )
         main_items.extend([card_block(c) for c in cards])
 
-    if accounts:
-        main_items.append(
-            dv.DivText(
-                text="Баланс ваших счетов:",
-                font_size=13,
-                font_weight="bold",
-                text_color="#374151",
-                margins=dv.DivEdgeInsets(top=12, bottom=8),
-            )
-        )
-        main_items.extend([account_block(a) for a in accounts])
-
     # Сообщение и кнопки
     main_items.append(
         dv.DivContainer(
             orientation="vertical",
             background=[dv.DivSolidBackground(color="#F9FAFB")],
-            # border=dv.DivBorder(corner_radius=12),
             paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
             items=[
                 dv.DivText(text=text, font_size=13, text_color="#374151"),
@@ -290,10 +448,14 @@ def build_balance_ui(balance_input: BalanceInput):
     root = dv.DivContainer(
         orientation="vertical",
         items=main_items,
-        width=dv.DivMatchParentSize(),
+        width=dv.DivFixedSize(value=280),
+        height=dv.DivFixedSize(value=248),
         background=[dv.DivSolidBackground(color="#FFFFFF")],
-        # border=dv.DivBorder(corner_radius=24),
+        border=dv.DivBorder(
+            corner_radius=8, stroke=dv.DivStroke(color="#E5E7EB", width=1)
+        ),
         paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
+        margins=dv.DivEdgeInsets(top=16, left=20),
     )
 
     output = dv.make_div(root)
