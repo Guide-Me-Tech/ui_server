@@ -4,6 +4,7 @@ import os
 from typing import Optional, Any, Dict, List, Callable, Set, Union
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from models.build import BuildOutput, ErrorResponse
 
@@ -12,6 +13,9 @@ from functions_to_format.functions import functions_mapper
 import sentry_sdk
 
 app = FastAPI()
+
+# Serve static files
+app.mount("/ui_server/static", StaticFiles(directory="static"), name="static")
 
 # https://www.youtbe.com/watch?v=NTP4XdTjRK0
 if os.getenv("ENVIRONMENT") == "production":

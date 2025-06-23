@@ -12,13 +12,835 @@
               "color": "#FFFFFF"
             }
           ],
-          "height": {
-            "type": "wrap_content"
+          "border": {
+            "corner_radius": 20
           },
-          "items": [],
+          "height": {
+            "type": "fixed",
+            "value": 958
+          },
+          "items": [
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_1_selected",
+                "payload": {
+                  "category_id": 1,
+                  "category_name": "Uyali aloqa"
+                },
+                "url": "divkit://action?type=select_category&id=1&name=Uyali aloqa"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671056545-57d63349-cdc1-4438-982f-23ae508dd782",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Uyali aloqa",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_2_selected",
+                "payload": {
+                  "category_id": 2,
+                  "category_name": "Uy telefoni"
+                },
+                "url": "divkit://action?type=select_category&id=2&name=Uy telefoni"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671056505-ad89d454-3f47-4e68-bc26-74fd2d32c5e2",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Uy telefoni",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_3_selected",
+                "payload": {
+                  "category_id": 3,
+                  "category_name": "Internet"
+                },
+                "url": "divkit://action?type=select_category&id=3&name=Internet"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671056578-a950e105-f0f2-4b8f-af05-766d730593e9",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Internet",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_4_selected",
+                "payload": {
+                  "category_id": 4,
+                  "category_name": "Xizmatlar"
+                },
+                "url": "divkit://action?type=select_category&id=4&name=Xizmatlar"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671056264-e1c665dc-ed0e-4617-9835-ddac232a1ffe",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Xizmatlar",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_5_selected",
+                "payload": {
+                  "category_id": 5,
+                  "category_name": "Televidenie"
+                },
+                "url": "divkit://action?type=select_category&id=5&name=Televidenie"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671056745-0899c2dc-f194-41e2-9a30-b1c16d45ef3e",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Televidenie",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_6_selected",
+                "payload": {
+                  "category_id": 6,
+                  "category_name": "Taxi"
+                },
+                "url": "divkit://action?type=select_category&id=6&name=Taxi"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671056657-eb712c52-a9ee-4293-b6ff-38eaaa052401",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Taxi",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_7_selected",
+                "payload": {
+                  "category_id": 7,
+                  "category_name": "Kommunal xizmatlar"
+                },
+                "url": "divkit://action?type=select_category&id=7&name=Kommunal xizmatlar"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671056712-902ee66f-9ad1-4d73-940a-c5f174b01ae0",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Kommunal xizmatlar",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_9_selected",
+                "payload": {
+                  "category_id": 9,
+                  "category_name": "Online platformalar"
+                },
+                "url": "divkit://action?type=select_category&id=9&name=Online platformalar"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671057830-ef6d3711-ff17-44b3-9107-1a3e8f6085aa",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Online platformalar",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_11_selected",
+                "payload": {
+                  "category_id": 11,
+                  "category_name": "Ta`lim"
+                },
+                "url": "divkit://action?type=select_category&id=11&name=Ta`lim"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671058625-3b117d55-22a0-42e6-aed0-a48c995586c3",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Ta`lim",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_18_selected",
+                "payload": {
+                  "category_id": 18,
+                  "category_name": "Xayriya"
+                },
+                "url": "divkit://action?type=select_category&id=18&name=Xayriya"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671056624-ea0e5f25-4998-4e49-9129-f8f6fed1fe94",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Xayriya",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_23_selected",
+                "payload": {
+                  "category_id": 23,
+                  "category_name": "Muddatli to'lovlar"
+                },
+                "url": "divkit://action?type=select_category&id=23&name=Muddatli to'lovlar"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1691671057272-e9da9dfc-c49b-47eb-9592-a201866ab5fe",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Muddatli to'lovlar",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_26_selected",
+                "payload": {
+                  "category_id": 26,
+                  "category_name": "Sport"
+                },
+                "url": "divkit://action?type=select_category&id=26&name=Sport"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/1ff1f772-fae4-44f3-b5d2-a20554966b5c",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Sport",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_27_selected",
+                "payload": {
+                  "category_id": 27,
+                  "category_name": "Mehmonxonalar va turizm"
+                },
+                "url": "divkit://action?type=select_category&id=27&name=Mehmonxonalar va turizm"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/58cbc39e-3906-4c97-b8ec-af9ece6d0d23",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Mehmonxonalar va turizm",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_28_selected",
+                "payload": {
+                  "category_id": 28,
+                  "category_name": "Sug'urta"
+                },
+                "url": "divkit://action?type=select_category&id=28&name=Sug'urta"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/5ab0d1bc-c3e7-4098-bd03-449ea84e74c5",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Sug'urta",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_29_selected",
+                "payload": {
+                  "category_id": 29,
+                  "category_name": "Tibbiyot"
+                },
+                "url": "divkit://action?type=select_category&id=29&name=Tibbiyot"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/2c365621-57e2-4a6a-b895-f76716bb0033",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Tibbiyot",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "bottom": 12,
+                "top": 12
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_30_selected",
+                "payload": {
+                  "category_id": 30,
+                  "category_name": "Yuridik xizmatlar"
+                },
+                "url": "divkit://action?type=select_category&id=30&name=Yuridik xizmatlar"
+              },
+              "alignment_vertical": "center",
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://s3.smartbank.uz/mobile-ui/4edc3627-310d-4773-a2f6-8e358b4f5e07",
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "margins": {
+                    "left": 14
+                  },
+                  "text": "Yuridik xizmatlar",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "width": {
+                "type": "fixed",
+                "value": 303
+              }
+            }
+          ],
+          "margins": {
+            "left": 16,
+            "top": 657
+          },
           "orientation": "vertical",
+          "paddings": {
+            "bottom": 8,
+            "left": 16,
+            "right": 16,
+            "top": 16
+          },
           "width": {
-            "type": "match_parent"
+            "type": "fixed",
+            "value": 343
           }
         },
         "state_id": 0

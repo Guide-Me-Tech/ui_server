@@ -9,7 +9,7 @@ from .general import (
     WidgetInput,
 )
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from models.build import BuildOutput
 import pydivkit as dv
 from tool_call_models.cards import CardsByPhoneNumberResponse, CardInfoByPhoneNumber
@@ -22,6 +22,7 @@ from tool_call_models.paynet import (
     SuppliersField,
     FieldOptions,
 )
+from conf import logger
 
 
 def send_money_to_someone_via_card(llm_output: str, backend_output, version="v2"):
@@ -58,6 +59,7 @@ def send_money_to_someone_via_card(llm_output: str, backend_output, version="v2"
 def get_number_by_receiver_name(
     llm_output, backend_output, version="v2"
 ) -> BuildOutput:
+    logger.info("get_number_by_receiver_name")
     output = []
     # backend_output_processed = []
     text_widget = TextWidget(
@@ -105,12 +107,20 @@ def get_number_by_receiver_name(
     return output
 
 
-def get_number_by_reciver_number_ui(receiver_name: str):
-    search_contact_action = dv.DivAction(
-        log_id="search_contact",
-        url=f"divkit://search_contact?name={receiver_name}",  # Custom scheme the iOS app will catch
-        payload={"name": receiver_name},  # Optional: structured access
-    )
+def get_number_by_reciver_number_ui(receiver_name: Union[str, List[str]]):
+    logger.info("get_number_by_reciver_number_ui")
+    if isinstance(receiver_name, list):
+        search_contact_action = dv.DivAction(
+            log_id="search_contact",
+            url=f"divkit://search_contact?name={receiver_name}",  # Custom scheme the iOS app will catch
+            payload={"name": receiver_name},  # Optional: structured access
+        )
+    else:
+        search_contact_action = dv.DivAction(
+            log_id="search_contact",
+            url=f"divkit://search_contact?name=[{receiver_name}]",  # Custom scheme the iOS app will catch
+            payload={"name": [receiver_name]},  # Optional: structured access
+        )
 
     # Main container
     main_container = dv.DivContainer(
@@ -130,7 +140,12 @@ def get_number_by_reciver_number_ui(receiver_name: str):
             ),
         ],
     )
-    return dv.make_div(main_container)
+    div = dv.make_div(main_container)
+    with open("get_number_by_reciver_number_ui.json", "w") as f:
+        json.dump(div, f, ensure_ascii=False, indent=2)
+        logger.info("Saved to get_number_by_reciver_number_ui.json", div=div)
+    logger.info("get_number_by_reciver_number_ui done")
+    return div
 
 
 def get_receiver_id_by_receiver_phone_number(
@@ -368,58 +383,54 @@ def build_get_categories_ui(categories: List[Category]):
     for idx, category in enumerate(categories):
         item_container = dv.DivContainer(
             orientation=dv.DivContainerOrientation.HORIZONTAL,
-            width=dv.DivMatchParentSize(),
-            height=dv.DivWrapContentSize(),
-            alignment_vertical=dv.DivAlignmentVertical.CENTER,
-            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=16, right=16),
+            width=dv.DivFixedSize(value=303),
+            # height=dv.DivFixedSize(
+            #     value=56
+            # ),  # Increased height to allow for vertical centering
             items=[
                 dv.DivImage(
                     image_url=category.s3Url,
                     width=dv.DivFixedSize(value=24),
                     height=dv.DivFixedSize(value=24),
-                    margins=dv.DivEdgeInsets(right=12),
                 ),
                 dv.DivText(
                     text=category.name,
                     font_size=16,
-                    font_weight=dv.DivFontWeight.REGULAR,  # Assuming regular weight
-                    text_color="#000000",  # Assuming black color
+                    font_weight=dv.DivFontWeight.REGULAR,
+                    text_color="#000000",
+                    margins=dv.DivEdgeInsets(left=14),
                 ),
             ],
+            alignment_vertical=dv.DivAlignmentVertical.CENTER,  # Added vertical centering
             action=dv.DivAction(
                 log_id=f"category_{category.id}_selected",
                 payload={"category_id": category.id, "category_name": category.name},
-                url=f"divkit://action?type=select_category&id={category.id}&name={category.name}",  # Example action
+                url=f"divkit://action?type=select_category&id={category.id}&name={category.name}",
             ),
         )
         category_items.append(item_container)
 
-        # Add separator, except for the last item
+        # Add separator with consistent spacing
         if idx < len(categories) - 1:
             category_items.append(
                 dv.DivSeparator(
-                    delimiter_style=dv.DivSeparatorDelimiterStyle(
-                        color="#E0E0E0"  # A light gray color for the separator
-                    ),
-                    margins=dv.DivEdgeInsets(left=16, right=16),  # Indent separator
+                    delimiter_style=dv.DivSeparatorDelimiterStyle(color="#E0E0E0"),
+                    margins=dv.DivEdgeInsets(top=12, bottom=12),
                 )
             )
 
     main_container = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
-        width=dv.DivMatchParentSize(),
-        height=dv.DivWrapContentSize(),
-        background=[
-            dv.DivSolidBackground(color="#FFFFFF")
-        ],  # White background for the list
+        width=dv.DivFixedSize(value=343),
+        height=dv.DivFixedSize(value=958),
+        background=[dv.DivSolidBackground(color="#FFFFFF")],
         items=category_items,
-        # Optional: add rounded corners and margins if needed, similar to other UIs
-        # border=dv.DivBorder(corner_radius=12),
-        # margins=dv.DivEdgeInsets(all=8),
+        border=dv.DivBorder(corner_radius=20),
+        paddings=dv.DivEdgeInsets(top=16, right=16, bottom=8, left=16),
+        margins=dv.DivEdgeInsets(left=16, top=657),
     )
 
     div = dv.make_div(main_container)
-    # For debugging or inspection, you can save the JSON output
     with open("build_get_categories_ui.json", "w") as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
     return div
@@ -480,19 +491,16 @@ def get_suppliers_by_category_ui(suppliers: List[Supplier]):
             width=dv.DivMatchParentSize(),
             height=dv.DivWrapContentSize(),
             alignment_vertical=dv.DivAlignmentVertical.CENTER,
-            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=16, right=16),
+            background=[dv.DivSolidBackground(color="#EBF2FA")],
+            paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
             items=[
                 dv.DivImage(
-                    image_url=supplier.s3Url,  # Assuming supplier object has an image_url or similar field
-                    width=dv.DivFixedSize(
-                        value=40
-                    ),  # Icon size from image appears to be a bit larger
-                    height=dv.DivFixedSize(value=40),
-                    margins=dv.DivEdgeInsets(
-                        right=16
-                    ),  # Increased margin for larger icon
+                    image_url=supplier.s3Url,
+                    width=dv.DivFixedSize(value=32),
+                    height=dv.DivFixedSize(value=32),
+                    margins=dv.DivEdgeInsets(right=12),
                     scale=dv.DivImageScale.FIT,
-                    border=dv.DivBorder(corner_radius=20),  # Circular border for icon
+                    border=dv.DivBorder(corner_radius=16),
                 ),
                 dv.DivText(
                     text=supplier.name,
@@ -504,20 +512,18 @@ def get_suppliers_by_category_ui(suppliers: List[Supplier]):
             action=dv.DivAction(
                 log_id=f"supplier_{supplier.id}_selected",
                 payload={"supplier_id": supplier.id, "supplier_name": supplier.name},
-                url=f"divkit://action?type=select_supplier&id={supplier.id}&name={supplier.name}",  # Example action
+                url=f"divkit://open_supplier?id={supplier.id}&name={supplier.name}",
             ),
         )
         supplier_items.append(item_container)
 
-        # if idx < len(suppliers) - 1:
-        #     supplier_items.append(
-        #         dv.DivSeparator(
-        #             delimiter_style=dv.DivSeparatorDelimiterStyle(color="#E0E0E0"),
-        #             margins=dv.DivEdgeInsets(
-        #                 left=72, right=16
-        #             ),  # Adjusted for larger icon + text area
-        #         )
-        #     )
+        if idx < len(suppliers) - 1:
+            supplier_items.append(
+                dv.DivSeparator(
+                    delimiter_style=dv.DivSeparatorDelimiterStyle(color="#E0E0E0"),
+                    margins=dv.DivEdgeInsets(left=60, right=16),
+                )
+            )
 
     main_container = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
@@ -530,7 +536,6 @@ def get_suppliers_by_category_ui(suppliers: List[Supplier]):
     )
 
     div = dv.make_div(main_container)
-    # For debugging or inspection, you can save the JSON output
     with open("get_suppliers_by_category_ui.json", "w") as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
     return div
@@ -550,8 +555,9 @@ class Field(BaseModel):
 
 
 def get_fields_of_supplier(llm_output, backend_output, version="v2") -> BuildOutput:
+    logger.info("get_fields_of_supplier")
     backend_output_processed: List[Field] = []
-    for i, field in enumerate(backend_output["fieldList"]):
+    for i, field in enumerate(backend_output["payload"]["fieldList"]):
         backend_output_processed.append(
             Field(
                 identName=field["identName"],
@@ -609,10 +615,7 @@ def get_fields_of_supplier(llm_output, backend_output, version="v2") -> BuildOut
                 widget=button_widget,
                 args={
                     "button_texts": [
-                        {
-                            "text": "Cancel",
-                            "action": "cancel",
-                        }
+                        "Cancel",
                     ]
                 },
             ),
@@ -636,7 +639,39 @@ def get_fields_of_supplier(llm_output, backend_output, version="v2") -> BuildOut
 
 
 def get_fields_of_supplier_ui(fields: List[Field]):
-    raise NotImplementedError
+    logger.info("get_fields_of_supplier_ui", fields=fields)
+    return
+    raise NotImplementedError()
+    div = dv.make_div(
+        dv.DivContainer(
+            orientation="vertical",
+            width=dv.DivFixedSize(value=343),
+            height=dv.DivFixedSize(value=555),
+            margins=dv.DivEdgeInsets(top=110, left=16),
+            items=[
+                dv.DivContainer(
+                    orientation="vertical",
+                    width=dv.DivMatchParentSize(),
+                    items=[
+                        dv.DivInput(
+                            hint_text=str(
+                                field.name
+                            ),  # Convert to string to ensure not None
+                            font_size=16,
+                            text_color="#1A1A1A",
+                            hint_color="#999999",
+                            margins=dv.DivEdgeInsets(bottom=16),
+                            keyboard_type="text",  # Ensure text input type
+                        )
+                        for field in fields
+                    ],
+                )
+            ],
+        )
+    )
+    with open("get_fields_of_supplier_ui.json", "w") as f:
+        json.dump(div, f, ensure_ascii=False, indent=2)
+    return div
 
 
 if __name__ == "__main__":
