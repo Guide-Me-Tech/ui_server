@@ -22,6 +22,7 @@ from tool_call_models.paynet import (
     SuppliersField,
     FieldOptions,
 )
+from tool_call_models.cards import CardInfoByCardNumberResponse
 from conf import logger
 
 
@@ -81,19 +82,27 @@ def get_number_by_receiver_name(
         values=[{"text": "cancel"}],
     )
 
+    names = (
+        ",".join(backend_output["receiver_name"])
+        if isinstance(backend_output["receiver_name"], list)
+        else backend_output["receiver_name"]
+    )
+
     widgets = add_ui_to_widget(
         {
-            get_number_by_reciver_number_ui: WidgetInput(
-                widget=get_contacts_widget,
-                args={"receiver_name": backend_output["receiver_name"]},
-            ),
-            build_buttons_row: WidgetInput(
-                widget=buttons,
-                args={"button_texts": ["cancel"]},
-            ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
-                args={"text": llm_output},
+                args={
+                    "text": f"Contactlaringiz orasidan {names} ismini qidirishimiz kerak. Qidiraylikmi ?"
+                },
+            ),
+            # get_number_by_reciver_number_ui: WidgetInput(
+            #     widget=get_contacts_widget,
+            #     args={"receiver_name": backend_output["receiver_name"]},
+            # ),
+            build_buttons_row: WidgetInput(
+                widget=buttons,
+                args={"button_texts": ["cancel", "search"], "receiver_name": names},
             ),
         },
         version,
@@ -124,21 +133,13 @@ def get_number_by_reciver_number_ui(receiver_name: Union[str, List[str]]):
 
     # Main container
     main_container = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        width=dv.DivMatchParentSize(),
-        height=dv.DivWrapContentSize(),
-        background=[dv.DivSolidBackground(color="#ffffff")],
         items=[
-            dv.DivText(
-                text="Contacts List",
-                font_size=24,
-                font_weight=dv.DivFontWeight(value="bold"),
-                margins=dv.DivEdgeInsets(
-                    **{"bottom": 16, "left": 16, "top": 16},
-                ),
-                actions=[search_contact_action],
-            ),
-        ],
+            dv.DivContainer(
+                items=[],
+                action=search_contact_action,
+                visibility=dv.DivVisibility.INVISIBLE,
+            )
+        ]
     )
     div = dv.make_div(main_container)
     with open("get_number_by_reciver_number_ui.json", "w") as f:
@@ -215,7 +216,6 @@ def get_receiver_id_by_receiver_phone_number_ui(
     #       {"name": "ROMAN GORBUNOV", "processing": "HUMO", "mask": "3525"},
     #   ]
     # }
-
     card_items = []
     for idx, card in enumerate(cards, 1):
         card_items.append(
@@ -295,6 +295,18 @@ def get_receiver_id_by_receiver_phone_number_ui(
                 paddings=dv.DivEdgeInsets(bottom=16, left=16, right=16, top=16),
                 background=[dv.DivSolidBackground(color="#FFFFFF")],
                 margins=dv.DivEdgeInsets(bottom=0 if idx == len(cards) else 8),
+                actions=[
+                    dv.DivAction(
+                        log_id=f"select_card_{idx}",
+                        url=f"divkit://select?card_id={idx}",
+                        payload={
+                            "card_id": card.pan,
+                            "card_name": card.name,
+                            "card_processing": card.processing,
+                            "card_mask": card.mask,
+                        },
+                    )
+                ],
             )
         )
         # Add divider except after last item
@@ -509,11 +521,24 @@ def get_suppliers_by_category_ui(suppliers: List[Supplier]):
                     text_color="#000000",
                 ),
             ],
-            action=dv.DivAction(
-                log_id=f"supplier_{supplier.id}_selected",
-                payload={"supplier_id": supplier.id, "supplier_name": supplier.name},
-                url=f"divkit://open_supplier?id={supplier.id}&name={supplier.name}",
-            ),
+            actions=[
+                dv.DivAction(
+                    log_id=f"supplier_{supplier.id}_selected",
+                    payload={
+                        "supplier_id": supplier.id,
+                        "supplier_name": supplier.name,
+                    },
+                    url=f"divkit://open_supplier?id={supplier.id}&name={supplier.name}",
+                ),
+                # dv.DivAction(
+                #     log_id=f"supplier_{supplier.id}_selected",
+                #     payload={
+                #         "supplier_id": supplier.id,
+                #         "supplier_name": supplier.name,
+                #     },
+                #     url=f"divkit://select?id={supplier.id}&name={supplier.name}",
+                # ),
+            ],
         )
         supplier_items.append(item_container)
 

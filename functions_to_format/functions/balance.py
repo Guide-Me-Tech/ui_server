@@ -235,7 +235,7 @@ def get_balance(llm_output, backend_output, version="v2"):
     backend_output: CardsBalanceResponse = CardsBalanceResponse(**backend_output)
     backend_output_processed: List[CardInfo] = []
     # logger.info(f"backend_output {backend_output} ----- type:{type(backend_output)}")
-    for i, card_info in enumerate(backend_output.cardList):
+    for i, card_info in enumerate(backend_output.body[0].cardList):
         backend_output_processed.append(
             CardInfo(
                 masked_card_pan=card_info.pan,

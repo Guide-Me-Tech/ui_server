@@ -14,6 +14,13 @@ import sentry_sdk
 
 app = FastAPI()
 
+
+# delete all json files in functions_to_format/functions/
+for file in os.listdir("."):
+    if file.endswith(".json"):
+        os.remove(os.path.join(".", file))
+        logger.info(f"Deleted file: {file}")
+
 # Serve static files
 app.mount("/ui_server/static", StaticFiles(directory="static"), name="static")
 
