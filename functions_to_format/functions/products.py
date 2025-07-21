@@ -255,11 +255,11 @@ def make_product_state(p: ProductItem, index: int):
                         actions=[
                             dv.DivAction(
                                 log_id="buy_product",
-                                url=f"sample-actions://redirect?url=https://smartbazar.uz/product/{p.slug}",
+                                url=f"sample-actions://redirect?url=https://smartbazar.uz/product/{p.id}",
                             ),
                             dv.DivAction(
                                 log_id="buy_product",
-                                url=f"div-action://redirect?url=https://smartbazar.uz/product/{p.slug}",
+                                url=f"div-action://redirect?url=https://smartbazar.uz/product/{p.id}",
                             ),
                         ],
                     ),

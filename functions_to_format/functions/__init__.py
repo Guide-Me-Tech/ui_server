@@ -1,7 +1,4 @@
-from .functions import (
-    chatbot_answer,
-    unauthorized_response,
-)
+from .functions import chatbot_answer, unauthorized_response, build_contacts_list
 from .balance import get_balance, build_balance_ui, get_home_balances
 from .payment import (
     get_receiver_id_by_receiver_phone_number,
@@ -15,7 +12,7 @@ from .contact import build_contact_widget, get_contact
 from .news import build_news_widget, get_news
 from .notification import build_notifications_widget, get_notifications
 from .products import build_products_list_widget, get_products, search_products
-from .weather import build_weather_widget, get_weather
+from .weather import build_weather_widget, get_weather_info
 from .buttons import build_buttons_row
 from .start_page import start_page_widget
 
@@ -37,7 +34,7 @@ sdui_functions_map = {
 }
 functions_mapper = {
     "get_balance": get_balance,
-    "get_weather": get_weather,
+    "get_weather_info": get_weather_info,
     "get_news": get_news,
     "get_products": get_products,
     "search_products": search_products,
@@ -54,4 +51,5 @@ functions_mapper = {
     "start_page_widget": start_page_widget,  # partially
     "send_money_to_someone_via_card": send_money_to_someone_via_card,  # not done yet
     "get_home_balances": get_home_balances,  # not done yet
+    "build_contacts_list": build_contacts_list,  # test phase
 }

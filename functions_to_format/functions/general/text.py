@@ -29,7 +29,7 @@ def text_widget(
                 letter_spacing=0,
             )
         ],
-        margins=dv.DivEdgeInsets(top=16, left=20),
+        margins=dv.DivEdgeInsets(top=16, left=20, right=20, bottom=16),
         width=dv.DivFixedSize(value=280),
         # item_spacing=10,  # gap between items
     )
