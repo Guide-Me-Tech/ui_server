@@ -314,10 +314,13 @@ def build_products_list_widget(products_list_input: List[ProductItem]):
         )
 
         return dv.make_div(
-            dv.DivData(
-                log_id=card_log_id, states=[dv.DivDataState(state_id=0, div=empty_div)]
+            dv.DivContainer(
+                orientation="vertical",
+                width=dv.DivMatchParentSize(),
+                paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
+                items=[empty_div],
             )
-        ).dict()
+        )
 
     # Create product state elements
     product_states = []

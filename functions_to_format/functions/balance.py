@@ -236,15 +236,20 @@ def get_balance(llm_output, backend_output, version="v2"):
     backend_output_processed: List[CardInfo] = []
     # logger.info(f"backend_output {backend_output} ----- type:{type(backend_output)}")
     for i, card_info in enumerate(backend_output.body[0].cardList):
+        balance_value = 0
+        if type(card_info.cardBalance.balance) is int:
+            balance_value = card_info.cardBalance.balance
+        elif type(card_info.cardBalance.balance) is str:
+            balance_value = int(card_info.cardBalance.balance.replace(" ", ""))
+        elif type(card_info.cardBalance.balance) is float:
+            balance_value = int(card_info.cardBalance.balance)
+
+
         backend_output_processed.append(
             CardInfo(
                 masked_card_pan=card_info.pan,
                 card_type=card_info.processingSystem,
-                balance=(
-                    card_info.cardBalance.balance
-                    if type(card_info.cardBalance.balance) is int
-                    else 0
-                ),
+                balance=balance_value,
                 card_name=card_info.cardDetails.cardName,
                 cardColor=card_info.cardDetails.cardColor,
                 image_url=card_info.bankIcon.bankLogoMini,
