@@ -1,5 +1,3 @@
-import jsonschema
-import jsonschema.exceptions
 import json
 import re
 import hashlib
@@ -18,7 +16,7 @@ from .general import (
 import pydivkit as dv
 from models.build import BuildOutput
 from pydantic import BaseModel
-
+from .general.const_values import WidgetMargins
 
 def chatbot_answer(llm_output: str, backend_output, version="v2") -> BuildOutput:
     # Janis Rubins: logic unchanged, just returns text_widget schema and llm_output as data
@@ -112,8 +110,9 @@ def build_contacts_list_widget(contacts: list[Contact]) -> list[dict]:
 
     container = dv.DivContainer(
         orientation="vertical",
-        # spacing=8,
         items=items,
+        margins=dv.DivEdgeInsets(top=WidgetMargins.TOP.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value, bottom=WidgetMargins.BOTTOM.value),
+        paddings=dv.DivEdgeInsets(left=16, right=16, top=8, bottom=8),
     )
     container = dv.make_div(container)
     with open("contacts.json", "w") as f:
@@ -233,59 +232,3 @@ def sanitize_output(data: Any) -> Any:
         return data.replace("<", "&lt;").replace(">", "&gt;")
     return data
 
-
-class SchemaValidator:
-    # Janis Rubins step 5: SchemaValidator class to handle validation and caching
-    def __init__(self):
-        self.validators = {}
-        self._schema_hashes = {}
-
-    def _calculate_hash(self, schema: Dict) -> str:
-        # Janis Rubins step 6: Calculate schema hash for integrity checks
-        return hashlib.sha256(json.dumps(schema, sort_keys=True).encode()).hexdigest()
-
-    def prepare_validator(self, name: str, schema: Dict) -> None:
-        # Janis Rubins step 7: Prepare and cache validator with integrity check
-        try:
-            schema_str = json.dumps(schema)
-            if len(schema_str.encode()) > MAX_PAYLOAD_SIZE:
-                logger.error(f"Schema {name} exceeds size limit")
-                return
-
-            schema_hash = self._calculate_hash(schema)
-            if name in self._schema_hashes and self._schema_hashes[name] != schema_hash:
-                logger.error(f"Schema {name} integrity check failed")
-                return
-
-            self.validators[name] = jsonschema.Draft7Validator(schema)
-            self._schema_hashes[name] = schema_hash
-            logger.debug(f"Validator prepared for {name}")
-        except Exception as e:
-            logger.error(f"Error preparing validator for {name}: {e}")
-
-    @lru_cache(maxsize=CACHE_SIZE)
-    def validate(self, name: str, data: Any) -> bool:
-        # Janis Rubins step 8: Validate data against cached schema
-        if name not in self.validators:
-            logger.error(f"No validator found for {name}")
-            return False
-
-        data_str = json.dumps(data)
-        if len(data_str.encode()) > MAX_PAYLOAD_SIZE:
-            logger.error("Input data exceeds size limit")
-            return False
-
-        if any(pattern in data_str.lower() for pattern in SUSPICIOUS_PATTERNS):
-            logger.error("Suspicious pattern detected in input")
-            return False
-
-        try:
-            self.validators[name].validate(data)
-            return True
-        except Exception as e:
-            logger.error(f"Validation error in {name}: {e}")
-            return False
-
-
-# Initialize schema validator and prepare validators if available
-schema_validator = SchemaValidator()

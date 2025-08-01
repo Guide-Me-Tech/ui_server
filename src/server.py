@@ -7,10 +7,17 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from models.build import BuildOutput, ErrorResponse
-
-# from src.config_router import router
 from functions_to_format.functions import functions_mapper
 import sentry_sdk
+try:
+    version = open("version.txt", "r").read()
+except Exception as e:
+    version = "0"
+finally:
+    if version == "":
+        version = "0"
+logger.info("Starting server", env=os.getenv("ENVIRONMENT"), version=version)
+# from src.config_router import router
 
 app = FastAPI()
 

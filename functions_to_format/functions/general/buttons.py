@@ -1,7 +1,7 @@
 import pydivkit as dv
 import json
 from models.widget import Widget
-
+from .const_values import WidgetMargins, WidgetPaddings, ButtonInRowMargins
 
 class ButtonsWidget(Widget):
     name: str = "buttons_widget"
@@ -31,7 +31,7 @@ def make_contacts_search_button(txt, receiver_name):
         alignment_horizontal="center",
         height=dv.DivFixedSize(value=36),
         paddings=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
-        margins=dv.DivEdgeInsets(right=8),
+        margins=dv.DivEdgeInsets(right=ButtonInRowMargins.RIGHT.value, top=ButtonInRowMargins.TOP.value, bottom=ButtonInRowMargins.BOTTOM.value, left=ButtonInRowMargins.LEFT.value),
         action=search_contact_action,
     )
 
@@ -53,7 +53,7 @@ def build_buttons_row(button_texts: list, receiver_name: str = None):
                     alignment_horizontal="center",
                     height=dv.DivFixedSize(value=36),
                     paddings=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
-                    margins=dv.DivEdgeInsets(right=8),
+                    margins=dv.DivEdgeInsets(right=ButtonInRowMargins.RIGHT.value, top=ButtonInRowMargins.TOP.value, bottom=ButtonInRowMargins.BOTTOM.value, left=ButtonInRowMargins.LEFT.value),
                     action=dv.DivAction(
                         log_id=f"btn-{txt.lower()}",
                         url=f"divkit://button/{txt.lower()}",
@@ -65,7 +65,7 @@ def build_buttons_row(button_texts: list, receiver_name: str = None):
         dv.DivContainer(
             orientation="horizontal",
             items=items,
-            margins=dv.DivEdgeInsets(top=13, bottom=13),
+            margins=dv.DivEdgeInsets(top=WidgetMargins.TOP.value, bottom=WidgetMargins.BOTTOM.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value),
         )
     )
     return div

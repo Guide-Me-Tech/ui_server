@@ -1,14 +1,13 @@
 from models.widget import Widget
 import pydivkit as dv
 import json
-
+from .const_values import WidgetMargins
 
 class TextWidget(Widget):
     name: str = "text_widget"
     type: str = "text_widget"
     layout: str = "horizontal"
     fields: list[str] = ["text"]
-
 
 def text_widget(
     text: str,
@@ -17,20 +16,24 @@ def text_widget(
         orientation="vertical",
         background=[dv.DivSolidBackground(color="#F8FAFF")],  # light bluish-white
         border=dv.DivBorder(corner_radius=16),
-        paddings=dv.DivEdgeInsets(left=16, right=16, top=12, bottom=12),
+        paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
         items=[
             dv.DivText(
-                text=text,
+                text=text +  "\n",
                 font_family="Manrope",
                 font_size=14,
                 font_weight=dv.DivFontWeight.LIGHT,
                 text_color="#111133",  # dark navy color
-                line_height=20,
+                line_height=22,
                 letter_spacing=0,
+                # max_lines=0,  # Allow unlimited lines
+                text_alignment_horizontal="left",
+                text_alignment_vertical="top",
             )
         ],
-        margins=dv.DivEdgeInsets(top=16, left=20, right=20, bottom=16),
-        width=dv.DivFixedSize(value=280),
+        margins=dv.DivEdgeInsets(top=WidgetMargins.TOP.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value, bottom=WidgetMargins.BOTTOM.value),
+        width=dv.DivMatchParentSize(),
+        height=dv.DivWrapContentSize(),
         # item_spacing=10,  # gap between items
     )
 
