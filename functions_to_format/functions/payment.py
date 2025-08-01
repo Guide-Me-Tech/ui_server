@@ -200,7 +200,6 @@ def get_receiver_id_by_receiver_phone_number(
 
     return output
 
-
 def get_receiver_id_by_receiver_phone_number_ui(
     cards: List[CardInfoByPhoneNumber],
 ) -> BuildOutput:
@@ -284,10 +283,13 @@ def get_receiver_id_by_receiver_phone_number_ui(
                                         font_size=15,
                                         text_color="#374151",
                                         line_height=18,
-                                        margins=dv.DivEdgeInsets(left=4),
+                                        margins=dv.DivEdgeInsets(left=1),
+                                        max_lines=1,
+                                        text_alignment_horizontal="left",
                                     ),
                                 ],
                                 margins=dv.DivEdgeInsets(top=2),
+                                width=dv.DivWrapContentSize(),
                             ),
                         ],
                     ),
@@ -375,7 +377,7 @@ def get_categories(llm_output, backend_output, version="v2") -> BuildOutput:
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons,
-                args={"button_texts": ["cancel", "submit"]},
+                args={"button_texts": ["cancel"]},
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
@@ -480,7 +482,7 @@ def get_suppliers_by_category(llm_output, backend_output, version="v2") -> Build
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons_widget,
-                args={"button_texts": ["cancel", "submit"]},
+                args={"button_texts": ["cancel"]},
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,

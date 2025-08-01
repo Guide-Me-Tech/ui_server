@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List
 from .general import Widget, add_ui_to_widget
 from models.build import BuildOutput
+from .general.const_values import WidgetMargins
 
 
 def get_contact(
@@ -27,6 +28,7 @@ def get_contact(
 
 
 def contact_widget(name, avatar_url, subtitle):
+    
     return dv.DivContainer(
         orientation="horizontal",
         items=[
@@ -55,7 +57,7 @@ def contact_widget(name, avatar_url, subtitle):
         background=[dv.DivSolidBackground(color="#FFFFFF")],
         border=dv.DivBorder(corner_radius=12, stroke=dv.DivStroke(color="#E5E7EB")),
         width=dv.DivMatchParentSize(),
-        margins=dv.DivEdgeInsets(bottom=8),
+        margins=dv.DivEdgeInsets(bottom=WidgetMargins.BOTTOM.value, top=WidgetMargins.TOP.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value),
     )
 
 

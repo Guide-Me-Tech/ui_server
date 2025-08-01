@@ -55,7 +55,6 @@ def get_weather_info(llm_output: str, backend_output: dict, version: str = "v3")
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
 
-
 def weather_widget(data: WeatherResponse):
     # Main weather card container
     main_container = dv.DivContainer(
@@ -109,9 +108,10 @@ def weather_widget(data: WeatherResponse):
                     dv.DivContainer(
                         orientation="vertical",
                         items=[
+                            # Temperature with inline °C on same line
                             dv.DivText(
                                 text=f"{data.current.temp_c}°C",
-                                font_size=48,
+                                font_size=40,
                                 font_weight="bold",
                                 text_color="#1F2937",
                             ),
@@ -183,13 +183,13 @@ def weather_widget(data: WeatherResponse):
                                 ),
                                 dv.DivText(
                                     text=f"{forecast_day.day.maxtemp_c}°C",
-                                    font_size=12,
+                                    font_size=10,
                                     font_weight="bold",
                                     text_color="#1F2937",
                                 ),
                                 dv.DivText(
                                     text=f"{forecast_day.day.mintemp_c}°C",
-                                    font_size=12,
+                                    font_size=9,
                                     text_color="#6B7280",
                                 ),
                             ],
