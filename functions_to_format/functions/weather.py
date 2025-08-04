@@ -1,14 +1,10 @@
 import pydivkit as dv
 import json
-from pydantic import BaseModel
-from typing import Optional
 from .general import (
     Widget,
     TextWidget,
     build_text_widget,
     add_ui_to_widget,
-    ButtonsWidget,
-    build_buttons_row,
     WidgetInput,
 )
 from tool_call_models.weather import WeatherResponse
@@ -58,7 +54,7 @@ def get_weather_info(llm_output: str, backend_output: dict, version: str = "v3")
 def weather_widget(data: WeatherResponse):
     # Main weather card container
     main_container = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         width=dv.DivFixedSize(value=320),
         background=[dv.DivSolidBackground(color="#FFFFFF")],
         border=dv.DivBorder(corner_radius=16, stroke=dv.DivStroke(color="#E5E7EB")),
@@ -67,16 +63,16 @@ def weather_widget(data: WeatherResponse):
         items=[
             # Header with city name and location
             dv.DivContainer(
-                orientation="horizontal",
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
                 alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                 items=[
                     dv.DivContainer(
-                        orientation="vertical",
+                        orientation=dv.DivContainerOrientation.VERTICAL,
                         items=[
                             dv.DivText(
                                 text=data.location.name,
                                 font_size=24,
-                                font_weight="bold",
+                                font_weight=dv.DivFontWeight.BOLD,
                                 text_color="#1F2937",
                             ),
                             dv.DivText(
@@ -102,17 +98,17 @@ def weather_widget(data: WeatherResponse):
             ),
             # Main temperature and condition section
             dv.DivContainer(
-                orientation="horizontal",
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
                 alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                 items=[
                     dv.DivContainer(
-                        orientation="vertical",
+                        orientation=dv.DivContainerOrientation.VERTICAL,
                         items=[
                             # Temperature with inline °C on same line
                             dv.DivText(
                                 text=f"{data.current.temp_c}°C",
                                 font_size=40,
-                                font_weight="bold",
+                                font_weight=dv.DivFontWeight.BOLD,
                                 text_color="#1F2937",
                             ),
                             dv.DivText(
@@ -138,13 +134,13 @@ def weather_widget(data: WeatherResponse):
                         ],
                     ),
                     dv.DivContainer(
-                        orientation="vertical",
-                        alignment_horizontal="center",
+                        orientation=dv.DivContainerOrientation.VERTICAL,
+                        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                         items=[
                             dv.DivText(
                                 text=data.current.condition.text,
                                 font_size=18,
-                                font_weight="medium",
+                                font_weight=dv.DivFontWeight.MEDIUM,
                                 text_color="#1F2937",
                             ),
                         ],
@@ -154,14 +150,14 @@ def weather_widget(data: WeatherResponse):
             ),
             # Weekly forecast section
             dv.DivContainer(
-                orientation="horizontal",
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
                 alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                 items=[
                     # Generate forecast days dynamically
                     *[
                         dv.DivContainer(
-                            orientation="vertical",
-                            alignment_horizontal="center",
+                            orientation=dv.DivContainerOrientation.VERTICAL,
+                            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                             items=[
                                 dv.DivText(
                                     text=forecast_day.date.split("-")[2]
@@ -184,7 +180,7 @@ def weather_widget(data: WeatherResponse):
                                 dv.DivText(
                                     text=f"{forecast_day.day.maxtemp_c}°C",
                                     font_size=10,
-                                    font_weight="bold",
+                                    font_weight=dv.DivFontWeight.BOLD,
                                     text_color="#1F2937",
                                 ),
                                 dv.DivText(

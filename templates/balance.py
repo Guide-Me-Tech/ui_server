@@ -4,7 +4,7 @@ import json
 
 def card_block(card):
     return dv.DivContainer(
-        orientation="horizontal",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
         items=[
             dv.DivImage(
                 image_url=card["image_url"],
@@ -15,12 +15,12 @@ def card_block(card):
                 margins=dv.DivEdgeInsets(right=12),
             ),
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 items=[
                     dv.DivText(
                         text=f'{card["balance"]} сум',
                         font_size=16,
-                        font_weight="bold",
+                        font_weight=dv.DivFontWeight.BOLD,
                         text_color="#111827",
                     ),
                     dv.DivText(
@@ -37,7 +37,7 @@ def card_block(card):
 
 def account_block(account):
     return dv.DivContainer(
-        orientation="horizontal",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
         items=[
             dv.DivImage(
                 image_url=account["image_url"],
@@ -48,12 +48,12 @@ def account_block(account):
                 margins=dv.DivEdgeInsets(right=12),
             ),
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 items=[
                     dv.DivText(
                         text=f'{account["balance"]} сум',
                         font_size=16,
-                        font_weight="bold",
+                        font_weight=dv.DivFontWeight.BOLD,
                         text_color="#111827",
                     ),
                     dv.DivText(
@@ -71,7 +71,7 @@ def action_button(text):
         text=text,
         text_color="#2563EB",
         height=dv.DivFixedSize(value=36),
-        alignment_horizontal="center",
+        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
         paddings=dv.DivEdgeInsets(top=8, bottom=8),
         border=dv.DivBorder(corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")),
         action=dv.DivAction(
@@ -118,7 +118,7 @@ if __name__ == "__main__":
             dv.DivText(
                 text="Баланс ваших карт:",
                 font_size=13,
-                font_weight="bold",
+                font_weight=dv.DivFontWeight.BOLD,
                 text_color="#374151",
                 margins=dv.DivEdgeInsets(bottom=8),
             )
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             dv.DivText(
                 text="Баланс ваших счетов:",
                 font_size=13,
-                font_weight="bold",
+                font_weight=dv.DivFontWeight.BOLD,
                 text_color="#374151",
                 margins=dv.DivEdgeInsets(top=12, bottom=8),
             )
@@ -140,14 +140,14 @@ if __name__ == "__main__":
     # Сообщение и кнопки
     main_items.append(
         dv.DivContainer(
-            orientation="vertical",
+            orientation=dv.DivContainerOrientation.VERTICAL,
             background=[dv.DivSolidBackground(color="#F9FAFB")],
             # border=dv.DivBorder(corner_radius=12),
             paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
             items=[
                 dv.DivText(text=text, font_size=13, text_color="#374151"),
                 dv.DivContainer(
-                    orientation="horizontal",
+                    orientation=dv.DivContainerOrientation.HORIZONTAL,
                     items=[action_button(act) for act in actions],
                     margins=dv.DivEdgeInsets(top=12),
                 ),
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     # Root контейнер
     root = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         items=main_items,
         width=dv.DivMatchParentSize(),
         background=[dv.DivSolidBackground(color="#FFFFFF")],

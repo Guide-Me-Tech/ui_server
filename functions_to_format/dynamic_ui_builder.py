@@ -42,16 +42,8 @@ UI_BUILDER_DEFAULT_WIDGET = os.environ.get("UI_BUILDER_DEFAULT_WIDGET", "text_wi
 UI_BUILDER_RESOURCE_SAVING_MODE = (
     os.environ.get("UI_BUILDER_RESOURCE_SAVING_MODE", "true").lower() == "true"
 )
+widgets = {}
 
-# Janis Rubins step 3: Attempt to import widgets from functions_to_format.components
-# If not found, fallback to empty dict or handle gracefully.
-try:
-    from functions_to_format.components import widgets
-except ImportError:
-    logger.warning(
-        "Could not import widgets from functions_to_format.components. Using empty widgets dict."
-    )
-    widgets = {}  # fallback, but normally we should have widgets defined.
 
 # Janis Rubins step 4: Parse UI_BUILDER_WIDGET_MAPPING
 # It could be a JSON or comma-separated. We choose JSON for flexibility.

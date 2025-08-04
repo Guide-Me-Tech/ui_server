@@ -39,10 +39,10 @@ def get_notifications(
 
 def notification_widget(title, description):
     return dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         items=[
             dv.DivText(
-                text=title, font_size=14, font_weight="bold", text_color="#1E3A8A"
+                text=title, font_size=14, font_weight=dv.DivFontWeight.BOLD, text_color="#1E3A8A"
             ),
             dv.DivText(
                 text=description,
@@ -81,7 +81,7 @@ def build_notifications_widget(notification_input: NotificationsInput):
 
     # Create container for all notifications
     notifications_container = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         items=notification_items,
         width=dv.DivMatchParentSize(),
         margins=dv.DivEdgeInsets(left=8, right=8, top=8, bottom=8),

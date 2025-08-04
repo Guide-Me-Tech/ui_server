@@ -2,7 +2,7 @@ import json
 import re
 import hashlib
 from functools import lru_cache
-from typing import Any, Dict
+from typing import Any, Dict, List
 from conf import logger
 from .general import (
     add_ui_to_widget,
@@ -55,8 +55,8 @@ class Contact(BaseModel):
     phone: str
 
 
-def build_contacts_list_widget(contacts: list[Contact]) -> list[dict]:
-    items = [
+def build_contacts_list_widget(contacts: list[Contact]) -> Dict[str, Any]:
+    items: List[dv.Div] = [
         dv.DivText(
             text="Contacts List",
             font_family="Manrope",
@@ -79,7 +79,7 @@ def build_contacts_list_widget(contacts: list[Contact]) -> list[dict]:
         )
 
         contact_cell = dv.DivContainer(
-            orientation="vertical",
+            orientation=dv.DivContainerOrientation.VERTICAL,
             paddings=dv.DivEdgeInsets(left=16, right=16, top=8, bottom=8),
             border=dv.DivBorder(
                 stroke=dv.DivStroke(color="#E0E0E0"),
@@ -109,7 +109,7 @@ def build_contacts_list_widget(contacts: list[Contact]) -> list[dict]:
         items.append(contact_cell)
 
     container = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         items=items,
         margins=dv.DivEdgeInsets(top=WidgetMargins.TOP.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value, bottom=WidgetMargins.BOTTOM.value),
         paddings=dv.DivEdgeInsets(left=16, right=16, top=8, bottom=8),
@@ -120,8 +120,8 @@ def build_contacts_list_widget(contacts: list[Contact]) -> list[dict]:
     return container
 
 
-def build_contacts_list(llm_output: str, backend_output, version="v2") -> list[dict]:
-    contacts_list: list[dict] = []
+def build_contacts_list(llm_output: str, backend_output: list[dict], version: str = "v2") -> BuildOutput:
+    contacts_list: list[Contact] = []
 
     contact_widget = Widget(
         order=1,
@@ -203,32 +203,3 @@ def build_contacts_list(llm_output: str, backend_output, version="v2") -> list[d
 ########################################################
 ########################################################
 ######### LEGACY UNUSED CODE #########
-# Janis Rubins: precompile validator to avoid repeated schema parsing
-
-# Janis Rubins step 1: Security and Performance Constants
-MAX_PAYLOAD_SIZE = 1024 * 1024  # 1MB limit for input/data size
-CACHE_SIZE = 100  # LRU cache size for schema validations
-SAFE_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]{1,64}$")  # Pattern for safe identifiers
-SUSPICIOUS_PATTERNS = ["__proto__", "constructor", "prototype", "<script"]
-
-
-def is_safe_identifier(value: str) -> bool:
-    # Janis Rubins step 3: Ensure identifiers are safe to prevent malicious keys or names
-    return bool(SAFE_PATTERN.match(value))
-
-
-@lru_cache(maxsize=CACHE_SIZE)
-def sanitize_output(data: Any) -> Any:
-    # Janis Rubins step 4: Sanitize output data to prevent injection attacks
-    # This does not break functionality, just adds a layer of security
-    if isinstance(data, dict):
-        return {
-            k: sanitize_output(v) for k, v in data.items() if is_safe_identifier(str(k))
-        }
-    elif isinstance(data, list):
-        return [sanitize_output(x) for x in data]
-    elif isinstance(data, str):
-        # Basic HTML/script sanitization
-        return data.replace("<", "&lt;").replace(">", "&gt;")
-    return data
-

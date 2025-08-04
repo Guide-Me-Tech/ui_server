@@ -1,5 +1,4 @@
 from conf import logger
-import json
 import os
 from typing import Optional, Any, Dict, List, Callable, Set, Union
 from fastapi import FastAPI, Request, Response
@@ -17,7 +16,6 @@ finally:
     if version == "":
         version = "0"
 logger.info("Starting server", env=os.getenv("ENVIRONMENT"), version=version)
-# from src.config_router import router
 
 app = FastAPI()
 
