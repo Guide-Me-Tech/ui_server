@@ -1,0 +1,12 @@
+{
+    "exclude": ["build", "dist", ".venv", "tests", "temp", "configuration_manager", "templates", "adapters", "test.py", "utils/performance_metrics.py", "utils/cache.py"],
+    "reportMissingImports": true,
+    "reportUnusedImport": "warning",
+    "typeCheckingMode": "basic",
+    "ignore": [
+        "reportImplicitOverride",
+        "reportRedeclaration"
+
+    ], 
+    "reportImplicitOverride": false
+}
