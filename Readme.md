@@ -1,3 +1,7 @@
+# UI Server
+
+[![Pyright Linter](https://github.com/Guide-Me-Tech/ui_server/actions/workflows/pyright%20linter.yml/badge.svg)](https://github.com/Guide-Me-Tech/ui_server/actions/workflows/pyright%20linter.yml)
+
 ## Before to Run the Code
 
 This section helps ensure that you have a complete grasp of the system before starting the application. Review this checklist and accompanying references carefully:
