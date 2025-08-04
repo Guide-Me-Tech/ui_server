@@ -12,7 +12,7 @@ class WidgetInput(BaseModel):
 
 def add_ui_to_widget(
     widget_inputs: Dict[Callable, WidgetInput],
-    version,
+    version: str,
 ):
     if version == "v3":
         for sdui_function, widget_input in widget_inputs.items():

@@ -28,7 +28,7 @@ def make_contacts_search_button(txt, receiver_name):
         font_size=14,
         text_color="#2563EB",
         border=dv.DivBorder(corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")),
-        alignment_horizontal="center",
+        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
         height=dv.DivFixedSize(value=36),
         paddings=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
         margins=dv.DivEdgeInsets(right=ButtonInRowMargins.RIGHT.value, top=ButtonInRowMargins.TOP.value, bottom=ButtonInRowMargins.BOTTOM.value, left=ButtonInRowMargins.LEFT.value),
@@ -36,7 +36,7 @@ def make_contacts_search_button(txt, receiver_name):
     )
 
 
-def build_buttons_row(button_texts: list, receiver_name: str = None):
+def build_buttons_row(button_texts: list, receiver_name: str | None = None):
     items = []
     for txt in button_texts:
         if txt == "search":
@@ -50,7 +50,7 @@ def build_buttons_row(button_texts: list, receiver_name: str = None):
                     border=dv.DivBorder(
                         corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
                     ),
-                    alignment_horizontal="center",
+                    alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                     height=dv.DivFixedSize(value=36),
                     paddings=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
                     margins=dv.DivEdgeInsets(right=ButtonInRowMargins.RIGHT.value, top=ButtonInRowMargins.TOP.value, bottom=ButtonInRowMargins.BOTTOM.value, left=ButtonInRowMargins.LEFT.value),
@@ -63,7 +63,7 @@ def build_buttons_row(button_texts: list, receiver_name: str = None):
 
     div = dv.make_div(
         dv.DivContainer(
-            orientation="horizontal",
+            orientation=dv.DivContainerOrientation.HORIZONTAL,
             items=items,
             margins=dv.DivEdgeInsets(top=WidgetMargins.TOP.value, bottom=WidgetMargins.BOTTOM.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value),
         )

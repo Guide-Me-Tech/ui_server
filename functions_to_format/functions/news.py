@@ -45,17 +45,17 @@ def get_news(llm_output: str, backend_output: dict, version: str = "v3"):
 
 def news_item(title, source, time, image_url, url):
     return dv.DivContainer(
-        orientation="horizontal",
-        alignment_vertical="center",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
+        alignment_vertical=dv.DivAlignmentVertical.CENTER,
         items=[
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 # width=dv.DivWeight(1),
                 items=[
                     dv.DivText(
                         text=title,
                         font_size=14,
-                        font_weight="medium",
+                        font_weight=dv.DivFontWeight.MEDIUM,
                         text_color="#FFFFFF",
                         max_lines=1,
                         # ellipsis=dv.DivTextEllipsis(),
@@ -102,12 +102,12 @@ def build_news_widget(news_widget_input: NewsWidgetInput):
     items = [
         # Header
         dv.DivContainer(
-            orientation="horizontal",
+            orientation=dv.DivContainerOrientation.HORIZONTAL,
             items=[
                 dv.DivText(
                     text=news_widget_input.header_text,
                     font_size=12,
-                    font_weight="bold",
+                    font_weight=dv.DivFontWeight.BOLD,
                     text_color="#9CA3AF",
                     letter_spacing=0.5,
                 ),
@@ -117,7 +117,7 @@ def build_news_widget(news_widget_input: NewsWidgetInput):
     items.extend(news)
 
     root = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         background=[dv.DivSolidBackground(color="#1F2937")],  # dark gray background
         border=dv.DivBorder(corner_radius=16),
         paddings=dv.DivEdgeInsets(
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     items = [
         # Header
         dv.DivContainer(
-            orientation="horizontal",
+            orientation=dv.DivContainerOrientation.HORIZONTAL,
             items=[
                 # dv.DivImage(
                 #     image_url="https://www.gstatic.com/images/branding/product/1x/googlenews_512dp.png",
@@ -163,7 +163,7 @@ if __name__ == "__main__":
                 dv.DivText(
                     text="TOP NEWS",
                     font_size=12,
-                    font_weight="bold",
+                    font_weight=dv.DivFontWeight.BOLD,
                     text_color="#9CA3AF",
                     letter_spacing=0.5,
                 ),
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     items.extend(news)
 
     root = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         background=[dv.DivSolidBackground(color="#1F2937")],  # dark gray background
         border=dv.DivBorder(corner_radius=16),
         paddings=dv.DivEdgeInsets(

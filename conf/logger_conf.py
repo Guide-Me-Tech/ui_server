@@ -20,7 +20,7 @@ dotenv.load_dotenv(".env")
 # logfire.configure(token=os.getenv("LOGFIRE_TOKEN"))
 
 
-def setup_logging(logfile: str) -> logging.Logger:
+def setup_logging(logfile: str) -> structlog.stdlib.BoundLogger:
     """Configure structlog to log JSON to file and prettified output to stdout."""
 
     # --- 1. Create handlers ---

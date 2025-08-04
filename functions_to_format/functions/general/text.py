@@ -13,7 +13,7 @@ def text_widget(
     text: str,
 ):
     return dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         background=[dv.DivSolidBackground(color="#F8FAFF")],  # light bluish-white
         border=dv.DivBorder(corner_radius=16),
         paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
@@ -27,8 +27,8 @@ def text_widget(
                 line_height=22,
                 letter_spacing=0,
                 # max_lines=0,  # Allow unlimited lines
-                text_alignment_horizontal="left",
-                text_alignment_vertical="top",
+                text_alignment_horizontal=dv.DivAlignmentHorizontal.LEFT,
+                text_alignment_vertical=dv.DivAlignmentVertical.TOP,
             )
         ],
         margins=dv.DivEdgeInsets(top=WidgetMargins.TOP.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value, bottom=WidgetMargins.BOTTOM.value),

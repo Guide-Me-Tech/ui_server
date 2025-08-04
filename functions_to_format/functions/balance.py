@@ -79,7 +79,7 @@ def build_balances_part(home_balance: HomeBalance):
         try:
             items.append(
                 dv.DivContainer(
-                    orientation="horizontal",
+                    orientation=dv.DivContainerOrientation.HORIZONTAL,
                     width=dv.DivFixedSize(value=150)
                     if service_name == "electricity"
                     else None,
@@ -116,7 +116,7 @@ def build_balances_part(home_balance: HomeBalance):
             )
 
     return dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         margins=dv.DivEdgeInsets(top=8),
         items=items,
     )
@@ -124,7 +124,7 @@ def build_balances_part(home_balance: HomeBalance):
 
 def build_home_balance_main_container(home_balance: HomeBalance):
     return dv.DivContainer(
-        orientation="horizontal",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
         width=dv.DivFixedSize(value=361),
         height=dv.DivFixedSize(value=150),
         background=[dv.DivSolidBackground(color="#EBF2FA")],
@@ -133,12 +133,12 @@ def build_home_balance_main_container(home_balance: HomeBalance):
         margins=dv.DivEdgeInsets(left=15),  # Added left margin to move card right
         items=[
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 items=[
                     dv.DivText(
                         text="Мой дом",
                         font_size=20,
-                        font_weight="medium",
+                        font_weight=dv.DivFontWeight.MEDIUM,
                         text_color="#000000",
                         margins=dv.DivEdgeInsets(bottom=8),
                     ),
@@ -150,7 +150,7 @@ def build_home_balance_main_container(home_balance: HomeBalance):
                 ],
             ),
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 margins=dv.DivEdgeInsets(left=64),
                 items=[
                     build_balances_part(home_balance),
@@ -172,7 +172,7 @@ def build_home_balances_ui(home_balance: HomeBalance):
     return output
 
 
-def get_home_balances(llm_output, backend_output, version="v2"):
+def get_home_balances(llm_output: str, backend_output: dict, version: str = "v2") -> BuildOutput:
     """
     Get home balances.
     """
@@ -180,7 +180,7 @@ def get_home_balances(llm_output, backend_output, version="v2"):
         backend_output[k] = v
     del backend_output["services"]
 
-    backend_output: HomeBalance = HomeBalance(**backend_output)
+    backend_data: HomeBalance = HomeBalance(**backend_output)
 
     text_widget = TextWidget(
         order=1,
@@ -192,7 +192,7 @@ def get_home_balances(llm_output, backend_output, version="v2"):
         order=2,
         layout="vertical",
         fields=["homeName", "services"],
-        values=[backend_output.model_dump(exclude_none=True)],
+        values=[backend_data.model_dump(exclude_none=True)],
     )
 
     widgets = add_ui_to_widget(
@@ -203,7 +203,7 @@ def get_home_balances(llm_output, backend_output, version="v2"):
             ),
             build_home_balances_ui: WidgetInput(
                 widget=home_Balance_Widget,
-                args={"home_balance": backend_output},
+                args={"home_balance": backend_data},
             ),
         },
         version,
@@ -215,7 +215,7 @@ def get_home_balances(llm_output, backend_output, version="v2"):
     return output
 
 
-def get_balance(llm_output, backend_output, version="v2"):
+def get_balance(llm_output: str, backend_output: dict, version: str = "v2") -> BuildOutput:
     """
     Process balance information and create UI widgets.
 
@@ -232,10 +232,10 @@ def get_balance(llm_output, backend_output, version="v2"):
     output = [
         llm_output,
     ]
-    backend_output: CardsBalanceResponse = CardsBalanceResponse(**backend_output)
+    backend_data: CardsBalanceResponse = CardsBalanceResponse(**backend_output)
     backend_output_processed: List[CardInfo] = []
     # logger.info(f"backend_output {backend_output} ----- type:{type(backend_output)}")
-    for i, card_info in enumerate(backend_output.body[0].cardList):
+    for i, card_info in enumerate(backend_data.body[0].cardList):
         balance_value = 0
         if type(card_info.cardBalance.balance) is int:
             balance_value = card_info.cardBalance.balance
@@ -305,7 +305,7 @@ def card_block(card: CardInfo):
         dv.DivContainer: UI component for card display
     """
     return dv.DivContainer(
-        orientation="horizontal",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
         items=[
             dv.DivImage(
                 image_url=card.image_url,
@@ -316,12 +316,12 @@ def card_block(card: CardInfo):
                 margins=dv.DivEdgeInsets(right=12),
             ),
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 items=[
                     dv.DivText(
                         text=f"{card.balance} сум",
                         font_size=16,
-                        font_weight="bold",
+                        font_weight=dv.DivFontWeight.BOLD,
                         text_color="#111827",
                     ),
                     dv.DivText(
@@ -347,7 +347,7 @@ def account_block(account: Account):
         dv.DivContainer: UI component for account display
     """
     return dv.DivContainer(
-        orientation="horizontal",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
         items=[
             dv.DivImage(
                 image_url=account.image_url,
@@ -358,12 +358,12 @@ def account_block(account: Account):
                 margins=dv.DivEdgeInsets(right=12),
             ),
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 items=[
                     dv.DivText(
                         text=f"{account.balance} сум",
                         font_size=16,
-                        font_weight="bold",
+                        font_weight=dv.DivFontWeight.BOLD,
                         text_color="#111827",
                     ),
                     dv.DivText(
@@ -390,7 +390,7 @@ def action_button(text: str):
         text=text,
         text_color="#2563EB",
         height=dv.DivFixedSize(value=36),
-        alignment_horizontal="center",
+        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
         paddings=dv.DivEdgeInsets(top=8, bottom=8),
         border=dv.DivBorder(corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")),
         action=dv.DivAction(
@@ -424,7 +424,7 @@ def build_balance_ui(balance_input: BalanceInput):
             dv.DivText(
                 text="Баланс ваших карт:",
                 font_size=13,
-                font_weight="bold",
+                font_weight=dv.DivFontWeight.BOLD,
                 text_color="#374151",
                 margins=dv.DivEdgeInsets(bottom=8),
             )
@@ -434,13 +434,13 @@ def build_balance_ui(balance_input: BalanceInput):
     # Сообщение и кнопки
     main_items.append(
         dv.DivContainer(
-            orientation="vertical",
+            orientation=dv.DivContainerOrientation.VERTICAL,
             background=[dv.DivSolidBackground(color="#F9FAFB")],
             paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
             items=[
                 dv.DivText(text=text, font_size=13, text_color="#374151"),
                 dv.DivContainer(
-                    orientation="horizontal",
+                    orientation=dv.DivContainerOrientation.HORIZONTAL,
                     items=[action_button(act) for act in actions],
                     margins=dv.DivEdgeInsets(top=12),
                 ),
@@ -451,7 +451,7 @@ def build_balance_ui(balance_input: BalanceInput):
 
     # Root контейнер
     root = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         items=main_items,
         width=dv.DivFixedSize(value=280),
         height=dv.DivFixedSize(value=248),
@@ -503,7 +503,7 @@ if __name__ == "__main__":
         }
     )
 
-    result = build_balance_ui(backend_output, llm_output)
+    result = build_balance_ui(BalanceInput.model_validate(backend_output)) 
 
     with open("jsons/balance_card.json", "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)

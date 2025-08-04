@@ -93,7 +93,7 @@ def make_product_state(p: ProductItem, index: int):
 
     # Collapsed state div
     collapsed_div = dv.DivContainer(
-        orientation="horizontal",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
         background=[dv.DivSolidBackground(color="#FFFFFF")],
         margins=dv.DivEdgeInsets(bottom=8),
         paddings=dv.DivEdgeInsets(left=12, right=12, top=12, bottom=12),
@@ -106,10 +106,10 @@ def make_product_state(p: ProductItem, index: int):
                 scale=dv.DivImageScale.FILL,
             ),
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 width=dv.DivWrapContentSize(),
                 items=[
-                    dv.DivText(text=p.name_ru, font_size=14, font_weight="medium"),
+                    dv.DivText(text=p.name_ru, font_size=14, font_weight=dv.DivFontWeight.MEDIUM),
                     dv.DivText(
                         text=f"{p.offers[0].price if p.offers else ''} сумм",
                         font_size=13,
@@ -141,22 +141,25 @@ def make_product_state(p: ProductItem, index: int):
 
     # Expanded state div
     offer_price_text = f"{p.offers[0].price if p.offers else ''} сумм"
-    if (
-        p.offers
-        and p.offers[0].twelve_month_price
-        and p.offers[0].twelve_month_price > 0
-    ):
-        offer_price_text = f"{p.offers[0].twelve_month_price} сумм x 12 мес"
+    if p.offers and isinstance( p.offers[0].twelve_month_price, str):
+        p.offers[0].twelve_month_price = int(p.offers[0].twelve_month_price)
+    elif p.offers and( isinstance( p.offers[0].twelve_month_price, int) or isinstance( p.offers[0].twelve_month_price, float) ):
+        if (
+            p.offers
+            and p.offers[0].twelve_month_price
+            and p.offers[0].twelve_month_price > 0
+        ):
+            offer_price_text = f"{p.offers[0].twelve_month_price} сумм x 12 мес"
 
     expanded_div = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         background=[dv.DivSolidBackground(color="#FFFFFF")],
         border=dv.DivBorder(corner_radius=12, stroke=dv.DivStroke(color="#E5E7EB")),
         paddings=dv.DivEdgeInsets(left=12, right=12, top=12, bottom=12),
         margins=dv.DivEdgeInsets(bottom=8),
         items=[
             dv.DivContainer(
-                orientation="horizontal",
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
                 items=[
                     dv.DivImage(
                         image_url=main_image_mobile_url,
@@ -165,11 +168,11 @@ def make_product_state(p: ProductItem, index: int):
                         scale=dv.DivImageScale.FILL,
                     ),
                     dv.DivContainer(
-                        orientation="vertical",
+                        orientation=dv.DivContainerOrientation.VERTICAL,
                         width=dv.DivWrapContentSize(),
                         items=[
                             dv.DivText(
-                                text=p.name_ru, font_size=14, font_weight="medium"
+                                text=p.name_ru, font_size=14, font_weight=dv.DivFontWeight.MEDIUM
                             ),
                             dv.DivText(
                                 text=f"{p.offers[0].price if p.offers else ''} сумм",
@@ -232,7 +235,7 @@ def make_product_state(p: ProductItem, index: int):
                 ),
             ),
             dv.DivContainer(
-                orientation="horizontal",
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
                 margins=dv.DivEdgeInsets(top=12),
                 width=dv.DivMatchParentSize(),
                 content_alignment_horizontal=dv.DivContentAlignmentHorizontal.SPACE_BETWEEN,
@@ -315,7 +318,7 @@ def build_products_list_widget(products_list_input: List[ProductItem]):
 
         return dv.make_div(
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 width=dv.DivMatchParentSize(),
                 paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
                 items=[empty_div],
@@ -330,7 +333,7 @@ def build_products_list_widget(products_list_input: List[ProductItem]):
 
     # Main container holding all products
     main_container = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         width=dv.DivMatchParentSize(),
         paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
         items=product_states,

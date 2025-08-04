@@ -5,19 +5,28 @@ from typing import List
 from .general import Widget, add_ui_to_widget
 from models.build import BuildOutput
 from .general.const_values import WidgetMargins
-
+from .general import WidgetInput
 
 def get_contact(
     llm_output: str, backend_output: dict, version: str = "v3"
 ) -> BuildOutput:
     widget = Widget(
+        name="contact_widget",
         type="contact_widget",
+        order=1,
         layout="horizontal",
         fields=["name", "avatar_url", "subtitle"],
     )
     widgets = add_ui_to_widget(
         {
-            build_contact_widget: widget,
+            build_contact_widget: WidgetInput(
+                widget= widget, 
+                args = {
+                    "backend_output": backend_output,
+                    "llm_output": llm_output,
+                }
+                
+            )
         },
         version,
     )
@@ -27,10 +36,10 @@ def get_contact(
     )
 
 
-def contact_widget(name, avatar_url, subtitle):
+def contact_widget(name: str, avatar_url: str, subtitle: str):
     
     return dv.DivContainer(
-        orientation="horizontal",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
         items=[
             dv.DivImage(
                 image_url=avatar_url,
@@ -41,12 +50,12 @@ def contact_widget(name, avatar_url, subtitle):
                 border=dv.DivBorder(corner_radius=20),
             ),
             dv.DivContainer(
-                orientation="vertical",
+                orientation=dv.DivContainerOrientation.VERTICAL,
                 items=[
                     dv.DivText(
                         text=name,
                         font_size=14,
-                        font_weight="medium",
+                        font_weight=dv.DivFontWeight.MEDIUM,
                         text_color="#111827",
                     ),
                     dv.DivText(text=subtitle, font_size=12, text_color="#6B7280"),
@@ -94,11 +103,11 @@ def build_contact_widget(backend_output: dict, llm_output: str):
 
 
 def make_contacts_list(contacts_data: List[Contact], title: str = "Contacts"):
-    items = [
+    items: List[dv.Div] = [
         dv.DivText(
             text=title,
             font_size=16,
-            font_weight="bold",
+            font_weight=dv.DivFontWeight.BOLD,
             text_color="#111827",
             margins=dv.DivEdgeInsets(bottom=12),
         )
@@ -114,7 +123,7 @@ def make_contacts_list(contacts_data: List[Contact], title: str = "Contacts"):
         )
 
     return dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         items=items,
         paddings=dv.DivEdgeInsets(all=16),
         background=[dv.DivSolidBackground(color="#F9FAFB")],

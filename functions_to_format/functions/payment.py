@@ -9,18 +9,15 @@ from .general import (
     WidgetInput,
 )
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, Any
 from models.build import BuildOutput
 import pydivkit as dv
 from tool_call_models.cards import CardsByPhoneNumberResponse, CardInfoByPhoneNumber
 from tool_call_models.paynet import (
     CategoriesResponse,
     SupplierByCategoryResponse,
-    SupplierFieldsResponse,
     Supplier,
-    Category,
-    SuppliersField,
-    FieldOptions,
+    Category
 )
 from tool_call_models.cards import CardInfoByCardNumberResponse
 from conf import logger
@@ -202,7 +199,7 @@ def get_receiver_id_by_receiver_phone_number(
 
 def get_receiver_id_by_receiver_phone_number_ui(
     cards: List[CardInfoByPhoneNumber],
-) -> BuildOutput:
+) -> Dict[str, Any]:
     """
     Builds a UI similar to the provided image, showing a list of cards for a receiver.
     Expects backend_output to be a dict with a "cards" key containing a list of cards,
@@ -219,7 +216,7 @@ def get_receiver_id_by_receiver_phone_number_ui(
     for idx, card in enumerate(cards, 1):
         card_items.append(
             dv.DivContainer(
-                orientation="horizontal",
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
                 items=[
                     dv.DivContainer(
                         width=dv.DivFixedSize(value=36),
@@ -236,16 +233,16 @@ def get_receiver_id_by_receiver_phone_number_ui(
                             dv.DivContainer(
                                 width=dv.DivFixedSize(value=36),
                                 height=dv.DivFixedSize(value=36),
-                                alignment_horizontal="center",
-                                alignment_vertical="center",
+                                alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                                alignment_vertical=dv.DivAlignmentVertical.CENTER,
                                 items=[
                                     dv.DivText(
                                         text=str(idx),
                                         font_size=18,
-                                        font_weight="medium",
+                                        font_weight=dv.DivFontWeight.MEDIUM,
                                         text_color="#3B82F6",
-                                        alignment_horizontal="center",
-                                        alignment_vertical="center",
+                                        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                                        alignment_vertical=dv.DivAlignmentVertical.CENTER,
                                         margins=dv.DivEdgeInsets(
                                             top=7, left=12, right=12, bottom=7
                                         ),
@@ -253,27 +250,27 @@ def get_receiver_id_by_receiver_phone_number_ui(
                                 ],
                             )
                         ],
-                        alignment_horizontal="center",
-                        alignment_vertical="center",
+                        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                        alignment_vertical=dv.DivAlignmentVertical.CENTER,
                         margins=dv.DivEdgeInsets(right=12),
                     ),
                     dv.DivContainer(
-                        orientation="vertical",
+                        orientation=dv.DivContainerOrientation.VERTICAL,
                         items=[
                             dv.DivText(
                                 text=card.name,
                                 font_size=16,
-                                font_weight="medium",
+                                font_weight=dv.DivFontWeight.MEDIUM,
                                 text_color="#222222",
                                 line_height=20,
                             ),
                             dv.DivContainer(
-                                orientation="horizontal",
+                                orientation=dv.DivContainerOrientation.HORIZONTAL,
                                 items=[
                                     dv.DivText(
                                         text=card.processing,
                                         font_size=15,
-                                        font_weight="bold",
+                                        font_weight=dv.DivFontWeight.BOLD,
                                         text_color="#1976D2",
                                         line_height=18,
                                         letter_spacing=0.2,
@@ -285,7 +282,7 @@ def get_receiver_id_by_receiver_phone_number_ui(
                                         line_height=18,
                                         margins=dv.DivEdgeInsets(left=1),
                                         max_lines=1,
-                                        text_alignment_horizontal="left",
+                                        text_alignment_horizontal=dv.DivAlignmentHorizontal.LEFT,
                                     ),
                                 ],
                                 margins=dv.DivEdgeInsets(top=2),
@@ -324,7 +321,7 @@ def get_receiver_id_by_receiver_phone_number_ui(
             )
 
     main_container = dv.DivContainer(
-        orientation="vertical",
+        orientation=dv.DivContainerOrientation.VERTICAL,
         items=card_items,
         background=[dv.DivSolidBackground(color="#F9FAFB")],
         border=dv.DivBorder(
@@ -708,10 +705,7 @@ if __name__ == "__main__":
     # )
     # with open("test_response.json", "w") as f:
     #     json.dump(output.model_dump(), f)
-    output = get_receiver_id_by_receiver_phone_number(
-        llm_output="Hello world",
-        backend_output=CardsByPhoneNumberResponse(
-            [
+    data =  [
                 {
                     "pan": "kkkkkkxxxxxxyyyyyy",
                     "name": "Aslon",
@@ -731,7 +725,9 @@ if __name__ == "__main__":
                     "mask": "*************1236",
                 },
             ]
-        ).model_dump(),
+    output = get_receiver_id_by_receiver_phone_number(
+        llm_output="Hello world",
+        backend_output=CardsByPhoneNumberResponse.model_validate(data).model_dump(),
         version="v3",
     )
     with open("test_response.json", "w") as f:
