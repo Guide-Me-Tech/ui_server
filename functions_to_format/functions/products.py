@@ -44,7 +44,7 @@ def get_products(
         fields=["products", "title"],
     )
 
-    products = backend_output_model.items
+    products = backend_output_model.products
 
     text_widget = TextWidget(
         order=1,
@@ -109,7 +109,7 @@ def make_product_state(p: ProductItem, index: int):
                 orientation=dv.DivContainerOrientation.VERTICAL,
                 width=dv.DivWrapContentSize(),
                 items=[
-                    dv.DivText(text=p.name_ru, font_size=14, font_weight=dv.DivFontWeight.MEDIUM),
+                    dv.DivText(text=p.name, font_size=14, font_weight=dv.DivFontWeight.MEDIUM),
                     dv.DivText(
                         text=f"{p.offers[0].price if p.offers else ''} сумм",
                         font_size=13,
@@ -172,7 +172,7 @@ def make_product_state(p: ProductItem, index: int):
                         width=dv.DivWrapContentSize(),
                         items=[
                             dv.DivText(
-                                text=p.name_ru, font_size=14, font_weight=dv.DivFontWeight.MEDIUM
+                                text=p.name, font_size=14, font_weight=dv.DivFontWeight.MEDIUM
                             ),
                             dv.DivText(
                                 text=f"{p.offers[0].price if p.offers else ''} сумм",
@@ -212,7 +212,7 @@ def make_product_state(p: ProductItem, index: int):
                 alignment_vertical=dv.DivAlignmentVertical.CENTER,
             ),
             dv.DivText(
-                text=p.name_ru,
+                text=p.name,
                 font_size=13,
                 text_color="#374151",
                 margins=dv.DivEdgeInsets(top=8),
