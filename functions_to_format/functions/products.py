@@ -53,12 +53,12 @@ def get_products(
 
     widgets = add_ui_to_widget(
         {
-            build_text_widget: WidgetInput(
-                widget=text_widget,
-                args={
-                    "text": llm_output,
-                },
-            ),
+            # build_text_widget: WidgetInput(
+            #     widget=text_widget,
+            #     args={
+            #         "text": llm_output,
+            #     },
+            # ),
             build_products_list_widget: WidgetInput(
                 widget=widget,
                 args={"products_list_input": products},
@@ -79,12 +79,17 @@ def make_product_state(p: ProductItem, index: int):
     # Safely get image URLs
     main_image_mobile_url = ""
     main_image_desktop_url = ""
-    if isinstance(p.main_image, dict):
-        main_image_mobile_url = p.main_image.get("mobile", "")
-        main_image_desktop_url = p.main_image.get("desktop", "")
-    elif isinstance(p.main_image, str):
-        main_image_mobile_url = p.main_image
-        main_image_desktop_url = p.main_image
+    if isinstance(p.images, dict):
+        mobile_images = p.images.get("mobile", [])
+        if mobile_images and isinstance(mobile_images, list):
+            main_image_mobile_url = mobile_images[0]
+        else:
+            main_image_mobile_url = ""
+        desktop_images = p.images.get("desktop", [])
+        if desktop_images and isinstance(desktop_images, list):
+            main_image_desktop_url = desktop_images[0]
+        else:
+            main_image_desktop_url = ""
 
     if not main_image_mobile_url and main_image_desktop_url:
         main_image_mobile_url = main_image_desktop_url
