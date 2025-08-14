@@ -96,6 +96,26 @@ def make_product_state(p: ProductItem, index: int):
     elif not main_image_desktop_url and main_image_mobile_url:
         main_image_desktop_url = main_image_mobile_url
 
+    # Get price information from the new Price schema
+    price_text = ""
+    if p.price and p.price.price:
+        price_text = f"{p.price.price} сумм"
+    
+    # Determine installment pricing for the expanded view
+    installment_price_text = price_text
+    if p.price and p.price.installments:
+        # Find 12-month installment if available
+        twelve_month_installment = None
+        for installment in p.price.installments:
+            if installment.period == 12:
+                twelve_month_installment = installment
+                break
+        
+        if twelve_month_installment and twelve_month_installment.price:
+            installment_price_text = f"{twelve_month_installment.price} сумм x 12 мес"
+    elif p.price and p.price.monthly:
+        installment_price_text = f"{p.price.monthly} сумм x 12 мес"
+
     # Collapsed state div
     collapsed_div = dv.DivContainer(
         orientation=dv.DivContainerOrientation.HORIZONTAL,
@@ -116,7 +136,7 @@ def make_product_state(p: ProductItem, index: int):
                 items=[
                     dv.DivText(text=p.name, font_size=14, font_weight=dv.DivFontWeight.MEDIUM),
                     dv.DivText(
-                        text=f"{p.offers[0].price if p.offers else ''} сумм",
+                        text=price_text,
                         font_size=13,
                         text_color="#6B7280",
                     ),
@@ -145,17 +165,6 @@ def make_product_state(p: ProductItem, index: int):
     )
 
     # Expanded state div
-    offer_price_text = f"{p.offers[0].price if p.offers else ''} сумм"
-    if p.offers and isinstance( p.offers[0].twelve_month_price, str):
-        p.offers[0].twelve_month_price = int(p.offers[0].twelve_month_price)
-    elif p.offers and( isinstance( p.offers[0].twelve_month_price, int) or isinstance( p.offers[0].twelve_month_price, float) ):
-        if (
-            p.offers
-            and p.offers[0].twelve_month_price
-            and p.offers[0].twelve_month_price > 0
-        ):
-            offer_price_text = f"{p.offers[0].twelve_month_price} сумм x 12 мес"
-
     expanded_div = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
         background=[dv.DivSolidBackground(color="#FFFFFF")],
@@ -180,7 +189,7 @@ def make_product_state(p: ProductItem, index: int):
                                 text=p.name, font_size=14, font_weight=dv.DivFontWeight.MEDIUM
                             ),
                             dv.DivText(
-                                text=f"{p.offers[0].price if p.offers else ''} сумм",
+                                text=price_text,
                                 font_size=13,
                                 text_color="#6B7280",
                             ),
@@ -229,7 +238,7 @@ def make_product_state(p: ProductItem, index: int):
                 margins=dv.DivEdgeInsets(top=4),
             ),
             dv.DivText(
-                text=offer_price_text,
+                text=installment_price_text,
                 font_size=11,
                 text_color="#DB2777",
                 background=[dv.DivSolidBackground(color="#FCE7F3")],
