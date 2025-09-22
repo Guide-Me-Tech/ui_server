@@ -480,19 +480,15 @@ def get_suppliers_by_category_ui(suppliers: List[Supplier]):
             width=dv.DivMatchParentSize(),
             height=dv.DivWrapContentSize(),
             alignment_vertical=dv.DivAlignmentVertical.CENTER,
-            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=16, right=16),
+            paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
             items=[
                 dv.DivImage(
-                    image_url=supplier.s3Url,  # Assuming supplier object has an image_url or similar field
-                    width=dv.DivFixedSize(
-                        value=40
-                    ),  # Icon size from image appears to be a bit larger
-                    height=dv.DivFixedSize(value=40),
-                    margins=dv.DivEdgeInsets(
-                        right=16
-                    ),  # Increased margin for larger icon
+                    image_url=supplier.s3Url,
+                    width=dv.DivFixedSize(value=32),
+                    height=dv.DivFixedSize(value=32),
+                    margins=dv.DivEdgeInsets(right=12),
                     scale=dv.DivImageScale.FIT,
-                    border=dv.DivBorder(corner_radius=20),  # Circular border for icon
+                    border=dv.DivBorder(corner_radius=16),
                 ),
                 dv.DivText(
                     text=supplier.name,
@@ -504,20 +500,18 @@ def get_suppliers_by_category_ui(suppliers: List[Supplier]):
             action=dv.DivAction(
                 log_id=f"supplier_{supplier.id}_selected",
                 payload={"supplier_id": supplier.id, "supplier_name": supplier.name},
-                url=f"divkit://action?type=select_supplier&id={supplier.id}&name={supplier.name}",  # Example action
+                url=f"divkit://action?type=select_supplier&id={supplier.id}&name={supplier.name}",
             ),
         )
         supplier_items.append(item_container)
 
-        # if idx < len(suppliers) - 1:
-        #     supplier_items.append(
-        #         dv.DivSeparator(
-        #             delimiter_style=dv.DivSeparatorDelimiterStyle(color="#E0E0E0"),
-        #             margins=dv.DivEdgeInsets(
-        #                 left=72, right=16
-        #             ),  # Adjusted for larger icon + text area
-        #         )
-        #     )
+        if idx < len(suppliers) - 1:
+            supplier_items.append(
+                dv.DivSeparator(
+                    delimiter_style=dv.DivSeparatorDelimiterStyle(color="#E0E0E0"),
+                    margins=dv.DivEdgeInsets(left=60, right=16),
+                )
+            )
 
     main_container = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
@@ -530,7 +524,6 @@ def get_suppliers_by_category_ui(suppliers: List[Supplier]):
     )
 
     div = dv.make_div(main_container)
-    # For debugging or inspection, you can save the JSON output
     with open("get_suppliers_by_category_ui.json", "w") as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
     return div

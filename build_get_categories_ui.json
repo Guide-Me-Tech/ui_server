@@ -15,7 +15,234 @@
           "height": {
             "type": "wrap_content"
           },
-          "items": [],
+          "items": [
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_1_selected",
+                "payload": {
+                  "category_id": 1,
+                  "category_name": "Category 1"
+                },
+                "url": "divkit://action?type=select_category&id=1&name=Category 1"
+              },
+              "alignment_vertical": "center",
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://img.icons8.com/?size=100&id=64062&format=png&color=000000",
+                  "margins": {
+                    "right": 12
+                  },
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Category 1",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 12,
+                "left": 16,
+                "right": 16,
+                "top": 12
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "left": 16,
+                "right": 16
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_2_selected",
+                "payload": {
+                  "category_id": 2,
+                  "category_name": "Category 2"
+                },
+                "url": "divkit://action?type=select_category&id=2&name=Category 2"
+              },
+              "alignment_vertical": "center",
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://img.icons8.com/?size=100&id=64062&format=png&color=000000",
+                  "margins": {
+                    "right": 12
+                  },
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Category 2",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 12,
+                "left": 16,
+                "right": 16,
+                "top": 12
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "left": 16,
+                "right": 16
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_3_selected",
+                "payload": {
+                  "category_id": 3,
+                  "category_name": "Category 3"
+                },
+                "url": "divkit://action?type=select_category&id=3&name=Category 3"
+              },
+              "alignment_vertical": "center",
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://img.icons8.com/?size=100&id=64062&format=png&color=000000",
+                  "margins": {
+                    "right": 12
+                  },
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Category 3",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 12,
+                "left": 16,
+                "right": 16,
+                "top": 12
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "left": 16,
+                "right": 16
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "category_4_selected",
+                "payload": {
+                  "category_id": 4,
+                  "category_name": "Category 4"
+                },
+                "url": "divkit://action?type=select_category&id=4&name=Category 4"
+              },
+              "alignment_vertical": "center",
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "height": {
+                    "type": "fixed",
+                    "value": 24
+                  },
+                  "image_url": "https://img.icons8.com/?size=100&id=64062&format=png&color=000000",
+                  "margins": {
+                    "right": 12
+                  },
+                  "width": {
+                    "type": "fixed",
+                    "value": 24
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Category 4",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 12,
+                "left": 16,
+                "right": 16,
+                "top": 12
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            }
+          ],
           "orientation": "vertical",
           "width": {
             "type": "match_parent"

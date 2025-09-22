@@ -18,7 +18,250 @@
           "height": {
             "type": "wrap_content"
           },
-          "items": [],
+          "items": [
+            {
+              "type": "container",
+              "action": {
+                "log_id": "supplier_1_selected",
+                "payload": {
+                  "supplier_id": 1,
+                  "supplier_name": "Supplier 1"
+                },
+                "url": "divkit://action?type=select_supplier&id=1&name=Supplier 1"
+              },
+              "alignment_vertical": "center",
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 16
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 32
+                  },
+                  "image_url": "https://img.icons8.com/?size=100&id=64062&format=png&color=000000",
+                  "margins": {
+                    "right": 12
+                  },
+                  "scale": "fit",
+                  "width": {
+                    "type": "fixed",
+                    "value": 32
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Supplier 1",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 16,
+                "left": 16,
+                "right": 16,
+                "top": 16
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "left": 60,
+                "right": 16
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "supplier_2_selected",
+                "payload": {
+                  "supplier_id": 2,
+                  "supplier_name": "Supplier 2"
+                },
+                "url": "divkit://action?type=select_supplier&id=2&name=Supplier 2"
+              },
+              "alignment_vertical": "center",
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 16
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 32
+                  },
+                  "image_url": "https://img.icons8.com/?size=100&id=64062&format=png&color=000000",
+                  "margins": {
+                    "right": 12
+                  },
+                  "scale": "fit",
+                  "width": {
+                    "type": "fixed",
+                    "value": 32
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Supplier 2",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 16,
+                "left": 16,
+                "right": 16,
+                "top": 16
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "left": 60,
+                "right": 16
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "supplier_3_selected",
+                "payload": {
+                  "supplier_id": 3,
+                  "supplier_name": "Supplier 3"
+                },
+                "url": "divkit://action?type=select_supplier&id=3&name=Supplier 3"
+              },
+              "alignment_vertical": "center",
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 16
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 32
+                  },
+                  "image_url": "https://img.icons8.com/?size=100&id=64062&format=png&color=000000",
+                  "margins": {
+                    "right": 12
+                  },
+                  "scale": "fit",
+                  "width": {
+                    "type": "fixed",
+                    "value": 32
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Supplier 3",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 16,
+                "left": 16,
+                "right": 16,
+                "top": 16
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            },
+            {
+              "type": "separator",
+              "delimiter_style": {
+                "color": "#E0E0E0"
+              },
+              "margins": {
+                "left": 60,
+                "right": 16
+              }
+            },
+            {
+              "type": "container",
+              "action": {
+                "log_id": "supplier_4_selected",
+                "payload": {
+                  "supplier_id": 4,
+                  "supplier_name": "Supplier 4"
+                },
+                "url": "divkit://action?type=select_supplier&id=4&name=Supplier 4"
+              },
+              "alignment_vertical": "center",
+              "height": {
+                "type": "wrap_content"
+              },
+              "items": [
+                {
+                  "type": "image",
+                  "border": {
+                    "corner_radius": 16
+                  },
+                  "height": {
+                    "type": "fixed",
+                    "value": 32
+                  },
+                  "image_url": "https://img.icons8.com/?size=100&id=64062&format=png&color=000000",
+                  "margins": {
+                    "right": 12
+                  },
+                  "scale": "fit",
+                  "width": {
+                    "type": "fixed",
+                    "value": 32
+                  }
+                },
+                {
+                  "type": "text",
+                  "font_size": 16,
+                  "font_weight": "regular",
+                  "text": "Supplier 4",
+                  "text_color": "#000000"
+                }
+              ],
+              "orientation": "horizontal",
+              "paddings": {
+                "bottom": 16,
+                "left": 16,
+                "right": 16,
+                "top": 16
+              },
+              "width": {
+                "type": "match_parent"
+              }
+            }
+          ],
           "margins": {
             "bottom": 8,
             "left": 8,
