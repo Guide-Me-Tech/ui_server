@@ -244,20 +244,6 @@ def _collect_system_metrics():
         time.sleep(METRICS_INTERVAL)
 
 
-def start_system_metrics_collection():
-    global _system_metrics_thread
-    if (
-        METRICS_ENABLED
-        and METRICS_SYSTEM_RESOURCES_ENABLED
-        and _system_metrics_thread is None
-    ):
-        _system_metrics_thread = threading.Thread(
-            target=_collect_system_metrics, daemon=True
-        )
-        _system_metrics_thread.start()
-        logger.info("System resource metrics collection started.")
-
-
 def stop_system_metrics_collection():
     global _stop_system_metrics_thread, _system_metrics_thread
     if _system_metrics_thread is not None:

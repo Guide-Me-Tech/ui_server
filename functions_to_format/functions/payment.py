@@ -24,7 +24,7 @@ from tool_call_models.cards import CardInfoByCardNumberResponse
 from conf import logger
 from functions_to_format.functions.general.const_values import LanguageOptions
 import structlog
-from models.context import Context
+from models.context import Context, LoggerContext
 
 
 def send_money_to_someone_via_card(context: Context) -> BuildOutput:
@@ -800,10 +800,17 @@ if __name__ == "__main__":
             "mask": "*************1236",
         },
     ]
-    output = get_receiver_id_by_receiver_phone_number(
+    context = Context(
         llm_output="Hello world",
         backend_output=CardsByPhoneNumberResponse.model_validate(data).model_dump(),
         version="v3",
+        language=LanguageOptions.UZBEK,
+        api_key="test",
+        logger_context=LoggerContext(
+            chat_id="test",
+            logger=logger,
+        ),
     )
+    output = get_receiver_id_by_receiver_phone_number(context=context)
     with open("logs/json/test_response.json", "w") as f:
         json.dump(output.model_dump(), f, ensure_ascii=False, indent=2)

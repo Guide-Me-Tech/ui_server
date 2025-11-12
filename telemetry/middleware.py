@@ -10,6 +10,7 @@ from starlette.types import ASGIApp
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from conf import logger, config
+from telemetry.metrics import MetricsCollector
 
 
 class TelemetryMiddleware(BaseHTTPMiddleware):

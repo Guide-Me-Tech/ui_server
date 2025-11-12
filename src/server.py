@@ -125,8 +125,11 @@ async def format_data_v3(request: Request, input_data: InputV3):
             logger.debug("Step 1: Entering /chat/v3/build_ui")
             language = LanguageOptions(request.headers.get("language", "ru"))
             func_name = input_data.function_name
-            llm_output = input_data.llm_output
-            backend_output = input_data.backend_output
+            llm_output = input_data.llm_output or ""
+            backend_output = (
+                input_data.backend_output if input_data.backend_output else {}
+            )
+            api_key = input_data.api_key or ""
 
             # Add telemetry attributes
             span.set_attribute("function.name", func_name)
@@ -158,12 +161,14 @@ async def format_data_v3(request: Request, input_data: InputV3):
             # Time function execution
             func_start = time.time()
             context = Context(
-                logger_context=LoggerContext(chat_id=input_data.chat_id, logger=logger),
+                logger_context=LoggerContext(
+                    chat_id=input_data.chat_id or "", logger=logger
+                ),
                 llm_output=llm_output,
-                backend_output=backend_output,
+                backend_output=backend_output,  # pyright: ignore[reportArgumentType]
                 version=version,
                 language=language,
-                api_key=input_data.api_key,
+                api_key=api_key,
             )
 
             result: BuildOutput = functions_mapper[func_name](
