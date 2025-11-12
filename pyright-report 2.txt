@@ -1,0 +1,149 @@
+/home/runner/work/ui_server/ui_server/conf/config_models.py
+  /home/runner/work/ui_server/ui_server/conf/config_models.py:6:8 - error: Import "dotenv" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/conf/config_models.py:60:42 - error: Argument of type "str | None" cannot be assigned to parameter "token" of type "str" in function "__init__"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /home/runner/work/ui_server/ui_server/conf/config_models.py:61:38 - error: Argument of type "str | None" cannot be assigned to parameter "dsn" of type "str" in function "__init__"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+/home/runner/work/ui_server/ui_server/conf/logger_conf.py
+  /home/runner/work/ui_server/ui_server/conf/logger_conf.py:2:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/conf/logger_conf.py:5:6 - error: Import "structlog" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/conf/logger_conf.py:6:6 - error: Import "structlog.processors" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/conf/logger_conf.py:7:8 - error: Import "logfire" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/conf/logger_conf.py:9:8 - error: Import "dotenv" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/conf/logger_conf.py:28:33 - error: "lower" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/conf/logger_conf.py:35:33 - error: "lower" is not a known attribute of "None" (reportOptionalMemberAccess)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/balance.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/balance.py:1:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/balance.py:12:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/balance.py:17:6 - error: Import "tool_call_models.cards" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/balance.py:18:6 - error: Import "tool_call_models.home_balance" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/balance.py:20:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/buttons.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/buttons.py:1:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/contact.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/contact.py:1:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/contact.py:3:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/contact.py:11:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/functions.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/functions.py:17:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/functions.py:19:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/functions.py:21:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/general/__init__.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/general/__init__.py:5:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/general/buttons.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/general/buttons.py:1:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/general/text.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/general/text.py:2:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/general/utils.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/general/utils.py:4:6 - error: Import "pymongo.asynchronous.collection" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/general/utils.py:7:6 - error: Import "pymongo" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/general/utils.py:52:48 - error: "mongo_uri" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/general/utils.py:54:26 - error: "database_name" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/general/utils.py:55:39 - error: "collection_name" is not a known attribute of "None" (reportOptionalMemberAccess)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/news.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/news.py:1:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/news.py:3:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/news.py:11:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/notification.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/notification.py:1:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/notification.py:3:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/notification.py:11:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:12:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:15:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:16:6 - error: Import "tool_call_models.cards" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:17:6 - error: Import "tool_call_models.paynet" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:23:6 - error: Import "tool_call_models.cards" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:26:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:803:14 - error: Argument missing for parameter "context" (reportCallIssue)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:804:9 - error: No parameter named "llm_output" (reportCallIssue)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:805:9 - error: No parameter named "backend_output" (reportCallIssue)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/payment.py:806:9 - error: No parameter named "version" (reportCallIssue)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/products.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/products.py:6:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/products.py:9:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/products.py:21:6 - error: Import "tool_call_models.smartbazar" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/products.py:22:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/start_page.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/start_page.py:6:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/functions/weather.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/weather.py:1:8 - error: Import "pydivkit" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/weather.py:11:6 - error: Import "tool_call_models.weather" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/functions/weather.py:15:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/functions_to_format/html_builder.py
+  /home/runner/work/ui_server/ui_server/functions_to_format/html_builder.py:1:6 - error: Import "jinja2" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/functions_to_format/html_builder.py:4:8 - error: Import "logfire" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/models/build.py
+  /home/runner/work/ui_server/ui_server/models/build.py:1:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/models/context.py
+  /home/runner/work/ui_server/ui_server/models/context.py:3:8 - error: Import "structlog" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/models/widget.py
+  /home/runner/work/ui_server/ui_server/models/widget.py:1:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/src/server.py
+  /home/runner/work/ui_server/ui_server/src/server.py:5:6 - error: Import "fastapi" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/src/server.py:6:6 - error: Import "fastapi.responses" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/src/server.py:7:6 - error: Import "fastapi.staticfiles" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/src/server.py:8:6 - error: Import "pydantic" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/src/server.py:15:8 - error: Import "sentry_sdk" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/src/server.py:161:54 - error: Argument of type "str | None" cannot be assigned to parameter "chat_id" of type "str" in function "__init__"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /home/runner/work/ui_server/ui_server/src/server.py:162:28 - error: Argument of type "str | None" cannot be assigned to parameter "llm_output" of type "str" in function "__init__"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /home/runner/work/ui_server/ui_server/src/server.py:163:32 - error: Argument of type "Dict[Unknown, Unknown] | List[Unknown] | None" cannot be assigned to parameter "backend_output" of type "dict[Unknown, Unknown]" in function "__init__"
+    Type "Dict[Unknown, Unknown] | List[Unknown] | None" is not assignable to type "dict[Unknown, Unknown]"
+      "List[Unknown]" is not assignable to "dict[Unknown, Unknown]" (reportArgumentType)
+  /home/runner/work/ui_server/ui_server/src/server.py:166:25 - error: Argument of type "str | None" cannot be assigned to parameter "api_key" of type "str" in function "__init__"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+/home/runner/work/ui_server/ui_server/src/ui_router.py
+  /home/runner/work/ui_server/ui_server/src/ui_router.py:1:6 - error: Import "fastapi" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/telemetry/decorators.py
+  /home/runner/work/ui_server/ui_server/telemetry/decorators.py:8:6 - error: Import "opentelemetry" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/decorators.py:9:6 - error: Import "opentelemetry.trace" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/decorators.py:13:37 - error: Expression of type "None" cannot be assigned to parameter of type "str"
+    "None" is not assignable to "str" (reportArgumentType)
+/home/runner/work/ui_server/ui_server/telemetry/metrics.py
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:6:6 - error: Import "opentelemetry" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:7:6 - error: Import "opentelemetry.metrics" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:29:43 - error: "create_counter" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:35:44 - error: "create_histogram" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:41:41 - error: "create_counter" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:48:55 - error: "create_counter" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:54:45 - error: "create_histogram" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:60:50 - error: "create_counter" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:67:43 - error: "create_up_down_counter" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:74:44 - error: "create_counter" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /home/runner/work/ui_server/ui_server/telemetry/metrics.py:163:30 - error: "create_counter" is not a known attribute of "None" (reportOptionalMemberAccess)
+/home/runner/work/ui_server/ui_server/telemetry/middleware.py
+  /home/runner/work/ui_server/ui_server/telemetry/middleware.py:7:6 - error: Import "fastapi" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/middleware.py:8:6 - error: Import "starlette.middleware.base" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/middleware.py:9:6 - error: Import "starlette.types" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/middleware.py:10:6 - error: Import "opentelemetry" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/middleware.py:11:6 - error: Import "opentelemetry.trace" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/middleware.py:22:58 - error: "MetricsCollector" is not defined (reportUndefinedVariable)
+/home/runner/work/ui_server/ui_server/telemetry/setup.py
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:7:6 - error: Import "opentelemetry" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:8:6 - error: Import "opentelemetry.sdk.trace" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:9:6 - error: Import "opentelemetry.sdk.trace.export" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:10:6 - error: Import "opentelemetry.sdk.metrics" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:11:6 - error: Import "opentelemetry.sdk.metrics.export" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:15:6 - error: Import "opentelemetry.sdk.resources" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:21:6 - error: Import "opentelemetry.instrumentation.fastapi" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:22:6 - error: Import "opentelemetry.exporter.otlp.proto.http.trace_exporter" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:23:6 - error: Import "opentelemetry.exporter.prometheus" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:24:6 - error: Import "fastapi" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/telemetry/setup.py:25:6 - error: Import "prometheus_client" could not be resolved (reportMissingImports)
+/home/runner/work/ui_server/ui_server/test.py
+  /home/runner/work/ui_server/ui_server/test.py:3:6 - error: Import "tool_call_models.cards" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/test.py:4:6 - error: Import "tool_call_models.paynet" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/test.py:13:6 - error: Import "tool_call_models.weather" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/test.py:442:6 - error: Import "tool_call_models.paynet" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/test.py:553:6 - error: Import "tool_call_models.paynet" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/test.py:667:6 - error: Import "tool_call_models.home_balance" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/test.py:686:6 - error: Import "tool_call_models.cards" could not be resolved (reportMissingImports)
+  /home/runner/work/ui_server/ui_server/test.py:817:6 - error: Import "tool_call_models.smartbazar" could not be resolved (reportMissingImports)
+108 errors, 0 warnings, 0 informations

@@ -28,7 +28,7 @@ jobs:
     - name: Install dependencies with uv
       run: |
         uv sync --no-dev
-        uv pip install --system pyright pytest
+        uv pip install pyright pytest
       continue-on-error: true
     - name: Fallback to pip if uv fails
       if: failure()
@@ -39,7 +39,7 @@ jobs:
     - name: Lint with pyright
       id: pyright-check
       run: |
-        pyright --project pyrightconfig.json --level error > pyright-report.txt
+        uv run pyright --project pyrightconfig.json --level error > pyright-report.txt
       continue-on-error: true
     - name: Upload pyright report
       uses: actions/upload-artifact@v4
