@@ -25,14 +25,14 @@ def setup_logging(logfile: str) -> structlog.stdlib.BoundLogger:
 
     # --- 1. Create handlers ---
     console_handler = logging.StreamHandler(sys.stdout)
-    if os.getenv("ENVIRONMENT").lower() == "development":
+    if os.getenv("ENVIRONMENT", "development").lower() == "development":
         console_handler.setLevel(logging.INFO)
     else:
         console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(logging.Formatter(fmt="%(message)s"))
 
     file_handler = logging.FileHandler(logfile)
-    if os.getenv("ENVIRONMENT").lower() == "development":
+    if os.getenv("ENVIRONMENT", "development").lower() == "development":
         file_handler.setLevel(logging.INFO)
     else:
         file_handler.setLevel(logging.DEBUG)

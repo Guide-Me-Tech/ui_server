@@ -46,7 +46,7 @@ class AppConfig:
     sentry: SentryConfig
     otel: OTELConfig
     environment: str = "development"
-    mongo: Optional[UsageCollectionMongoConfig] = None
+    mongo: UsageCollectionMongoConfig = UsageCollectionMongoConfig()
 
 
 def New() -> AppConfig:
@@ -57,8 +57,8 @@ def New() -> AppConfig:
     # for key, value in os.environ.items():
     #     print(f"{key}: {value}")
 
-    logfire_config = LogfireConfig(token=os.getenv("LOGFIRE_TOKEN"))
-    sentry_config = SentryConfig(dsn=os.getenv("SENTRY_DSN"))
+    logfire_config = LogfireConfig(token=os.getenv("LOGFIRE_TOKEN", ""))
+    sentry_config = SentryConfig(dsn=os.getenv("SENTRY_DSN", ""))
     otel_config = OTELConfig(
         service_name=os.getenv("SERVICE_NAME", "ui_server"),
         resource_attributes=os.getenv(

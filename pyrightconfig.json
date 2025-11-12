@@ -6,7 +6,8 @@
         "configuration_manager",
         "adapters",
         "temp",
-        "utils"
+        "utils",
+        "telemetry/examples.py"
     ],
     "reportMissingImports": true,
     "reportUnusedImport": "warning",

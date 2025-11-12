@@ -316,7 +316,7 @@ def make_product_state(
                 ),
                 alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                 id=cart_container,  # ✅ matches the ID above
-                items=(
+                items=(  # pyright: ignore[reportArgumentType]
                     [
                         (
                             dv.DivText(

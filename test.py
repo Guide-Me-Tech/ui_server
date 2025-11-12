@@ -660,7 +660,7 @@ suppliers = {
 }
 get_suppliers_by_category = functions_mapper["get_suppliers_by_category"](
     llm_output="Hello world",
-    backend_output=SupplierByCategoryResponse(**suppliers).model_dump(),
+    backend_output=SupplierByCategoryResponse(**suppliers).model_dump(),  # pyright: ignore[reportArgumentType]
     version="v3",
 )
 
@@ -842,11 +842,11 @@ offer = Offer(
     id=1,
     original_price=1000000,
     price=900000,
-    three_month_price=350000,
-    six_month_price=200000,
-    nine_month_price=150000,
-    twelve_month_price=100000,
-    eighteen_month_price=80000,
+    three_month_price=350000,  # pyright: ignore[reportCallIssue]
+    six_month_price=200000,  # pyright: ignore[reportCallIssue]
+    nine_month_price=150000,  # pyright: ignore[reportCallIssue]
+    twelve_month_price=100000,  # pyright: ignore[reportCallIssue]
+    eighteen_month_price=80000,  # pyright: ignore[reportCallIssue]
     discount=True,
     discount_percent=10,
     discount_start_at="2024-01-01T00:00:00",
@@ -857,30 +857,16 @@ offer = Offer(
 )
 product = ProductItem(
     id=123,
-    remote_id="ABC123",
-    name_ru="Смартфон Samsung Galaxy S21",
-    name_uz="Samsung Galaxy S21 смартфони",
     slug="samsung-galaxy-s21",
     brand=Brand(
         id=1,
         name="Samsung",
-        name_ru="Samsung",
-        name_uz="Samsung",
-        default_lang="uz",
     ),
-    main_categories=[category],
-    short_name_uz="Galaxy S21",
-    short_name_ru="Galaxy S21",
-    main_image={
-        "mobile": "https://i5.walmartimages.com/seo/Pre-Owned-Samsung-Galaxy-S21-5G-SM-G991U1-128GB-Pink-US-Model-Factory-Unlocked-Cell-Phone-Refurbished-Like-New_268fd090-9e5d-4287-98f8-4ad4ac93de54.71fd3099cec626bd02fc726424299241.jpeg?odnWidth=180&odnHeight=180&odnBg=ffffff",
-        "desktop": "https://i5.walmartimages.com/seo/Pre-Owned-Samsung-Galaxy-S21-5G-SM-G991U1-128GB-Pink-US-Model-Factory-Unlocked-Cell-Phone-Refurbished-Like-New_268fd090-9e5d-4287-98f8-4ad4ac93de54.71fd3099cec626bd02fc726424299241.jpeg?odnWidth=180&odnHeight=180&odnBg=ffffff",
-    },
     created_at="2024-01-15T10:30:00",
     updated_at="2024-01-16T15:45:00",
     count=50,
     tracking=True,
     offers=[offer, offer, offer],
-    status={"active": True},
     view_count=1000,
     order_count=25,
     like_count=150,
@@ -891,15 +877,13 @@ product = ProductItem(
 get_products = functions_mapper["get_products"](
     llm_output="Hello world",
     backend_output=SearchProductsResponse(
-        items=[
+        products=[
             product,
             product,
             product,
             product,
         ],
-        meta=Meta(
-            current_page=1, from_=1, last_page=1, path=None, per_page=1, to=1, total=1
-        ),
+        meta=Meta(current_page=1, last_page=1, path=None, per_page=1, to=1, total=1),
     ).model_dump(),
 )
 

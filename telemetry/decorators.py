@@ -10,7 +10,7 @@ from opentelemetry.trace import Status, StatusCode
 from conf import logger
 
 
-def trace_function(span_name: str = None):
+def trace_function(span_name: str | None = None):
     """
     Decorator to trace function execution
 
