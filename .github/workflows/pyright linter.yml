@@ -39,7 +39,7 @@ jobs:
     - name: Lint with pyright
       id: pyright-check
       run: |
-        pyright --project pyrightconfig.json --level error > pyright-report.txt 2>&1
+        pyright --project pyrightconfig.json --level error > pyright-report.txt
       continue-on-error: true
     - name: Upload pyright report
       uses: actions/upload-artifact@v4
