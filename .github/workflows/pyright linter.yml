@@ -21,14 +21,41 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: "3.11"
-    - name: Install dependencies
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    - name: Install dependencies with uv
+      run: |
+        uv sync --no-dev
+        uv pip install --system pyright pytest
+      continue-on-error: true
+    - name: Fallback to pip if uv fails
+      if: failure()
       run: |
         python -m pip install --upgrade pip
         pip install pyright pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with pyright
+      id: pyright-check
       run: |
-        pyright --project pyrightconfig.json --level error
+        pyright --project pyrightconfig.json --level error > pyright-report.txt 2>&1
+      continue-on-error: true
+    - name: Upload pyright report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: pyright-report
+        path: pyright-report.txt
+        retention-days: 30
+    - name: Display pyright results
+      if: always()
+      run: |
+        echo "Pyright linting results:"
+        cat pyright-report.txt
+    - name: Fail job if pyright found errors
+      if: steps.pyright-check.outcome == 'failure'
+      run: exit 1
     # - name: Test with pytest
     #   run: |
     #     pytest tets/*

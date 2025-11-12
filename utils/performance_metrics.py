@@ -45,17 +45,25 @@ With these variables, we achieve extremely fine-grained control and maximum inte
 METRICS_ENABLED = os.environ.get("METRICS_ENABLED", "true").lower() == "true"
 METRICS_LOG_LEVEL = os.environ.get("METRICS_LOG_LEVEL", "ERROR").upper()
 METRICS_INTERVAL = int(os.environ.get("METRICS_INTERVAL", 60))
-METRICS_SYSTEM_RESOURCES_ENABLED = os.environ.get("METRICS_SYSTEM_RESOURCES_ENABLED", "true").lower() == "true"
+METRICS_SYSTEM_RESOURCES_ENABLED = (
+    os.environ.get("METRICS_SYSTEM_RESOURCES_ENABLED", "true").lower() == "true"
+)
 METRICS_DISK_ENABLED = os.environ.get("METRICS_DISK_ENABLED", "false").lower() == "true"
-METRICS_NETWORK_ENABLED = os.environ.get("METRICS_NETWORK_ENABLED", "false").lower() == "true"
+METRICS_NETWORK_ENABLED = (
+    os.environ.get("METRICS_NETWORK_ENABLED", "false").lower() == "true"
+)
 METRICS_JSON_LOGGING = os.environ.get("METRICS_JSON_LOGGING", "false").lower() == "true"
 METRICS_MAX_FUNCTIONS = int(os.environ.get("METRICS_MAX_FUNCTIONS", 1000))
 METRICS_MAX_COUNTERS = int(os.environ.get("METRICS_MAX_COUNTERS", 1000))
 METRICS_MAX_GAUGES = int(os.environ.get("METRICS_MAX_GAUGES", 1000))
 
-METRICS_CUSTOM_EXPORT_ENABLE = os.environ.get("METRICS_CUSTOM_EXPORT_ENABLE", "false").lower() == "true"
+METRICS_CUSTOM_EXPORT_ENABLE = (
+    os.environ.get("METRICS_CUSTOM_EXPORT_ENABLE", "false").lower() == "true"
+)
 METRICS_CUSTOM_EXPORT_ENDPOINT = os.environ.get("METRICS_CUSTOM_EXPORT_ENDPOINT", "")
-METRICS_PROMETHEUS_EXPORT = os.environ.get("METRICS_PROMETHEUS_EXPORT", "false").lower() == "true"
+METRICS_PROMETHEUS_EXPORT = (
+    os.environ.get("METRICS_PROMETHEUS_EXPORT", "false").lower() == "true"
+)
 
 ###########################
 # Step 2: Logging Setup
@@ -67,19 +75,22 @@ handler = logging.StreamHandler(sys.stdout)
 if METRICS_JSON_LOGGING:
     # JSON format logging for easy machine parsing
     import json
+
     class JSONFormatter(logging.Formatter):
         def format(self, record):
             base = {
                 "time": self.formatTime(record, self.datefmt),
                 "level": record.levelname,
                 "name": record.name,
-                "message": record.getMessage()
+                "message": record.getMessage(),
             }
             return json.dumps(base)
 
     handler.setFormatter(JSONFormatter())
 else:
-    handler.setFormatter(logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s]: %(message)s'))
+    handler.setFormatter(
+        logging.Formatter("[%(asctime)s][%(levelname)s][%(name)s]: %(message)s")
+    )
 
 logger.addHandler(handler)
 
@@ -89,12 +100,13 @@ logger.addHandler(handler)
 # Use dict with internal locks for thread-safety.
 metrics_data: Dict[str, Any] = {
     "requests": 0,
-    "function_calls": {},     # fname -> {count, total_time, max_time}
-    "custom_counters": {},    # name -> int
-    "custom_gauges": {},      # name -> float
-    "system": {}
+    "function_calls": {},  # fname -> {count, total_time, max_time}
+    "custom_counters": {},  # name -> int
+    "custom_gauges": {},  # name -> float
+    "system": {},
 }
 metrics_lock = threading.Lock()
+
 
 ###########################
 # Step 4: Utility functions to ensure capacity limits
@@ -115,6 +127,7 @@ def ensure_capacity(dictionary: Dict, max_capacity: int):
         for k in keys_to_remove:
             del dictionary[k]
 
+
 ###########################
 # Step 5: Decorator to measure function performance
 ###########################
@@ -130,7 +143,9 @@ def measure_performance(func: Callable):
 
         with metrics_lock:
             fname = func.__name__
-            fdata = metrics_data["function_calls"].get(fname, {"count": 0, "total_time": 0.0, "max_time": 0.0})
+            fdata = metrics_data["function_calls"].get(
+                fname, {"count": 0, "total_time": 0.0, "max_time": 0.0}
+            )
             fdata["count"] += 1
             fdata["total_time"] += elapsed
             if elapsed > fdata["max_time"]:
@@ -142,7 +157,9 @@ def measure_performance(func: Callable):
 
         logger.debug(f"Function {func.__name__} took {elapsed:.6f}s")
         return result
+
     return wrapper
+
 
 ###########################
 # Step 6: Increment request count
@@ -152,6 +169,7 @@ def increment_request_count():
         return
     with metrics_lock:
         metrics_data["requests"] += 1
+
 
 ###########################
 # Step 7: Custom counters and gauges
@@ -166,6 +184,7 @@ def increment_counter(name: str, delta: int = 1):
         ensure_capacity(metrics_data["custom_counters"], METRICS_MAX_COUNTERS)
     logger.debug(f"Counter {name} incremented by {delta}, new value={new_val}")
 
+
 def set_gauge(name: str, value: float):
     if not METRICS_ENABLED:
         return
@@ -174,11 +193,13 @@ def set_gauge(name: str, value: float):
         ensure_capacity(metrics_data["custom_gauges"], METRICS_MAX_GAUGES)
     logger.debug(f"Gauge {name} set to {value}")
 
+
 ###########################
 # Step 8: System metrics collection
 ###########################
 _system_metrics_thread = None
 _stop_system_metrics_thread = False
+
 
 def _collect_system_metrics():
     while not _stop_system_metrics_thread:
@@ -202,7 +223,7 @@ def _collect_system_metrics():
                         "total_mb": usage.total / (1024**2),
                         "used_mb": usage.used / (1024**2),
                         "free_mb": usage.free / (1024**2),
-                        "percent": usage.percent
+                        "percent": usage.percent,
                     }
                 metrics_data["system"]["disk_usage"] = disk_usage_data
 
@@ -216,18 +237,26 @@ def _collect_system_metrics():
                     "errin": net_io.errin,
                     "errout": net_io.errout,
                     "dropin": net_io.dropin,
-                    "dropout": net_io.dropout
+                    "dropout": net_io.dropout,
                 }
 
             logger.debug("System metrics updated.")
         time.sleep(METRICS_INTERVAL)
 
+
 def start_system_metrics_collection():
     global _system_metrics_thread
-    if METRICS_ENABLED and METRICS_SYSTEM_RESOURCES_ENABLED and _system_metrics_thread is None:
-        _system_metrics_thread = threading.Thread(target=_collect_system_metrics, daemon=True)
+    if (
+        METRICS_ENABLED
+        and METRICS_SYSTEM_RESOURCES_ENABLED
+        and _system_metrics_thread is None
+    ):
+        _system_metrics_thread = threading.Thread(
+            target=_collect_system_metrics, daemon=True
+        )
         _system_metrics_thread.start()
         logger.info("System resource metrics collection started.")
+
 
 def stop_system_metrics_collection():
     global _stop_system_metrics_thread, _system_metrics_thread
@@ -236,6 +265,7 @@ def stop_system_metrics_collection():
         _system_metrics_thread.join()
         _system_metrics_thread = None
         logger.info("System resource metrics collection stopped.")
+
 
 ###########################
 # Step 9: Snapshot and logging
@@ -246,12 +276,18 @@ def get_metrics_snapshot() -> Dict[str, Any]:
     with metrics_lock:
         snapshot = {
             "requests": metrics_data["requests"],
-            "function_calls": {fname: dict(fdata) for fname, fdata in metrics_data["function_calls"].items()},
+            "function_calls": {
+                fname: dict(fdata)
+                for fname, fdata in metrics_data["function_calls"].items()
+            },
             "custom_counters": dict(metrics_data["custom_counters"]),
             "custom_gauges": dict(metrics_data["custom_gauges"]),
-            "system": dict(metrics_data["system"]) if METRICS_SYSTEM_RESOURCES_ENABLED else {}
+            "system": dict(metrics_data["system"])
+            if METRICS_SYSTEM_RESOURCES_ENABLED
+            else {},
         }
     return snapshot
+
 
 def log_metrics_summary():
     if not METRICS_ENABLED:
@@ -259,7 +295,7 @@ def log_metrics_summary():
         return
     snapshot = get_metrics_snapshot()
     logger.info("Performance Metrics Summary:")
-    logger.info(f"Total requests: {snapshot.get('requests',0)}")
+    logger.info(f"Total requests: {snapshot.get('requests', 0)}")
 
     func_calls = snapshot.get("function_calls", {})
     if func_calls:
@@ -294,24 +330,31 @@ def log_metrics_summary():
     system_data = snapshot.get("system", {})
     if system_data:
         logger.info("System Resources:")
-        logger.info(f"Updated at {system_data.get('last_update',0)}")
-        logger.info(f"CPU={system_data.get('cpu_percent',0):.2f}% "
-                    f"Mem_Used={system_data.get('mem_used_mb',0):.2f}MB "
-                    f"Mem_Available={system_data.get('mem_available_mb',0):.2f}MB "
-                    f"Mem_Total={system_data.get('mem_total_mb',0):.2f}MB")
+        logger.info(f"Updated at {system_data.get('last_update', 0)}")
+        logger.info(
+            f"CPU={system_data.get('cpu_percent', 0):.2f}% "
+            f"Mem_Used={system_data.get('mem_used_mb', 0):.2f}MB "
+            f"Mem_Available={system_data.get('mem_available_mb', 0):.2f}MB "
+            f"Mem_Total={system_data.get('mem_total_mb', 0):.2f}MB"
+        )
 
         if METRICS_DISK_ENABLED and "disk_usage" in system_data:
             logger.info("Disk Usage:")
             for mount, ddata in system_data["disk_usage"].items():
-                logger.info(f"{mount}: total={ddata['total_mb']:.2f}MB used={ddata['used_mb']:.2f}MB "
-                            f"free={ddata['free_mb']:.2f}MB {ddata['percent']:.2f}%")
+                logger.info(
+                    f"{mount}: total={ddata['total_mb']:.2f}MB used={ddata['used_mb']:.2f}MB "
+                    f"free={ddata['free_mb']:.2f}MB {ddata['percent']:.2f}%"
+                )
 
         if METRICS_NETWORK_ENABLED and "net_io" in system_data:
             net_io = system_data["net_io"]
             logger.info("Network I/O:")
-            logger.info(f"bytes_sent={net_io['bytes_sent_mb']:.2f}MB bytes_recv={net_io['bytes_recv_mb']:.2f}MB "
-                        f"packets_sent={net_io['packets_sent']} packets_recv={net_io['packets_recv']} "
-                        f"errin={net_io['errin']} errout={net_io['errout']} dropin={net_io['dropin']} dropout={net_io['dropout']}")
+            logger.info(
+                f"bytes_sent={net_io['bytes_sent_mb']:.2f}MB bytes_recv={net_io['bytes_recv_mb']:.2f}MB "
+                f"packets_sent={net_io['packets_sent']} packets_recv={net_io['packets_recv']} "
+                f"errin={net_io['errin']} errout={net_io['errout']} dropin={net_io['dropin']} dropout={net_io['dropout']}"
+            )
+
 
 ###########################
 # Step 10: Integrations for Custom Export
@@ -322,17 +365,23 @@ def log_metrics_summary():
 # Real implementation would require requests or httpx library.
 
 import json
+
 try:
     import requests
 except ImportError:
     requests = None
+
 
 def export_metrics_custom():
     """
     Export metrics to a custom endpoint if enabled.
     This can be called periodically or after certain events.
     """
-    if not METRICS_ENABLED or not METRICS_CUSTOM_EXPORT_ENABLE or not METRICS_CUSTOM_EXPORT_ENDPOINT:
+    if (
+        not METRICS_ENABLED
+        or not METRICS_CUSTOM_EXPORT_ENABLE
+        or not METRICS_CUSTOM_EXPORT_ENDPOINT
+    ):
         return
     if requests is None:
         logger.error("Requests library not installed, cannot export metrics.")
@@ -356,6 +405,7 @@ def export_metrics_custom():
 _system_metrics_thread = None
 _stop_system_metrics_thread = False
 
+
 def _system_metrics_collector():
     while not _stop_system_metrics_thread:
         with metrics_lock:
@@ -377,7 +427,7 @@ def _system_metrics_collector():
                         "total_mb": usage.total / (1024**2),
                         "used_mb": usage.used / (1024**2),
                         "free_mb": usage.free / (1024**2),
-                        "percent": usage.percent
+                        "percent": usage.percent,
                     }
                 metrics_data["system"]["disk_usage"] = disk_usage_data
 
@@ -391,32 +441,32 @@ def _system_metrics_collector():
                     "errin": net_io.errin,
                     "errout": net_io.errout,
                     "dropin": net_io.dropin,
-                    "dropout": net_io.dropout
+                    "dropout": net_io.dropout,
                 }
 
             logger.debug("System metrics updated.")
         time.sleep(METRICS_INTERVAL)
 
+
 def start_system_metrics_collection():
     global _system_metrics_thread
-    if METRICS_ENABLED and METRICS_SYSTEM_RESOURCES_ENABLED and _system_metrics_thread is None:
-        _system_metrics_thread = threading.Thread(target=_system_metrics_collector, daemon=True)
+    if (
+        METRICS_ENABLED
+        and METRICS_SYSTEM_RESOURCES_ENABLED
+        and _system_metrics_thread is None
+    ):
+        _system_metrics_thread = threading.Thread(
+            target=_system_metrics_collector, daemon=True
+        )
         _system_metrics_thread.start()
         logger.info("System resource metrics collection started.")
 
-def stop_system_metrics_collection():
-    global _stop_system_metrics_thread, _system_metrics_thread
-    if _system_metrics_thread is not None:
-        _stop_system_metrics_thread = True
-        _system_metrics_thread.join()
-        _system_metrics_thread = None
-        logger.info("System resource metrics collection stopped.")
 
 if METRICS_ENABLED and METRICS_SYSTEM_RESOURCES_ENABLED:
     start_system_metrics_collection()
 
 ###########################
-# Easy to modify by changing environment vars, 
+# Easy to modify by changing environment vars,
 # and collects a wide range of metrics (functions, requests, counters/gauges, system resources, disk, network).
 # We have also considered JSON logging, custom export endpoints, and maximum capacities.
 ###########################
