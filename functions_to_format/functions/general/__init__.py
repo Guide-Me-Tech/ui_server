@@ -26,4 +26,5 @@ def add_ui_to_widget(
     widgets: List[Widget] = []
     for widget_input in widget_inputs.values():
         widgets.append(widget_input.widget)
+
     return widgets

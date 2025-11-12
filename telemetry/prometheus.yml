@@ -1,0 +1,46 @@
+# Prometheus configuration for UI Server telemetry
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'ui_server'
+    environment: 'development'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Load rules once and periodically evaluate them
+rule_files: []
+
+# Scrape configurations
+scrape_configs:
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Scrape UI Server metrics from /metrics endpoint (PULL-BASED)
+  - job_name: 'ui_server'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+        labels:
+          service: 'ui_server'
+          environment: 'development'
+    # Optional: relabel to extract more information
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'ui_server'
+
+  # Scrape Jaeger metrics (if available)
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14269']
+

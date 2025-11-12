@@ -28,7 +28,6 @@ def balance(*args, **kwargs):
 
 
 def weather_widget(*args, **kwargs):
-
     logger.info("Weather widget")
     # logger.info("Args: ", args=args)
     # logger.info("Kwargs:", kwarg=kwargs)
@@ -39,7 +38,7 @@ def weather_widget(*args, **kwargs):
 
 if __name__ == "__main__":
     with logfire.span("Buildiing weather widget"):
-        with open("temp/weather.html", "w") as f:
+        with open("logs/html/weather.html", "w") as f:
             f.write(
                 weather_widget(
                     **{
@@ -50,7 +49,7 @@ if __name__ == "__main__":
                     }
                 )
             )
-        with open("temp/balance.html", "w") as f:
+        with open("logs/html/balance.html", "w") as f:
             f.write(
                 balance(
                     **{
@@ -86,7 +85,7 @@ if __name__ == "__main__":
                 )
             )
 
-        with open("temp/notifications.html", "w") as f:
+        with open("logs/html/notifications.html", "w") as f:
             f.write(
                 notifications(
                     **{
@@ -102,7 +101,7 @@ if __name__ == "__main__":
                     }
                 )
             )
-        with open("temp/products.html", "w") as f:
+        with open("logs/html/products.html", "w") as f:
             f.write(
                 products(
                     **{
@@ -152,7 +151,7 @@ if __name__ == "__main__":
                     }
                 )
             )
-        # with open("temp/balance.html", "w") as f:
+        # with open("logs/html/balance.html", "w") as f:
         #     f.write(balance(**{}))
-        # with open("temp/balance.html", "w") as f:
+        # with open("logs/html/balance.html", "w") as f:
         #     f.write(balance(**{}))

@@ -7,11 +7,25 @@ from .general import (
     add_ui_to_widget,
     WidgetInput,
 )
+from .general.utils import save_builder_output
 from tool_call_models.weather import WeatherResponse
 from models.build import BuildOutput
+from functions_to_format.functions.general.const_values import LanguageOptions
+from conf import logger
+import structlog
+from models.context import Context
 
 
-def get_weather_info(llm_output: str, backend_output: dict, version: str = "v3"):
+def get_weather_info(context: Context) -> BuildOutput:
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     weather_data = WeatherResponse(**backend_output)
     widget = Widget(
         name="weather_widget",
@@ -41,17 +55,85 @@ def get_weather_info(llm_output: str, backend_output: dict, version: str = "v3")
             ),
             build_weather_widget: WidgetInput(
                 widget=widget,
-                args={"weather_data": weather_data},
+                args={"weather_data": weather_data, "language": language},
             ),
         },
         version,
     )
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=1,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
-def weather_widget(data: WeatherResponse):
+
+def weather_widget(
+    data: WeatherResponse, language: LanguageOptions = LanguageOptions.RUSSIAN
+):
+    city_name = data.location.name
+
+    texts_map = {
+        LanguageOptions.RUSSIAN: {
+            "feels_like": "Ощущается как",
+            "wind": "Ветер",
+            "wind_speed": "м/с",
+            "humidity": "Влажность",
+            "sunny": "Ясно",
+            "cloudy": "Облачно",
+            "rainy": "Дождь",
+            "snowy": "Снег",
+            "thunderstorm": "Гроза",
+            "mist": "Туман",
+            "fog": "Туман",
+            "hail": "Град",
+            "tornado": "Торнадо",
+        },
+        LanguageOptions.ENGLISH: {
+            "feels_like": "Feels like",
+            "wind": "Wind",
+            "wind_speed": "m/s",
+            "humidity": "Humidity",
+            "sunny": "Sunny",
+            "cloudy": "Cloudy",
+            "rainy": "Rainy",
+            "snowy": "Snowy",
+            "thunderstorm": "Thunderstorm",
+            "mist": "Mist",
+            "fog": "Fog",
+            "hail": "Hail",
+            "tornado": "Tornado",
+        },
+        LanguageOptions.UZBEK: {
+            "feels_like": "Hisoblangan temperatura",
+            "wind": "Shamol",
+            "wind_speed": "m/s",
+            "humidity": "Namlik",
+            "sunny": "Quyoshli",
+            "cloudy": "Bulutli",
+            "rainy": "Yomg'irli",
+            "snowy": "Qorli",
+            "thunderstorm": "G'alaba",
+            "mist": "Tumanli",
+            "fog": "Tumanli",
+            "hail": "Qorli",
+            "tornado": "Tornado",
+        },
+    }
+
+    city_name = data.location.name
+    country_name = data.location.country
+    current_temperature = data.current.temp_c
+    feels_like_temperature = data.current.feelslike_c
+    humidity = data.current.humidity
+    wind_speed = data.current.wind_mph
+    wind_direction = data.current.wind_dir
+    last_updated = data.current.last_updated
+    condition_text = texts_map[language].get(
+        data.current.condition.text.lower(),
+        data.current.condition.text,
+    )
+
     # Main weather card container
     main_container = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
@@ -70,28 +152,30 @@ def weather_widget(data: WeatherResponse):
                         orientation=dv.DivContainerOrientation.VERTICAL,
                         items=[
                             dv.DivText(
-                                text=data.location.name,
+                                text=city_name,
                                 font_size=24,
                                 font_weight=dv.DivFontWeight.BOLD,
                                 text_color="#1F2937",
                             ),
                             dv.DivText(
-                                text=f"{data.location.name}, {data.location.country}",
+                                text=f"{city_name}, {country_name}",
                                 font_size=14,
                                 text_color="#6B7280",
                             ),
                         ],
                     ),
                     # Weather icon
-                    dv.DivText(
-                        text="☀️",
-                        font_size=48,
-                    )
-                    if data.current.condition.icon is None
-                    else dv.DivImage(
-                        image_url="https:" + data.current.condition.icon,
-                        width=dv.DivFixedSize(value=48),
-                        height=dv.DivFixedSize(value=48),
+                    (
+                        dv.DivText(
+                            text="☀️",
+                            font_size=48,
+                        )
+                        if data.current.condition.icon is None
+                        else dv.DivImage(
+                            image_url="https:" + data.current.condition.icon,
+                            width=dv.DivFixedSize(value=48),
+                            height=dv.DivFixedSize(value=48),
+                        )
                     ),
                 ],
                 margins=dv.DivEdgeInsets(bottom=16),
@@ -106,28 +190,28 @@ def weather_widget(data: WeatherResponse):
                         items=[
                             # Temperature with inline °C on same line
                             dv.DivText(
-                                text=f"{data.current.temp_c}°C",
+                                text=f"{current_temperature}°C",
                                 font_size=40,
                                 font_weight=dv.DivFontWeight.BOLD,
                                 text_color="#1F2937",
                             ),
                             dv.DivText(
-                                text=f"Ощущается как {data.current.feelslike_c}°C",
+                                text=f"{texts_map[language]['feels_like']} {feels_like_temperature}°C",
                                 font_size=14,
                                 text_color="#6B7280",
                             ),
                             dv.DivText(
-                                text=f"Ветер: {data.current.wind_dir} {data.current.wind_mph} миль/ч",
+                                text=f"{texts_map[language]['wind']} {wind_direction} {wind_speed} {texts_map[language]['wind_speed']}",
                                 font_size=14,
                                 text_color="#6B7280",
                             ),
                             dv.DivText(
-                                text=f"Влажность: {data.current.humidity}%",
+                                text=f"{texts_map[language]['humidity']} {humidity}%",
                                 font_size=14,
                                 text_color="#6B7280",
                             ),
                             dv.DivText(
-                                text=data.current.last_updated,
+                                text=last_updated,
                                 font_size=14,
                                 text_color="#6B7280",
                             ),
@@ -138,7 +222,7 @@ def weather_widget(data: WeatherResponse):
                         alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                         items=[
                             dv.DivText(
-                                text=data.current.condition.text,
+                                text=condition_text,
                                 font_size=18,
                                 font_weight=dv.DivFontWeight.MEDIUM,
                                 text_color="#1F2937",
@@ -160,22 +244,26 @@ def weather_widget(data: WeatherResponse):
                             alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
                             items=[
                                 dv.DivText(
-                                    text=forecast_day.date.split("-")[2]
-                                    if len(forecast_day.date.split("-")) > 2
-                                    else forecast_day.date[:3],
+                                    text=(
+                                        forecast_day.date.split("-")[2]
+                                        if len(forecast_day.date.split("-")) > 2
+                                        else forecast_day.date[:3]
+                                    ),
                                     font_size=12,
                                     text_color="#6B7280",
                                 ),
-                                dv.DivText(
-                                    text="☀️",
-                                    font_size=24,
-                                )
-                                if forecast_day.day.condition.icon is None
-                                else dv.DivImage(
-                                    image_url="https:"
-                                    + forecast_day.day.condition.icon,
-                                    width=dv.DivFixedSize(value=24),
-                                    height=dv.DivFixedSize(value=24),
+                                (
+                                    dv.DivText(
+                                        text="☀️",
+                                        font_size=24,
+                                    )
+                                    if forecast_day.day.condition.icon is None
+                                    else dv.DivImage(
+                                        image_url="https:"
+                                        + forecast_day.day.condition.icon,
+                                        width=dv.DivFixedSize(value=24),
+                                        height=dv.DivFixedSize(value=24),
+                                    )
                                 ),
                                 dv.DivText(
                                     text=f"{forecast_day.day.maxtemp_c}°C",
@@ -203,10 +291,12 @@ def weather_widget(data: WeatherResponse):
     return main_container
 
 
-def build_weather_widget(weather_data: WeatherResponse):
+def build_weather_widget(
+    weather_data: WeatherResponse, language: LanguageOptions = LanguageOptions.RUSSIAN
+):
     # Create weather widget
-    widget = weather_widget(weather_data)
-    with open("build_weather_widget.json", "w") as f:
+    widget = weather_widget(weather_data, language)
+    with open("logs/json/build_weather_widget.json", "w") as f:
         json.dump(dv.make_div(widget), f, indent=2, ensure_ascii=False)
 
     # Return the widget as a JSON-serializable object
@@ -552,5 +642,5 @@ if __name__ == "__main__":
     # Создание и сохранение JSON
     root = weather_widget(sample_data)
 
-    with open("jsons/weather.json", "w", encoding="utf-8") as f:
+    with open("logs/json/weather.json", "w", encoding="utf-8") as f:
         json.dump(dv.make_div(root), f, indent=2, ensure_ascii=False)

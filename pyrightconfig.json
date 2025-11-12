@@ -1,0 +1,19 @@
+{
+    "exclude": [
+        ".venv",
+        "tests",
+        "test_requests",
+        "configuration_manager",
+        "adapters",
+        "temp",
+        "utils"
+    ],
+    "reportMissingImports": true,
+    "reportUnusedImport": "warning",
+    "typeCheckingMode": "basic",
+    "ignore": [
+        "reportImplicitOverride",
+        "reportRedeclaration"
+    ],
+    "reportImplicitOverride": false
+}

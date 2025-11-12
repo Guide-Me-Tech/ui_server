@@ -13,13 +13,26 @@ from .general import (
     build_text_widget,
     WidgetInput,
 )
+from .general.utils import save_builder_output
 import pydivkit as dv
 from models.build import BuildOutput
 from pydantic import BaseModel
-from .general.const_values import WidgetMargins
+from .general.const_values import WidgetMargins, LanguageOptions
+import structlog
+from models.context import Context
 
-def chatbot_answer(llm_output: str, backend_output, version="v2") -> BuildOutput:
+
+def chatbot_answer(context: Context) -> BuildOutput:
     # Janis Rubins: logic unchanged, just returns text_widget schema and llm_output as data
+
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
 
     text_widget = TextWidget(
         order=1,
@@ -36,14 +49,27 @@ def chatbot_answer(llm_output: str, backend_output, version="v2") -> BuildOutput
         version,
     )
 
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=1,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
-def unauthorized_response(llm_output, backend_output, version="v2"):
+def unauthorized_response(context):
     # Janis Rubins: logic unchanged, just returns text_widget schema and llm_output as data
+    from models.context import Context
+
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     return {
         "data": llm_output,
     }
@@ -111,16 +137,32 @@ def build_contacts_list_widget(contacts: list[Contact]) -> Dict[str, Any]:
     container = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
         items=items,
-        margins=dv.DivEdgeInsets(top=WidgetMargins.TOP.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value, bottom=WidgetMargins.BOTTOM.value),
+        margins=dv.DivEdgeInsets(
+            top=WidgetMargins.TOP.value,
+            left=WidgetMargins.LEFT.value,
+            right=WidgetMargins.RIGHT.value,
+            bottom=WidgetMargins.BOTTOM.value,
+        ),
         paddings=dv.DivEdgeInsets(left=16, right=16, top=8, bottom=8),
     )
     container = dv.make_div(container)
-    with open("contacts.json", "w") as f:
+    with open("logs/json/build_contacts.json", "w") as f:
         json.dump(container, f, indent=4)
     return container
 
 
-def build_contacts_list(llm_output: str, backend_output: list[dict], version: str = "v2") -> BuildOutput:
+def build_contacts_list(context) -> BuildOutput:
+    from models.context import Context
+
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     contacts_list: list[Contact] = []
 
     contact_widget = Widget(
@@ -169,10 +211,12 @@ def build_contacts_list(llm_output: str, backend_output: list[dict], version: st
         version,
     )
 
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=1,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
 ########################################################

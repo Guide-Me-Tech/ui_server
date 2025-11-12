@@ -1,30 +1,56 @@
-# Use the official Python image
-FROM python:3.12
+# Use a Python image with uv pre-installed
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
-# Set environment to help with performance and security
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONHASHSEED=random
+# Setup a non-root user
+RUN groupadd --system --gid 999 nonroot \
+    && useradd --system --gid 999 --uid 999 --create-home nonroot
 
-# Add a non-root user for security
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
+
+
+
+# Install the project into `/app`
 WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
 
-# Adjust permissions for non-root
-RUN chown -R appuser:appgroup /app
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-# Grant root access to the user
-USER root
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
 
-#EXPOSE 8000
+# Ensure installed tools can be executed out of the box
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
-# Healthcheck to detect issues early
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-RUN mkdir /var/ui_server
+RUN apt update && apt install -y iputils-ping curl
 
-CMD ["fastapi", "run", "src/server.py"]
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-dev
+
+# Then, add the rest of the project source code and install it
+# Installing separately from its dependencies allows optimal layer caching
+COPY uv.lock pyproject.toml /app/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
+
+# # RUN ls && sleep 10
+# # Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+RUN mkdir logs
+
+COPY . /app/
+
+# Reset the entrypoint, don't invoke `uv`
+ENTRYPOINT []
+
+# Use the non-root user to run our application
+# USER noonroot
+# # Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+CMD ["fastapi", "run", "src/server.py", "--port", "8000" ]

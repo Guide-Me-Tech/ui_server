@@ -2,6 +2,7 @@ import os
 import sys
 
 sys.path.append("/home/aslonhamidov/Desktop/work/ui_server")
+from functions_to_format.functions.general.const_values import LanguageOptions
 import pydivkit as dv
 from datetime import timedelta
 import json, sys
@@ -13,10 +14,14 @@ from functions_to_format.functions.general import (
     WidgetInput,
     TextWidget,
 )
+from .general.utils import save_builder_output
 from models.build import BuildOutput
 from conf import logger
 from .general.text import build_text_widget
 from tool_call_models.smartbazar import SearchProductsResponse, ProductItem
+import structlog
+from models.context import Context
+
 # -------------------------------------------------------------------
 #  Функция-шаблон: возвращает dv.DivState с двумя состояниями — collapsed
 #  и expanded. Переключение реализовано через dv.DivAction -> SetState.
@@ -25,13 +30,20 @@ from tool_call_models.smartbazar import SearchProductsResponse, ProductItem
 # import json
 
 
-def search_products(*args, **kwargs) -> BuildOutput:
-    return get_products(*args, **kwargs)
+def search_products(context: Context) -> BuildOutput:
+    return get_products(context=context)
 
 
-def get_products(
-    llm_output: str, backend_output: dict, version: str = "v3"
-) -> BuildOutput:
+def get_products(context: Context) -> BuildOutput:
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     backend_output_model: SearchProductsResponse = SearchProductsResponse(
         **backend_output
     )
@@ -53,28 +65,69 @@ def get_products(
 
     widgets = add_ui_to_widget(
         {
-            # build_text_widget: WidgetInput(
-            #     widget=text_widget,
-            #     args={
-            #         "text": llm_output,
-            #     },
-            # ),
             build_products_list_widget: WidgetInput(
                 widget=widget,
-                args={"products_list_input": products},
+                args={
+                    "products_list_input": products,
+                    "language": language,
+                    "chat_id": chat_id,
+                    "api_key": api_key,
+                },
+            ),
+            build_text_widget: WidgetInput(
+                widget=text_widget,
+                args={
+                    "text": llm_output,
+                },
             ),
         },
         version,
     )
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=1,
         widgets=[w.model_dump(exclude_none=True) for w in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
-def make_product_state(p: ProductItem, index: int):
+def make_product_state(
+    p: ProductItem,
+    index: int,
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+    chat_id: str = "BLABLABLA",
+    api_key: str = "BLABLABLA",
+):
     """Create a product state element using pydivkit SDK classes"""
     product_state_id = f"product_{p.id}_{index}"  # Make unique by adding index
+    cart_container = f"cart_container_{p.id}_{index}_2"
+
+    texts_map = {
+        LanguageOptions.ENGLISH: {
+            "price": "Price: {price}",
+            "summ": "summ",
+            "months": "months",
+            "more": "More",
+            "hide": "Hide",
+            "add": "Add to cart",
+        },
+        LanguageOptions.UZBEK: {
+            "price": "Narxi: {price}",
+            "summ": "so'm",
+            "months": "oy",
+            "more": "Ko'proq",
+            "hide": "Yopish",
+            "add": "Savatga qo'shish",
+        },
+        LanguageOptions.RUSSIAN: {
+            "price": "Цена: {price}",
+            "summ": "сум",
+            "months": "мес",
+            "more": "Подробнее",
+            "hide": "Скрыть",
+            "add": "Добавить в корзину",
+        },
+    }
 
     # Safely get image URLs
     main_image_mobile_url = ""
@@ -99,22 +152,22 @@ def make_product_state(p: ProductItem, index: int):
     # Get price information from the new Price schema
     price_text = ""
     if p.price and p.price.price:
-        price_text = f"{p.price.price} сумм"
-    
+        price_text = f"{p.price.price} {texts_map[language]['summ']}"
+
     # Determine installment pricing for the expanded view
     installment_price_text = price_text
-    if p.price and p.price.installments:
-        # Find 12-month installment if available
-        twelve_month_installment = None
-        for installment in p.price.installments:
-            if installment.period == 12:
-                twelve_month_installment = installment
-                break
-        
-        if twelve_month_installment and twelve_month_installment.price:
-            installment_price_text = f"{twelve_month_installment.price} сумм x 12 мес"
-    elif p.price and p.price.monthly:
-        installment_price_text = f"{p.price.monthly} сумм x 12 мес"
+    # if p.price and p.price.installments:
+    #     # Find 12-month installment if available
+    #     twelve_month_installment = None
+    #     for installment in p.price.installments:
+    #         if installment.period == 12:
+    #             twelve_month_installment = installment
+    #             break
+
+    #     if twelve_month_installment and twelve_month_installment.price:
+    #         installment_price_text = f"{twelve_month_installment.price} {texts_map[language]['summ']} x 12 {texts_map[language]['months']}"
+    # elif p.price and p.price.monthly:
+    #     installment_price_text = f"{p.price.monthly} {texts_map[language]['summ']} x 12 {texts_map[language]['months']}"          # TODO: uncomment this when installment service is back again.
 
     # Collapsed state div
     collapsed_div = dv.DivContainer(
@@ -134,7 +187,9 @@ def make_product_state(p: ProductItem, index: int):
                 orientation=dv.DivContainerOrientation.VERTICAL,
                 width=dv.DivWrapContentSize(),
                 items=[
-                    dv.DivText(text=p.name, font_size=14, font_weight=dv.DivFontWeight.MEDIUM),
+                    dv.DivText(
+                        text=p.name, font_size=14, font_weight=dv.DivFontWeight.MEDIUM
+                    ),
                     dv.DivText(
                         text=price_text,
                         font_size=13,
@@ -186,7 +241,9 @@ def make_product_state(p: ProductItem, index: int):
                         width=dv.DivWrapContentSize(),
                         items=[
                             dv.DivText(
-                                text=p.name, font_size=14, font_weight=dv.DivFontWeight.MEDIUM
+                                text=p.name,
+                                font_size=14,
+                                font_weight=dv.DivFontWeight.MEDIUM,
                             ),
                             dv.DivText(
                                 text=price_text,
@@ -232,7 +289,7 @@ def make_product_state(p: ProductItem, index: int):
                 margins=dv.DivEdgeInsets(top=8),
             ),
             dv.DivText(
-                text=f"⭐ {p.rate}",
+                text=f"⭐ {p.rate or 0}",
                 font_size=11,
                 text_color="#6B7280",
                 margins=dv.DivEdgeInsets(top=4),
@@ -252,60 +309,124 @@ def make_product_state(p: ProductItem, index: int):
                 orientation=dv.DivContainerOrientation.HORIZONTAL,
                 margins=dv.DivEdgeInsets(top=12),
                 width=dv.DivMatchParentSize(),
-                content_alignment_horizontal=dv.DivContentAlignmentHorizontal.SPACE_BETWEEN,
+                content_alignment_horizontal=(
+                    dv.DivContentAlignmentHorizontal.SPACE_BETWEEN
+                    if p.offer_id
+                    else dv.DivContentAlignmentHorizontal.CENTER
+                ),
                 alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                items=[
-                    dv.DivText(
-                        text="Подробнее",
-                        border=dv.DivBorder(
-                            corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
+                id=cart_container,  # ✅ matches the ID above
+                items=(
+                    [
+                        (
+                            dv.DivText(
+                                text=texts_map[language]["add"],
+                                border=dv.DivBorder(
+                                    corner_radius=8,
+                                    stroke=dv.DivStroke(color="#3B82F6"),
+                                ),
+                                text_color="#2563EB",
+                                height=dv.DivFixedSize(value=36),
+                                width=dv.DivMatchParentSize(),
+                                alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                                alignment_vertical=dv.DivAlignmentVertical.CENTER,
+                                text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                                text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
+                                paddings=dv.DivEdgeInsets(left=16, right=16),
+                                margins=(
+                                    dv.DivEdgeInsets(right=4)
+                                    if p.offer_id
+                                    else dv.DivEdgeInsets()
+                                ),
+                                actions=[
+                                    dv.DivAction(
+                                        url="divkit://send-request",
+                                        log_id="1234",
+                                        typed=dv.DivActionSubmit(
+                                            container_id=cart_container,  # ✅ matches the ID above
+                                            request=dv.DivActionSubmitRequest(
+                                                url=f"https://smarty.smartbank.uz/chat/v3/tools/call?function_name=add_product_to_cart&chat_id={chat_id}&arguments={json.dumps({'offer_id': p.offer_id, 'quantity': 1})}",
+                                                method=dv.RequestMethod.POST,
+                                                headers=[
+                                                    dv.RequestHeader(
+                                                        name="api-key", value=api_key
+                                                    )
+                                                ],
+                                            ),
+                                        ),
+                                        payload={
+                                            "function_name": "add_product_to_cart",
+                                            "chat_id": chat_id,
+                                            "arguments": {
+                                                "offer_id": p.offer_id,
+                                                "quantity": 1,
+                                            },
+                                        },
+                                    ),
+                                ],
+                            )
+                            if p.offer_id
+                            else None
                         ),
-                        text_color="#2563EB",
-                        height=dv.DivFixedSize(value=36),
-                        width=dv.DivMatchParentSize(),
-                        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                        alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                        text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                        text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                        paddings=dv.DivEdgeInsets(left=16, right=16),
-                        margins=dv.DivEdgeInsets(right=4),
-                        actions=[
-                            dv.DivAction(
-                                log_id="buy_product",
-                                url=f"sample-actions://redirect?url=https://smartbazar.uz/product/{p.id}",
+                        dv.DivText(
+                            text=texts_map[language]["hide"],
+                            border=dv.DivBorder(
+                                corner_radius=8, stroke=dv.DivStroke(color="#D1D5DB")
                             ),
-                            dv.DivAction(
-                                log_id="buy_product",
-                                url=f"div-action://redirect?url=https://smartbazar.uz/product/{p.id}",
+                            text_color="#6B7280",
+                            height=dv.DivFixedSize(value=36),
+                            width=dv.DivMatchParentSize(),
+                            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                            alignment_vertical=dv.DivAlignmentVertical.CENTER,
+                            text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                            text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
+                            paddings=dv.DivEdgeInsets(left=16, right=16),
+                            margins=(
+                                dv.DivEdgeInsets(left=4)
+                                if p.offer_id
+                                else dv.DivEdgeInsets()
                             ),
-                        ],
-                    ),
-                    dv.DivText(
-                        text="Скрыть",
-                        border=dv.DivBorder(
-                            corner_radius=8, stroke=dv.DivStroke(color="#D1D5DB")
+                            actions=[
+                                dv.DivAction(
+                                    log_id="collapse_from_button",
+                                    url=f"sample-actions://set_state?state_id=0/{product_state_id}/collapsed",
+                                ),
+                                dv.DivAction(
+                                    log_id="collapse_from_button",
+                                    url=f"div-action://set_state?state_id=0/{product_state_id}/collapsed",
+                                ),
+                            ],
                         ),
-                        text_color="#6B7280",
-                        height=dv.DivFixedSize(value=36),
-                        width=dv.DivMatchParentSize(),
-                        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                        alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                        text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                        text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                        paddings=dv.DivEdgeInsets(left=16, right=16),
-                        margins=dv.DivEdgeInsets(left=4),
-                        actions=[
-                            dv.DivAction(
-                                log_id="collapse_from_button",
-                                url=f"sample-actions://set_state?state_id=0/{product_state_id}/collapsed",
+                    ]
+                    if p.offer_id
+                    else [
+                        dv.DivText(
+                            text=texts_map[language]["hide"],
+                            border=dv.DivBorder(
+                                corner_radius=8, stroke=dv.DivStroke(color="#D1D5DB")
                             ),
-                            dv.DivAction(
-                                log_id="collapse_from_button",
-                                url=f"div-action://set_state?state_id=0/{product_state_id}/collapsed",
-                            ),
-                        ],
-                    ),
-                ],
+                            text_color="#6B7280",
+                            height=dv.DivFixedSize(value=36),
+                            width=dv.DivMatchParentSize(),
+                            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                            alignment_vertical=dv.DivAlignmentVertical.CENTER,
+                            text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                            text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
+                            paddings=dv.DivEdgeInsets(left=16, right=16),
+                            margins=dv.DivEdgeInsets(),
+                            actions=[
+                                dv.DivAction(
+                                    log_id="collapse_from_button",
+                                    url=f"sample-actions://set_state?state_id=0/{product_state_id}/collapsed",
+                                ),
+                                dv.DivAction(
+                                    log_id="collapse_from_button",
+                                    url=f"div-action://set_state?state_id=0/{product_state_id}/collapsed",
+                                ),
+                            ],
+                        ),
+                    ]
+                ),
             ),
         ],
     )
@@ -320,13 +441,30 @@ def make_product_state(p: ProductItem, index: int):
     )
 
 
-def build_products_list_widget(products_list_input: List[ProductItem]):
+def build_products_list_widget(
+    products_list_input: List[ProductItem],
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+    chat_id: str = "BLABLABLA",
+    api_key: str = "BLABLABLA",
+):
     """Build products list widget using pydivkit SDK classes"""
     card_log_id = "products_list_card"
 
+    texts_map = {
+        LanguageOptions.ENGLISH: {
+            "no_products": "No products to display.",
+        },
+        LanguageOptions.UZBEK: {
+            "no_products": "Mahsulotlar yo'q.",
+        },
+        LanguageOptions.RUSSIAN: {
+            "no_products": "Товаров нет.",
+        },
+    }
+
     if not products_list_input:
         empty_div = dv.DivText(
-            text="No products to display.",
+            text=texts_map[language]["no_products"],
             paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
         )
 
@@ -342,7 +480,7 @@ def build_products_list_widget(products_list_input: List[ProductItem]):
     # Create product state elements
     product_states = []
     for index, product in enumerate(products_list_input):
-        product_state = make_product_state(product, index)
+        product_state = make_product_state(product, index, language, chat_id, api_key)
         product_states.append(product_state)
 
     # Main container holding all products
@@ -354,7 +492,7 @@ def build_products_list_widget(products_list_input: List[ProductItem]):
     )
 
     div = dv.make_div(main_container)
-    with open("build_products_list_widget.json", "w", encoding="utf-8") as f:
+    with open("logs/json/build_products_list_widget.json", "w", encoding="utf-8") as f:
         json.dump(div, f, indent=2, ensure_ascii=False)
 
     return div
@@ -541,7 +679,7 @@ if __name__ == "__main__":
     # Test the new widget format
     widget_result = build_products_list_widget(products)
 
-    with open("products.json", "w", encoding="utf-8") as f:
+    with open("logs/json/build_products.json", "w", encoding="utf-8") as f:
         json.dump(
             widget_result,
             f,

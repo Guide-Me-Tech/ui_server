@@ -329,3 +329,7 @@ build*.json
 *widget*.json
 test_*
 test_json/
+logs/json/
+logs/temp/
+logs/usage/
+*.ignore.*

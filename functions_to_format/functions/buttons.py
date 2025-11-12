@@ -30,5 +30,5 @@ def build_buttons_row(button_texts: list):
 if __name__ == "__main__":
     buttons = ["submit", "cancel"]
     buttons_widget = build_buttons_row(buttons)
-    with open("temp/json/buttons.json", "w") as f:
+    with open("logs/json/buttons.json", "w") as f:
         json.dump(buttons_widget, f)

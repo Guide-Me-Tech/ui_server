@@ -3,12 +3,24 @@ import json
 from pydantic import BaseModel
 from typing import List
 from .general import Widget, add_ui_to_widget, WidgetInput
+from .general.utils import save_builder_output
 from models.build import BuildOutput
+from functions_to_format.functions.general.const_values import LanguageOptions
+from conf import logger
+from models.context import Context, LoggerContext
+import structlog
 
 
-def get_notifications(
-    llm_output: str, backend_output: dict, version: str = "v3"
-) -> BuildOutput:
+def get_notifications(context: Context) -> BuildOutput:
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     notifications_widget = Widget(
         name="notifications_widget",
         type="notifications_widget",
@@ -26,15 +38,19 @@ def get_notifications(
                 widget=notifications_widget,
                 args={
                     "notification_input": notification_input,
+                    "context": context.logger_context,
                 },
             ),
         },
         version,
     )
-    return BuildOutput(
+
+    output = BuildOutput(
         widgets_count=1,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
 def notification_widget(title, description):
@@ -42,7 +58,10 @@ def notification_widget(title, description):
         orientation=dv.DivContainerOrientation.VERTICAL,
         items=[
             dv.DivText(
-                text=title, font_size=14, font_weight=dv.DivFontWeight.BOLD, text_color="#1E3A8A"
+                text=title,
+                font_size=14,
+                font_weight=dv.DivFontWeight.BOLD,
+                text_color="#1E3A8A",
             ),
             dv.DivText(
                 text=description,
@@ -67,7 +86,10 @@ class NotificationsInput(BaseModel):
     notifications: List[Notification]
 
 
-def build_notifications_widget(notification_input: NotificationsInput):
+def build_notifications_widget(
+    notification_input: NotificationsInput,
+    context: LoggerContext,
+):
     # Parse input data
 
     # Create notification widgets
@@ -96,5 +118,5 @@ if __name__ == "__main__":
     description = "Fraudalent transaction"
     root = notification_widget(title, description)
 
-    with open("jsons/notification.json", "w", encoding="utf-8") as f:
+    with open("logs/json/notification.json", "w", encoding="utf-8") as f:
         json.dump(dv.make_div(root), f, indent=2, ensure_ascii=False)

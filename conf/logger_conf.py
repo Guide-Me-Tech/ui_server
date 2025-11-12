@@ -25,11 +25,17 @@ def setup_logging(logfile: str) -> structlog.stdlib.BoundLogger:
 
     # --- 1. Create handlers ---
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG)
+    if os.getenv("ENVIRONMENT").lower() == "development":
+        console_handler.setLevel(logging.INFO)
+    else:
+        console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(logging.Formatter(fmt="%(message)s"))
 
     file_handler = logging.FileHandler(logfile)
-    file_handler.setLevel(logging.DEBUG)
+    if os.getenv("ENVIRONMENT").lower() == "development":
+        file_handler.setLevel(logging.INFO)
+    else:
+        file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(logging.Formatter(fmt="%(message)s"))
 
     # --- 2. Set up root logger ---
@@ -78,7 +84,7 @@ def setup_logging(logfile: str) -> structlog.stdlib.BoundLogger:
     return get_logger()
 
 
-logfile_path = "logs"  # "/var/ui_server/"
+logfile_path = "/var/ui_server/"  # "/var/ui_server/"
 logfile = "ui_server.log"
 if not os.path.exists(logfile_path):
     os.mkdir(logfile_path)
