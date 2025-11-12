@@ -8,6 +8,7 @@ from .general import (
     build_buttons_row,
     WidgetInput,
 )
+from .general.utils import save_builder_output
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional, Union, Any
 from models.build import BuildOutput
@@ -17,13 +18,25 @@ from tool_call_models.paynet import (
     CategoriesResponse,
     SupplierByCategoryResponse,
     Supplier,
-    Category
+    Category,
 )
 from tool_call_models.cards import CardInfoByCardNumberResponse
 from conf import logger
+from functions_to_format.functions.general.const_values import LanguageOptions
+import structlog
+from models.context import Context
 
 
-def send_money_to_someone_via_card(llm_output: str, backend_output, version="v2"):
+def send_money_to_someone_via_card(context: Context) -> BuildOutput:
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     backend_output = {
         "amount": 1000,
         "card_owner_name": "John Doe",
@@ -48,15 +61,26 @@ def send_money_to_someone_via_card(llm_output: str, backend_output, version="v2"
             ui=backend_output,
         )
     ]
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=1,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
-def get_number_by_receiver_name(
-    llm_output, backend_output, version="v2"
-) -> BuildOutput:
+def get_number_by_receiver_name(context) -> BuildOutput:
+    from models.context import Context
+
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     logger.info("get_number_by_receiver_name")
     output = []
     # backend_output_processed = []
@@ -109,7 +133,7 @@ def get_number_by_receiver_name(
         widgets_count=len(widgets),
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
-
+    save_builder_output(context, output)
     return output
 
 
@@ -139,16 +163,25 @@ def get_number_by_reciver_number_ui(receiver_name: Union[str, List[str]]):
         ]
     )
     div = dv.make_div(main_container)
-    with open("get_number_by_reciver_number_ui.json", "w") as f:
+    with open("logs/json/build_get_number_by_reciver_number_ui.json", "w") as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
-        logger.info("Saved to get_number_by_reciver_number_ui.json", div=div)
+        logger.info("Saved to build_get_number_by_reciver_number_ui.json", div=div)
     logger.info("get_number_by_reciver_number_ui done")
     return div
 
 
-def get_receiver_id_by_receiver_phone_number(
-    llm_output, backend_output, version="v2"
-) -> BuildOutput:
+def get_receiver_id_by_receiver_phone_number(context) -> BuildOutput:
+    from models.context import Context
+
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     output = []
     # backend_output_processed = []
     backend_output = CardsByPhoneNumberResponse(**backend_output)
@@ -194,8 +227,9 @@ def get_receiver_id_by_receiver_phone_number(
         widgets_count=len(widgets),
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
-
+    save_builder_output(context, output)
     return output
+
 
 def get_receiver_id_by_receiver_phone_number_ui(
     cards: List[CardInfoByPhoneNumber],
@@ -336,12 +370,25 @@ def get_receiver_id_by_receiver_phone_number_ui(
     )
 
     div = dv.make_div(main_container)
-    with open("get_receiver_id_by_receiver_phone_number_ui.json", "w") as f:
+    with open(
+        "logs/json/build_get_receiver_id_by_receiver_phone_number_ui.json", "w"
+    ) as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
     return div
 
 
-def get_categories(llm_output, backend_output, version="v2") -> BuildOutput:
+def get_categories(context) -> BuildOutput:
+    from models.context import Context
+
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     backend_output = CategoriesResponse(**backend_output)
     backend_output_processed: List[Category] = backend_output.payload
 
@@ -383,10 +430,12 @@ def get_categories(llm_output, backend_output, version="v2") -> BuildOutput:
         },
         version,
     )
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=3,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
 def build_get_categories_ui(categories: List[Category]):
@@ -442,12 +491,23 @@ def build_get_categories_ui(categories: List[Category]):
     )
 
     div = dv.make_div(main_container)
-    with open("build_get_categories_ui.json", "w") as f:
+    with open("logs/json/build_get_categories_ui.json", "w") as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
     return div
 
 
-def get_suppliers_by_category(llm_output, backend_output, version="v2") -> BuildOutput:
+def get_suppliers_by_category(context) -> BuildOutput:
+    from models.context import Context
+
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     backend_output = SupplierByCategoryResponse(**backend_output)
     backend_output_processed: List[Supplier] = backend_output.payload
 
@@ -488,10 +548,12 @@ def get_suppliers_by_category(llm_output, backend_output, version="v2") -> Build
         },
         version,
     )
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=3,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
 def get_suppliers_by_category_ui(suppliers: List[Supplier]):
@@ -560,7 +622,7 @@ def get_suppliers_by_category_ui(suppliers: List[Supplier]):
     )
 
     div = dv.make_div(main_container)
-    with open("get_suppliers_by_category_ui.json", "w") as f:
+    with open("logs/json/build_get_suppliers_by_category_ui.json", "w") as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
     return div
 
@@ -578,7 +640,18 @@ class Field(BaseModel):
     valueList: List[str] = []
 
 
-def get_fields_of_supplier(llm_output, backend_output, version="v2") -> BuildOutput:
+def get_fields_of_supplier(context) -> BuildOutput:
+    from models.context import Context
+
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     logger.info("get_fields_of_supplier")
     backend_output_processed: List[Field] = []
     for i, field in enumerate(backend_output["payload"]["fieldList"]):
@@ -651,15 +724,17 @@ def get_fields_of_supplier(llm_output, backend_output, version="v2") -> BuildOut
         version,
     )
     if len(llm_output) > 0:
-        return BuildOutput(
+        output = BuildOutput(
             widgets_count=3,
             widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
         )
     else:
-        return BuildOutput(
+        output = BuildOutput(
             widgets_count=2,
             widgets=[widget.model_dump(exclude_none=True) for widget in widgets[:2]],
         )
+    save_builder_output(context, output)
+    return output
 
 
 def get_fields_of_supplier_ui(fields: List[Field]):
@@ -693,7 +768,7 @@ def get_fields_of_supplier_ui(fields: List[Field]):
             ],
         )
     )
-    with open("get_fields_of_supplier_ui.json", "w") as f:
+    with open("logs/json/build_get_fields_of_supplier_ui.json", "w") as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
     return div
 
@@ -703,32 +778,32 @@ if __name__ == "__main__":
     # output = get_receiver_id_by_receiver_phone_number(
     #     llm_output="", backend_output={"receiver_name": "Aslon"}, version="v3"
     # )
-    # with open("test_response.json", "w") as f:
+    # with open("logs/json/test_response.json", "w") as f:
     #     json.dump(output.model_dump(), f)
-    data =  [
-                {
-                    "pan": "kkkkkkxxxxxxyyyyyy",
-                    "name": "Aslon",
-                    "processing": "HUMO",
-                    "mask": "*************1234",
-                },
-                {
-                    "pan": "kkkkkkxxxxxxyyasdfafsdfyyyy",
-                    "name": "Aslon",
-                    "processing": "HUMO",
-                    "mask": "*************1235",
-                },
-                {
-                    "pan": "kkkkkkxxxxxxyyasdfafsdfyyyy",
-                    "name": "Aslon",
-                    "processing": "HUMO",
-                    "mask": "*************1236",
-                },
-            ]
+    data = [
+        {
+            "pan": "kkkkkkxxxxxxyyyyyy",
+            "name": "Aslon",
+            "processing": "HUMO",
+            "mask": "*************1234",
+        },
+        {
+            "pan": "kkkkkkxxxxxxyyasdfafsdfyyyy",
+            "name": "Aslon",
+            "processing": "HUMO",
+            "mask": "*************1235",
+        },
+        {
+            "pan": "kkkkkkxxxxxxyyasdfafsdfyyyy",
+            "name": "Aslon",
+            "processing": "HUMO",
+            "mask": "*************1236",
+        },
+    ]
     output = get_receiver_id_by_receiver_phone_number(
         llm_output="Hello world",
         backend_output=CardsByPhoneNumberResponse.model_validate(data).model_dump(),
         version="v3",
     )
-    with open("test_response.json", "w") as f:
+    with open("logs/json/test_response.json", "w") as f:
         json.dump(output.model_dump(), f, ensure_ascii=False, indent=2)

@@ -24,3 +24,12 @@ class WidgetPaddings(Enum):
     BOTTOM = 16
     LEFT = 16
     RIGHT = 16
+
+
+class LanguageOptions(Enum):
+    RUSSIAN = "ru"
+    ENGLISH = "en"
+    UZBEK = "uz"
+    RU = "ru"
+    EN = "en"
+    UZ = "uz"

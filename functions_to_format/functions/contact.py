@@ -3,13 +3,26 @@ import json
 from pydantic import BaseModel
 from typing import List
 from .general import Widget, add_ui_to_widget
+from .general.utils import save_builder_output
 from models.build import BuildOutput
-from .general.const_values import WidgetMargins
+from .general.const_values import WidgetMargins, LanguageOptions
 from .general import WidgetInput
+from conf import logger
+import structlog
 
-def get_contact(
-    llm_output: str, backend_output: dict, version: str = "v3"
-) -> BuildOutput:
+from models.context import Context, LoggerContext
+
+
+def get_contact(context: Context) -> BuildOutput:
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     widget = Widget(
         name="contact_widget",
         type="contact_widget",
@@ -20,24 +33,25 @@ def get_contact(
     widgets = add_ui_to_widget(
         {
             build_contact_widget: WidgetInput(
-                widget= widget, 
-                args = {
+                widget=widget,
+                args={
                     "backend_output": backend_output,
                     "llm_output": llm_output,
-                }
-                
+                    "context": context.logger_context,
+                },
             )
         },
         version,
     )
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=1,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
 def contact_widget(name: str, avatar_url: str, subtitle: str):
-    
     return dv.DivContainer(
         orientation=dv.DivContainerOrientation.HORIZONTAL,
         items=[
@@ -66,7 +80,12 @@ def contact_widget(name: str, avatar_url: str, subtitle: str):
         background=[dv.DivSolidBackground(color="#FFFFFF")],
         border=dv.DivBorder(corner_radius=12, stroke=dv.DivStroke(color="#E5E7EB")),
         width=dv.DivMatchParentSize(),
-        margins=dv.DivEdgeInsets(bottom=WidgetMargins.BOTTOM.value, top=WidgetMargins.TOP.value, left=WidgetMargins.LEFT.value, right=WidgetMargins.RIGHT.value),
+        margins=dv.DivEdgeInsets(
+            bottom=WidgetMargins.BOTTOM.value,
+            top=WidgetMargins.TOP.value,
+            left=WidgetMargins.LEFT.value,
+            right=WidgetMargins.RIGHT.value,
+        ),
     )
 
 
@@ -87,7 +106,7 @@ class ContactsListInput(BaseModel):
     title: str = "Contacts"
 
 
-def build_contact_widget(backend_output: dict, llm_output: str):
+def build_contact_widget(backend_output: dict, llm_output: str, context: LoggerContext):
     # Parse input data
     contact_data = ContactWidgetInput(**backend_output)
 
@@ -152,7 +171,7 @@ if __name__ == "__main__":
     # Создание и сохранение JSON
     root = contact_widget(name, avatar_url, subtitle)
 
-    with open("jsons/contact.json", "w", encoding="utf-8") as f:
+    with open("logs/json/contact.json", "w", encoding="utf-8") as f:
         json.dump(dv.make_div(root), f, indent=2, ensure_ascii=False)
 
     # Create and save contacts list JSON
@@ -164,5 +183,5 @@ if __name__ == "__main__":
 
     contacts_list = make_contacts_list(contacts, "My Contacts")
 
-    with open("jsons/contacts_list.json", "w", encoding="utf-8") as f:
+    with open("logs/json/contacts_list.json", "w", encoding="utf-8") as f:
         json.dump(dv.make_div(contacts_list), f, indent=2, ensure_ascii=False)

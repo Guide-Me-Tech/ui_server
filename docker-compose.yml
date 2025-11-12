@@ -9,8 +9,19 @@ services:
     ports:
       - "8003:8000"
     volumes:
-      - .:/app
+      - ./logs:/app/logs
+      - /var/ui_server/ui_server.log:/var/ui_server/ui_server.log
+    environment:
+      - ENVIRONMENT=PRODUCTION
     restart: unless-stopped
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - consultant_ai
       - monitoring

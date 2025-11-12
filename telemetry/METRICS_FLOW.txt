@@ -1,0 +1,142 @@
+================================================================================
+                    METRICS COLLECTION FLOW
+================================================================================
+
+1. INITIALIZATION (server.py startup)
+   ┌─────────────────────────────────────────────────────────────┐
+   │ setup_telemetry(app, "ui_server", version)                  │
+   │   ├─> Creates MeterProvider                                 │
+   │   ├─> Configures OTLPMetricExporter (→ Prometheus)         │
+   │   └─> Sets export interval: 60 seconds                     │
+   │                                                              │
+   │ metrics_collector = MetricsCollector()                      │
+   │   └─> Creates metric instruments from MeterProvider        │
+   └─────────────────────────────────────────────────────────────┘
+
+2. METRIC INSTRUMENTS (metrics.py)
+   ┌─────────────────────────────────────────────────────────────┐
+   │ Counter (monotonic increase only)                           │
+   │   • ui_server.requests.total                                │
+   │   • ui_server.errors.total                                  │
+   │   • ui_server.functions.invocations                         │
+   │   • ui_server.functions.errors                              │
+   │   • ui_server.requests.language                             │
+   │                                                              │
+   │ Histogram (distributions for percentiles)                   │
+   │   • ui_server.requests.duration                             │
+   │   • ui_server.functions.duration                            │
+   │                                                              │
+   │ UpDownCounter (can increase/decrease)                       │
+   │   • ui_server.requests.active                               │
+   └─────────────────────────────────────────────────────────────┘
+
+3. RECORDING METRICS (your application code)
+   ┌─────────────────────────────────────────────────────────────┐
+   │ # Example from server.py:                                   │
+   │                                                              │
+   │ func_start = time.time()                                    │
+   │ result = functions_mapper[func_name](...)                   │
+   │ func_duration = (time.time() - func_start) * 1000           │
+   │                                                              │
+   │ metrics_collector.record_function_invocation(               │
+   │     function_name="chatbot_answer",  ← Label/Attribute     │
+   │     duration_ms=123.45,              ← Value               │
+   │     success=True,                    ← Label/Attribute     │
+   │     version="v3"                     ← Label/Attribute     │
+   │ )                                                            │
+   └─────────────────────────────────────────────────────────────┘
+                              ↓
+   ┌─────────────────────────────────────────────────────────────┐
+   │ Inside record_function_invocation():                        │
+   │                                                              │
+   │ attributes = {                                              │
+   │     "function.name": "chatbot_answer",                      │
+   │     "function.version": "v3",                               │
+   │     "function.success": True                                │
+   │ }                                                            │
+   │                                                              │
+   │ self.function_invocation_counter.add(1, attributes)         │
+   │ self.function_duration.record(123.45, attributes)           │
+   └─────────────────────────────────────────────────────────────┘
+
+4. DATA ACCUMULATION (in memory)
+   ┌─────────────────────────────────────────────────────────────┐
+   │ Time 0s:   record(100ms) → stored in memory                │
+   │ Time 5s:   record(150ms) → stored in memory                │
+   │ Time 10s:  record(120ms) → stored in memory                │
+   │ Time 15s:  → Prometheus SCRAPES /metrics endpoint          │
+   │ Time 30s:  → Prometheus SCRAPES /metrics endpoint          │
+   │ (Continuous accumulation, Prometheus pulls on schedule)    │
+   └─────────────────────────────────────────────────────────────┘
+
+5. SCRAPING (Prometheus pulls every 15 seconds)
+   ┌─────────────────────────────────────────────────────────────┐
+   │ Prometheus Scraper                                          │
+   │   ├─> Sends: GET http://localhost:8000/metrics             │
+   │   └─> App responds with Prometheus text format             │
+   │                                                              │
+   │ PrometheusMetricReader                                      │
+   │   ├─> Collects all metrics from instruments                │
+   │   ├─> Aggregates (sum counters, create histogram buckets)  │
+   │   └─> Converts to Prometheus text format                   │
+   │                                                              │
+   │ /metrics Endpoint Returns:                                  │
+   │   ui_server_functions_invocations{...} 42.0                │
+   │   ui_server_functions_duration_bucket{...} 35.0            │
+   └─────────────────────────────────────────────────────────────┘
+
+6. STORAGE (Prometheus)
+   ┌─────────────────────────────────────────────────────────────┐
+   │ Stores as time series with labels:                          │
+   │                                                              │
+   │ ui_server_functions_invocations{                            │
+   │     function_name="chatbot_answer",                         │
+   │     function_version="v3",                                  │
+   │     function_success="true"                                 │
+   │ } = 42                                                      │
+   │                                                              │
+   │ ui_server_functions_duration_bucket{                        │
+   │     function_name="chatbot_answer",                         │
+   │     le="100"  # bucket: values ≤ 100ms                     │
+   │ } = 35                                                      │
+   └─────────────────────────────────────────────────────────────┘
+
+7. VISUALIZATION (Grafana Dashboard)
+   ┌─────────────────────────────────────────────────────────────┐
+   │ PromQL Queries:                                             │
+   │                                                              │
+   │ # Rate of invocations                                       │
+   │ rate(ui_server_functions_invocations[5m])                   │
+   │                                                              │
+   │ # P95 latency                                               │
+   │ histogram_quantile(0.95,                                    │
+   │     rate(ui_server_functions_duration_bucket[5m]))          │
+   │                                                              │
+   │ # Success rate                                              │
+   │ sum(rate(...{function_success="true"}[5m]))                 │
+   │   / sum(rate(...[5m]))                                      │
+   └─────────────────────────────────────────────────────────────┘
+
+================================================================================
+KEY CONCEPTS
+================================================================================
+
+ATTRIBUTES (Labels):
+  Key-value pairs attached to metrics for filtering
+  Example: {"function.name": "chatbot_answer", "version": "v3"}
+  
+  ✅ LOW CARDINALITY (good):  function_name, version, status_code
+  ❌ HIGH CARDINALITY (bad):  user_id, request_id, timestamp
+
+METRIC TYPES:
+  Counter:      Monotonic (only increases) - counts events
+  Histogram:    Distribution - measures values, enables percentiles
+  UpDownCounter: Can increase/decrease - current state
+
+SCRAPE INTERVAL:
+  15 seconds - Prometheus pulls metrics from /metrics endpoint (PULL-BASED)
+
+PROMETHEUS FORMAT:
+  metric_name{label1="value1", label2="value2"} = numeric_value
+
+================================================================================

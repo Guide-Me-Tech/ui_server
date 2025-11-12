@@ -8,12 +8,16 @@ from .general import (
     build_text_widget,
     TextWidget,
 )
+from .general.utils import save_builder_output
 from pydantic import BaseModel
 from typing import List
 from conf import logger
 from models.build import BuildOutput
+from models.context import Context, LoggerContext
 from tool_call_models.cards import CardsBalanceResponse
 from tool_call_models.home_balance import HomeBalance
+from functions_to_format.functions.general.const_values import LanguageOptions
+import structlog
 
 
 class CardInfo(BaseModel):
@@ -59,7 +63,6 @@ def format_balance(balance: int):
 
 def build_balances_part(home_balance: HomeBalance):
     # Services list
-    print(home_balance.services)
     service_icons = {
         "electricity": "https://smarty-test.smartbank.uz/ui_server/static/electricity.png",
         "gas": "https://smarty-test.smartbank.uz/ui_server/static/gas.png",
@@ -80,9 +83,11 @@ def build_balances_part(home_balance: HomeBalance):
             items.append(
                 dv.DivContainer(
                     orientation=dv.DivContainerOrientation.HORIZONTAL,
-                    width=dv.DivFixedSize(value=150)
-                    if service_name == "electricity"
-                    else None,
+                    width=(
+                        dv.DivFixedSize(value=150)
+                        if service_name == "electricity"
+                        else None
+                    ),
                     height=dv.DivFixedSize(value=24),
                     items=[
                         dv.DivImage(
@@ -92,7 +97,7 @@ def build_balances_part(home_balance: HomeBalance):
                         ),
                         dv.DivText(
                             text=format_balance(
-                                home_balance.services[service_name].balance
+                                home_balance.services[service_name].balance * 100
                             ),
                             font_size=16,
                             text_color="#666666",
@@ -167,15 +172,22 @@ def build_home_balances_ui(home_balance: HomeBalance):
     """
     container = build_home_balance_main_container(home_balance)
     output = dv.make_div(container)
-    with open("build_home_balances_ui.json", "w", encoding="utf-8") as f:
+    with open("logs/json/build_home_balances_ui.json", "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
     return output
 
 
-def get_home_balances(llm_output: str, backend_output: dict, version: str = "v2") -> BuildOutput:
+def get_home_balances(context: Context) -> BuildOutput:
     """
     Get home balances.
     """
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
     for k, v in backend_output["services"].items():
         backend_output[k] = v
     del backend_output["services"]
@@ -212,21 +224,29 @@ def get_home_balances(llm_output: str, backend_output: dict, version: str = "v2"
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
         widgets_count=len(widgets),
     )
+    save_builder_output(context, output)
     return output
 
 
-def get_balance(llm_output: str, backend_output: dict, version: str = "v2") -> BuildOutput:
+def get_balance(context: Context) -> BuildOutput:
     """
     Process balance information and create UI widgets.
 
     Args:
-        llm_output (str): Output from language model
-        backend_output (dict): Card and account data from backend
-        version (str, optional): UI version. Defaults to "v2".
+        context (Context): Context object containing llm_output, backend_output, version, etc.
 
     Returns:
-        dict: Processed output with widgets
+        BuildOutput: Processed output with widgets
     """
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     # Janis Rubins: use precompiled validator if available to avoid repeated validation overhead
     #  preprocess backend output:
     output = [
@@ -243,7 +263,6 @@ def get_balance(llm_output: str, backend_output: dict, version: str = "v2") -> B
             balance_value = int(card_info.cardBalance.balance.replace(" ", ""))
         elif type(card_info.cardBalance.balance) is float:
             balance_value = int(card_info.cardBalance.balance)
-
 
         backend_output_processed.append(
             CardInfo(
@@ -282,6 +301,7 @@ def get_balance(llm_output: str, backend_output: dict, version: str = "v2") -> B
                     "balance_input": BalanceInput(
                         cards=backend_output_processed, accounts=[]
                     ),
+                    "language": language,
                 },
             ),
         },
@@ -291,10 +311,11 @@ def get_balance(llm_output: str, backend_output: dict, version: str = "v2") -> B
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
         widgets_count=len(widgets),
     )
+    save_builder_output(context, output)
     return output
 
 
-def card_block(card: CardInfo):
+def card_block(card: CardInfo, language: LanguageOptions = LanguageOptions.RUSSIAN):
     """
     Create a UI container for displaying card information.
 
@@ -304,6 +325,18 @@ def card_block(card: CardInfo):
     Returns:
         dv.DivContainer: UI component for card display
     """
+    texts_map = {
+        LanguageOptions.RUSSIAN: {
+            "sum": "сум",
+        },
+        LanguageOptions.ENGLISH: {
+            "sum": "sum",
+        },
+        LanguageOptions.UZBEK: {
+            "sum": "so'm",
+        },
+    }
+    sum_text = texts_map[language]["sum"]
     return dv.DivContainer(
         orientation=dv.DivContainerOrientation.HORIZONTAL,
         items=[
@@ -319,7 +352,7 @@ def card_block(card: CardInfo):
                 orientation=dv.DivContainerOrientation.VERTICAL,
                 items=[
                     dv.DivText(
-                        text=f"{card.balance} сум",
+                        text=f"{card.balance // 100} {sum_text}",
                         font_size=16,
                         font_weight=dv.DivFontWeight.BOLD,
                         text_color="#111827",
@@ -336,7 +369,9 @@ def card_block(card: CardInfo):
     )
 
 
-def account_block(account: Account):
+def account_block(
+    account: Account, language: LanguageOptions = LanguageOptions.RUSSIAN
+):
     """
     Create a UI container for displaying account information.
 
@@ -346,6 +381,19 @@ def account_block(account: Account):
     Returns:
         dv.DivContainer: UI component for account display
     """
+    texts_map = {
+        LanguageOptions.RUSSIAN: {
+            "sum": "сум",
+        },
+        LanguageOptions.ENGLISH: {
+            "sum": "sum",
+        },
+        LanguageOptions.UZBEK: {
+            "sum": "so'm",
+        },
+    }
+
+    sum_text = texts_map[language]["sum"]
     return dv.DivContainer(
         orientation=dv.DivContainerOrientation.HORIZONTAL,
         items=[
@@ -361,7 +409,7 @@ def account_block(account: Account):
                 orientation=dv.DivContainerOrientation.VERTICAL,
                 items=[
                     dv.DivText(
-                        text=f"{account.balance} сум",
+                        text=f"{account.balance} {sum_text}",
                         font_size=16,
                         font_weight=dv.DivFontWeight.BOLD,
                         text_color="#111827",
@@ -400,7 +448,10 @@ def action_button(text: str):
     )
 
 
-def build_balance_ui(balance_input: BalanceInput):
+def build_balance_ui(
+    balance_input: BalanceInput,
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+):
     """
     Build the balance UI using backend data and LLM output.
 
@@ -410,19 +461,44 @@ def build_balance_ui(balance_input: BalanceInput):
     Returns:
         dict: Complete UI definition in DivKit format
     """
+
     logger.info("Build balance ui")
     cards = balance_input.cards
+    texts_map = {
+        LanguageOptions.RUSSIAN: {
+            "cards_title": "Баланс ваших карт:",
+            "accounts_title": "Баланс ваших счетов:",
+            "text": "Вы можете пополнить счёт или перевести средства на другую карту.",
+            "actions": ["Пополнить", "Перевести"],
+        },
+        LanguageOptions.ENGLISH: {
+            "cards_title": "Your cards balance:",
+            "accounts_title": "Your accounts balance:",
+            "text": "You can top up your account or transfer money to another card.",
+            "actions": ["Top up", "Transfer"],
+        },
+        LanguageOptions.UZBEK: {
+            "cards_title": "Sizning kartalaringizning balansi:",
+            "accounts_title": "Sizning hisoblaringizning balansi:",
+            "text": "Siz hisobingizni to'ldirishingiz yoki boshqa kartaga pul o'tkazishingiz mumkin.",
+            "actions": ["To'ldirish", "O'tkazish"],
+        },
+    }
 
     # Parse LLM output for text and actions
-    text = "Вы можете пополнить счёт или перевести средства на другую карту."
-    actions = ["Пополнить", "Перевести"]
+    # text = "Вы можете пополнить счёт или перевести средства на другую карту."
+    # actions = ["Пополнить", "Перевести"]
+    text = texts_map[language]["text"]
+    actions = texts_map[language]["actions"]
+    cards_title = texts_map[language]["cards_title"]
+    accounts_title = texts_map[language]["accounts_title"]
 
     main_items = []
 
     if cards:
         main_items.append(
             dv.DivText(
-                text="Баланс ваших карт:",
+                text=cards_title,
                 font_size=13,
                 font_weight=dv.DivFontWeight.BOLD,
                 text_color="#374151",
@@ -432,29 +508,29 @@ def build_balance_ui(balance_input: BalanceInput):
         main_items.extend([card_block(c) for c in cards])
 
     # Сообщение и кнопки
-    main_items.append(
-        dv.DivContainer(
-            orientation=dv.DivContainerOrientation.VERTICAL,
-            background=[dv.DivSolidBackground(color="#F9FAFB")],
-            paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
-            items=[
-                dv.DivText(text=text, font_size=13, text_color="#374151"),
-                dv.DivContainer(
-                    orientation=dv.DivContainerOrientation.HORIZONTAL,
-                    items=[action_button(act) for act in actions],
-                    margins=dv.DivEdgeInsets(top=12),
-                ),
-            ],
-            margins=dv.DivEdgeInsets(top=16),
-        )
-    )
+    # main_items.append(
+    #     dv.DivContainer(
+    #         orientation=dv.DivContainerOrientation.VERTICAL,
+    #         background=[dv.DivSolidBackground(color="#F9FAFB")],
+    #         paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
+    #         items=[
+    #             dv.DivText(text=text, font_size=13, text_color="#374151"),
+    #             dv.DivContainer(
+    #                 orientation=dv.DivContainerOrientation.HORIZONTAL,
+    #                 items=[action_button(act) for act in actions],
+    #                 margins=dv.DivEdgeInsets(top=12),
+    #             ),
+    #         ],
+    #         margins=dv.DivEdgeInsets(top=16),
+    #     )
+    # )
 
     # Root контейнер
     root = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
         items=main_items,
         width=dv.DivFixedSize(value=280),
-        height=dv.DivFixedSize(value=248),
+        # height=dv.DivFixedSize(value=248),
         background=[dv.DivSolidBackground(color="#FFFFFF")],
         border=dv.DivBorder(
             corner_radius=8, stroke=dv.DivStroke(color="#E5E7EB", width=1)
@@ -464,7 +540,7 @@ def build_balance_ui(balance_input: BalanceInput):
     )
 
     output = dv.make_div(root)
-    with open("build_balance_ui.json", "w", encoding="utf-8") as f:
+    with open("logs/json/build_balance_ui.json", "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
     return output
@@ -503,7 +579,7 @@ if __name__ == "__main__":
         }
     )
 
-    result = build_balance_ui(BalanceInput.model_validate(backend_output)) 
+    result = build_balance_ui(BalanceInput.model_validate(backend_output))
 
-    with open("jsons/balance_card.json", "w", encoding="utf-8") as f:
+    with open("logs/json/jsons/balance_card.json", "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)

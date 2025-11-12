@@ -2,8 +2,14 @@ import pydivkit as dv
 import json
 from pydantic import BaseModel
 from typing import List
+
+from functions_to_format.functions.general.utils import save_builder_output
 from .general import Widget, add_ui_to_widget, WidgetInput
 from models.build import BuildOutput
+from functions_to_format.functions.general.const_values import LanguageOptions
+from conf import logger
+import structlog
+from models.context import Context
 
 
 class NewsItem(BaseModel):
@@ -19,7 +25,16 @@ class NewsWidgetInput(BaseModel):
     header_text: str = "TOP NEWS"
 
 
-def get_news(llm_output: str, backend_output: dict, version: str = "v3"):
+def get_news(context: Context) -> BuildOutput:
+    # Extract values from context
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
     news_widget_input = NewsWidgetInput(**backend_output)
     widget = Widget(
         name="news_widget",
@@ -37,10 +52,12 @@ def get_news(llm_output: str, backend_output: dict, version: str = "v3"):
         },
         version,
     )
-    return BuildOutput(
+    output = BuildOutput(
         widgets_count=1,
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
+    save_builder_output(context, output)
+    return output
 
 
 def news_item(title, source, time, image_url, url):
@@ -131,7 +148,6 @@ def build_news_widget(news_widget_input: NewsWidgetInput):
 
 
 if __name__ == "__main__":
-
     news = [
         news_item(
             title="Trump elige a Chris Wright, CEO de...",
@@ -184,5 +200,5 @@ if __name__ == "__main__":
     )
 
     # Save to JSON
-    with open("jsons/news_widget.json", "w", encoding="utf-8") as f:
+    with open("logs/json/news_widget.json", "w", encoding="utf-8") as f:
         json.dump(dv.make_div(root), f, indent=2, ensure_ascii=False)
