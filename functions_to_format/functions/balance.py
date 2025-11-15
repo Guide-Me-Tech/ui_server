@@ -505,7 +505,7 @@ def build_balance_ui(
                 margins=dv.DivEdgeInsets(bottom=8),
             )
         )
-        main_items.extend([card_block(c) for c in cards])
+        main_items.extend([card_block(c, language) for c in cards])
 
     # Сообщение и кнопки
     # main_items.append(

@@ -83,10 +83,17 @@ class InputV2(BaseModel):
     backend_output: Union[Dict, List, None] = None
 
 
+health_counter = 0
+
+
 @app.get("/health")
 async def health():
     # here I need function to upload logs/usage to somewhere - can be [s3, mongo]
-    await upload_usages_async()
+    # every health check is in 30 seconds so for 30 minutes I need to upload usages every 60 health checks
+    global health_counter
+    if health_counter % 60 == 0:
+        await upload_usages_async()
+    health_counter += 1
 
     return "Ok"
 
@@ -116,13 +123,14 @@ async def format_data(request: Request):
 async def format_data_v3(request: Request, input_data: InputV3):
     global logger
     version = "v3"
-    logger.debug("BUILD UI V3")
+
     start_time = time.time()
     logger = logger.bind(chat_id=input_data.chat_id)
+    logger.info("BUILD UI V3")
 
     with tracer.start_as_current_span("build_ui_v3") as span:
         try:
-            logger.debug("Step 1: Entering /chat/v3/build_ui")
+            logger.info("Step 1: Entering /chat/v3/build_ui")
             language = LanguageOptions(request.headers.get("language", "ru"))
             func_name = input_data.function_name
             llm_output = input_data.llm_output or ""
@@ -136,12 +144,11 @@ async def format_data_v3(request: Request, input_data: InputV3):
             span.set_attribute("function.version", version)
             span.set_attribute("language", language.value)
 
-            logger.debug(
+            logger.info(
                 "Received request parameters",
                 function_name=func_name,
                 llm_output=llm_output,
                 backend_output=backend_output,
-                chat_id=input_data.chat_id,
                 api_key=input_data.api_key,
             )
 
@@ -156,7 +163,7 @@ async def format_data_v3(request: Request, input_data: InputV3):
                     ).model_dump(),
                 )
 
-            logger.debug(f"Step 2: Found function {func_name}, invoking now")
+            logger.info(f"Step 2: Found function {func_name}, invoking now")
 
             # Time function execution
             func_start = time.time()
@@ -185,7 +192,7 @@ async def format_data_v3(request: Request, input_data: InputV3):
             )
 
             span.set_attribute("function.duration_ms", func_duration)
-            logger.debug(f"Step 3: Function result={result}")
+            logger.info(f"Step 3: Function result={result}")
 
             return result
         except Exception as e:

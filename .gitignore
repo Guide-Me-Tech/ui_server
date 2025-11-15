@@ -333,3 +333,5 @@ logs/json/
 logs/temp/
 logs/usage/
 *.ignore.*
+a.json
+a.py

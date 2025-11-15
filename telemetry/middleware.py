@@ -90,15 +90,6 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
                     self.metrics_collector.decrement_active_requests()
 
                 # Log request details
-                logger.debug(
-                    "Request processed",
-                    method=request.method,
-                    path=request.url.path,
-                    status_code=response.status_code,
-                    duration_ms=duration_ms,
-                    trace_id=format(span.get_span_context().trace_id, "032x"),
-                    span_id=format(span.get_span_context().span_id, "016x"),
-                )
 
                 return response
 

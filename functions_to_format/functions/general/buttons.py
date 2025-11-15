@@ -2,6 +2,7 @@ import pydivkit as dv
 import json
 from models.widget import Widget
 from .const_values import WidgetMargins, WidgetPaddings, ButtonInRowMargins
+from .const_values import LanguageOptions
 
 
 class ButtonsWidget(Widget):
@@ -25,7 +26,7 @@ def make_contacts_search_button(txt, receiver_name):
             payload={"name": [receiver_name]},  # Optional: structured access
         )
     return dv.DivText(
-        text="Qidirish",
+        text=txt,
         font_size=14,
         text_color="#2563EB",
         border=dv.DivBorder(corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")),
@@ -42,15 +43,38 @@ def make_contacts_search_button(txt, receiver_name):
     )
 
 
-def build_buttons_row(button_texts: list, receiver_name: str | None = None):
+def build_buttons_row(
+    button_texts: list,
+    receiver_name: str | None = None,
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+):
     items = []
+
+    texts_map = {
+        LanguageOptions.RUSSIAN: {
+            "search": "Поиск",
+            "cancel": "Отмена",
+        },
+        LanguageOptions.ENGLISH: {
+            "search": "Search",
+            "cancel": "Cancel",
+        },
+        LanguageOptions.UZBEK: {
+            "search": "Qidirish",
+            "cancel": "Bekor qilish",
+        },
+    }
+
     for txt in button_texts:
         if txt == "search":
-            items.append(make_contacts_search_button(txt, receiver_name))
+            items.append(
+                make_contacts_search_button(texts_map[language][txt], receiver_name)
+            )
+
         else:
             items.append(
                 dv.DivText(
-                    text=txt,
+                    text=texts_map[language][txt],
                     font_size=14,
                     text_color="#2563EB",
                     border=dv.DivBorder(
@@ -84,7 +108,7 @@ def build_buttons_row(button_texts: list, receiver_name: str | None = None):
             ),
         )
     )
-    with open("logs/build_buttons.json", "w") as f:
+    with open("logs/json/build_buttons.json", "w") as f:
         json.dump(div, f, indent=2, ensure_ascii=False)
     return div
 

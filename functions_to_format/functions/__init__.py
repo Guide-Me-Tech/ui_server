@@ -7,6 +7,7 @@ from .payment import (
     get_suppliers_by_category,
     get_number_by_receiver_name,
     send_money_to_someone_via_card,
+    pay_for_home_utility,
 )
 from .contact import build_contact_widget, get_contact
 from .news import build_news_widget, get_news
@@ -52,4 +53,5 @@ functions_mapper = {
     "send_money_to_someone_via_card": send_money_to_someone_via_card,
     "get_home_balances": get_home_balances,
     "build_contacts_list": build_contacts_list,
+    "pay_for_home_utility": pay_for_home_utility,
 }

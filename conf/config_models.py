@@ -46,7 +46,7 @@ class AppConfig:
     sentry: SentryConfig
     otel: OTELConfig
     environment: str = "development"
-    mongo: UsageCollectionMongoConfig = UsageCollectionMongoConfig()
+    mongo: UsageCollectionMongoConfig | None = None
 
 
 def New() -> AppConfig:
