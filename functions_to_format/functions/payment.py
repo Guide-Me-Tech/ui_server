@@ -1,4 +1,5 @@
 import json
+
 from .general import (
     add_ui_to_widget,
     Widget,
@@ -16,6 +17,7 @@ import pydivkit as dv
 from tool_call_models.cards import CardsByPhoneNumberResponse, CardInfoByPhoneNumber
 from tool_call_models.paynet import (
     CategoriesResponse,
+    PaymentManagerPaymentResponse,
     SupplierByCategoryResponse,
     Supplier,
     Category,
@@ -25,6 +27,322 @@ from conf import logger
 from functions_to_format.functions.general.const_values import LanguageOptions
 import structlog
 from models.context import Context, LoggerContext
+
+
+def build_pay_for_home_utility_ui(
+    payment_response: PaymentManagerPaymentResponse,
+    language: LanguageOptions = LanguageOptions.UZBEK,
+):
+    """Build a payment success card UI using pydivkit"""
+
+    texts_map = {
+        LanguageOptions.UZBEK: {
+            "payment_status": "To'lov miqdori",
+            "currency": "so'm",
+            "payment_description": "Mahsulot va xizmatlar uchun to'lov",
+            "transaction_details": "Tranzaksiya raqami:",
+            "date": "O'tkazish vaqti:",
+            "sender": "Jo'natuvchi:",
+            "receiver": "Qabul qiluvchi:",
+        },
+        LanguageOptions.RUSSIAN: {
+            "payment_status": "Сумма платежа",
+            "currency": "cумм.",
+            "payment_description": "Платеж за товары и услуги",
+            "transaction_details": "Номер транзакции:",
+            "date": "Время перевода:",
+            "sender": "Отправитель:",
+            "receiver": "Получатель:",
+        },
+        LanguageOptions.ENGLISH: {
+            "payment_status": "Payment amount",
+            "currency": "USD",
+            "payment_description": "Payment for goods and services",
+            "transaction_details": "Transaction number:",
+            "date": "Transfer time:",
+            "sender": "Sender:",
+            "receiver": "Receiver:",
+        },
+    }
+
+    # get receiver name  ---- receiver name is the item in data.response where item["order"] == 1
+    receiver_name = ""
+    for item in payment_response.data.response:
+        if item.order == 1:
+            receiver_name = item.value
+            break
+
+    # Create payment details items from response
+    payment_items = []
+    for item in payment_response.data.response:
+        payment_items.append(
+            dv.DivContainer(
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
+                items=[
+                    dv.DivText(
+                        text=item.name,
+                        text_color="#666666",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.REGULAR,
+                        width=dv.DivWrapContentSize(),
+                        margins=dv.DivEdgeInsets(right=8),
+                    ),
+                    dv.DivText(
+                        text=item.value,
+                        text_color="#000000",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.MEDIUM,
+                        width=dv.DivMatchParentSize(),
+                        text_alignment_horizontal=dv.DivAlignmentHorizontal.END,
+                    ),
+                ],
+                margins=dv.DivEdgeInsets(bottom=12),
+            )
+        )
+
+    # Create success card matching the image design
+    success_card = dv.DivContainer(
+        orientation=dv.DivContainerOrientation.VERTICAL,
+        background=[
+            dv.DivSolidBackground(
+                color="#FFFFFF",
+            )
+        ],
+        border=dv.DivBorder(
+            corner_radius=16,
+        ),
+        paddings=dv.DivEdgeInsets(left=24, top=32, right=24, bottom=32),
+        margins=dv.DivEdgeInsets(left=16, top=16, right=16, bottom=16),
+        items=[
+            # Success checkmark icon
+            dv.DivContainer(
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
+                items=[
+                    dv.DivContainer(
+                        background=[
+                            dv.DivSolidBackground(
+                                color="#E8F5E8",
+                            )
+                        ],
+                        border=dv.DivBorder(
+                            corner_radius=50,
+                        ),
+                        width=dv.DivFixedSize(value=80),
+                        height=dv.DivFixedSize(value=80),
+                        items=[
+                            dv.DivText(
+                                text="✓",
+                                text_color="#4CAF50",
+                                font_size=36,
+                                font_weight=dv.DivFontWeight.BOLD,
+                                text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                                text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
+                            ),
+                        ],
+                    ),
+                ],
+                content_alignment_horizontal=dv.DivContentAlignmentHorizontal.CENTER,
+                margins=dv.DivEdgeInsets(bottom=24),
+            ),
+            # Payment success title
+            dv.DivText(
+                text=texts_map[language]["payment_status"],
+                text_color="#666666",
+                font_size=16,
+                font_weight=dv.DivFontWeight.REGULAR,
+                text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                margins=dv.DivEdgeInsets(bottom=8),
+            ),
+            # Amount
+            dv.DivText(
+                text=f"{payment_response.additional.amount if payment_response.additional else '0'} {texts_map[language]['currency']}",
+                text_color="#000000",
+                font_size=32,
+                font_weight=dv.DivFontWeight.BOLD,
+                text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                margins=dv.DivEdgeInsets(bottom=8),
+            ),
+            # Service description
+            dv.DivContainer(
+                background=[
+                    dv.DivSolidBackground(
+                        color="#E8F5E8",
+                    )
+                ],
+                border=dv.DivBorder(
+                    corner_radius=8,
+                ),
+                paddings=dv.DivEdgeInsets(left=12, top=8, right=12, bottom=8),
+                margins=dv.DivEdgeInsets(bottom=32),
+                items=[
+                    dv.DivText(
+                        text=texts_map[language]["payment_description"],
+                        text_color="#4CAF50",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.MEDIUM,
+                        text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+                    ),
+                ],
+            ),
+            # Transaction details
+            dv.DivContainer(
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
+                items=[
+                    dv.DivText(
+                        text=texts_map[language]["transaction_details"],
+                        text_color="#666666",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.REGULAR,
+                        width=dv.DivWrapContentSize(),
+                    ),
+                ],
+                margins=dv.DivEdgeInsets(bottom=8),
+            ),
+            # Separator line
+            dv.DivSeparator(
+                delimiter_style=dv.DivSeparatorDelimiterStyle(
+                    color="#E0E0E0",
+                ),
+                margins=dv.DivEdgeInsets(bottom=16),
+            ),
+            # Date
+            dv.DivContainer(
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
+                items=[
+                    dv.DivText(
+                        text=texts_map[language]["date"],
+                        text_color="#666666",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.REGULAR,
+                        width=dv.DivWrapContentSize(),
+                    ),
+                    dv.DivText(
+                        text=payment_response.additional.date
+                        if payment_response.additional
+                        else "",
+                        text_color="#000000",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.MEDIUM,
+                        width=dv.DivMatchParentSize(),
+                        text_alignment_horizontal=dv.DivAlignmentHorizontal.END,
+                    ),
+                ],
+                margins=dv.DivEdgeInsets(bottom=16),
+            ),
+            # Recipient
+            dv.DivContainer(
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
+                items=[
+                    dv.DivText(
+                        text=texts_map[language]["sender"],
+                        text_color="#666666",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.REGULAR,
+                        width=dv.DivWrapContentSize(),
+                    ),
+                    dv.DivContainer(
+                        orientation=dv.DivContainerOrientation.VERTICAL,
+                        width=dv.DivMatchParentSize(),
+                        items=[
+                            dv.DivText(
+                                text=payment_response.additional.sender_name
+                                if payment_response.additional
+                                else "",
+                                text_color="#000000",
+                                font_size=14,
+                                font_weight=dv.DivFontWeight.MEDIUM,
+                                text_alignment_horizontal=dv.DivAlignmentHorizontal.END,
+                            ),
+                            dv.DivText(
+                                text=payment_response.additional.sender_masked_pan
+                                if payment_response.additional
+                                else "**** **** **** ****",
+                                text_color="#666666",
+                                font_size=12,
+                                font_weight=dv.DivFontWeight.REGULAR,
+                                text_alignment_horizontal=dv.DivAlignmentHorizontal.END,
+                            ),
+                        ],
+                    ),
+                ],
+                margins=dv.DivEdgeInsets(bottom=16),
+            ),
+            # Receiver
+            dv.DivContainer(
+                orientation=dv.DivContainerOrientation.HORIZONTAL,
+                items=[
+                    dv.DivText(
+                        text=texts_map[language]["receiver"],
+                        text_color="#666666",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.REGULAR,
+                        width=dv.DivWrapContentSize(),
+                    ),
+                    dv.DivText(
+                        text=receiver_name,
+                        text_color="#000000",
+                        font_size=14,
+                        font_weight=dv.DivFontWeight.MEDIUM,
+                        width=dv.DivMatchParentSize(),
+                        text_alignment_horizontal=dv.DivAlignmentHorizontal.END,
+                    ),
+                ],
+                margins=dv.DivEdgeInsets(bottom=16),
+            ),
+        ],
+    )
+
+    return dv.make_div(success_card)
+
+
+def pay_for_home_utility(context: Context) -> BuildOutput:
+    llm_output = context.llm_output
+    backend_output = context.backend_output
+    version = context.version
+    language = context.language
+    chat_id = context.logger_context.chat_id
+    api_key = context.api_key
+    logger = context.logger_context.logger
+
+    backend_output = PaymentManagerPaymentResponse.model_validate(backend_output)
+
+    logger.info("pay_for_home_utility")
+
+    text_widget = TextWidget(
+        order=1,
+        values=[{"text": llm_output}],
+    )
+    payment_status_widget = Widget(
+        order=2,
+        type="payment_status_widget",
+        name="payment_status_widget",
+        layout="vertical",
+        fields=["payment_status"],
+        values=[backend_output.model_dump()],
+    )
+
+    widgets = add_ui_to_widget(
+        {
+            build_text_widget: WidgetInput(
+                widget=text_widget,
+                args={
+                    "text": llm_output,
+                },
+            ),
+            build_pay_for_home_utility_ui: WidgetInput(
+                widget=payment_status_widget,
+                args={"payment_response": backend_output},
+            ),
+        },
+        version,
+    )
+    output = BuildOutput(
+        widgets_count=len(widgets),
+        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
+    )
+
+    save_builder_output(context, output)
+    return output
 
 
 def send_money_to_someone_via_card(context: Context) -> BuildOutput:
@@ -123,7 +441,11 @@ def get_number_by_receiver_name(context) -> BuildOutput:
             # ),
             build_buttons_row: WidgetInput(
                 widget=buttons,
-                args={"button_texts": ["cancel", "search"], "receiver_name": names},
+                args={
+                    "button_texts": ["cancel", "search"],
+                    "receiver_name": names,
+                    "language": language,
+                },
             ),
         },
         version,
@@ -170,9 +492,7 @@ def get_number_by_reciver_number_ui(receiver_name: Union[str, List[str]]):
     return div
 
 
-def get_receiver_id_by_receiver_phone_number(context) -> BuildOutput:
-    from models.context import Context
-
+def get_receiver_id_by_receiver_phone_number(context: Context) -> BuildOutput:
     # Extract values from context
     llm_output = context.llm_output
     backend_output = context.backend_output
@@ -213,7 +533,10 @@ def get_receiver_id_by_receiver_phone_number(context) -> BuildOutput:
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons,
-                args={"button_texts": ["cancel"]},
+                args={
+                    "button_texts": ["cancel"],
+                    "language": language,
+                },
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
@@ -421,7 +744,10 @@ def get_categories(context) -> BuildOutput:
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons,
-                args={"button_texts": ["cancel"]},
+                args={
+                    "button_texts": ["cancel"],
+                    "language": language,
+                },
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
@@ -539,7 +865,10 @@ def get_suppliers_by_category(context) -> BuildOutput:
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons_widget,
-                args={"button_texts": ["cancel"]},
+                args={
+                    "button_texts": ["cancel"],
+                    "language": language,
+                },
             ),
             build_text_widget: WidgetInput(
                 widget=text_widget,
@@ -712,8 +1041,9 @@ def get_fields_of_supplier(context) -> BuildOutput:
                 widget=button_widget,
                 args={
                     "button_texts": [
-                        "Cancel",
-                    ]
+                        "cancel",
+                    ],
+                    "language": language,
                 },
             ),
             build_text_widget: WidgetInput(

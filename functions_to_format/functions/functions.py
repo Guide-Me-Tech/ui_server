@@ -201,7 +201,7 @@ def build_contacts_list(context) -> BuildOutput:
             ),
             build_buttons_row: WidgetInput(
                 widget=buttons,
-                args={"button_texts": ["cancel"]},
+                args={"button_texts": ["cancel"], "language": language},
             ),
             # build_text_widget: WidgetInput(
             #     widget=text_widget,

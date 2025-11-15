@@ -3,6 +3,7 @@ from functions_to_format.functions import functions_mapper
 from tool_call_models.cards import CardsByPhoneNumberResponse
 from tool_call_models.paynet import (
     CategoriesResponse,
+    PaymentManagerPaymentResponse,
     SupplierByCategoryResponse,
     SupplierFieldsResponse,
     Supplier,
@@ -11,6 +12,96 @@ from tool_call_models.paynet import (
     FieldOptions,
 )
 from tool_call_models.weather import WeatherResponse
+
+from functions_to_format.functions.general.const_values import LanguageOptions
+from models.context import Context, LoggerContext
+import structlog
+
+logger = structlog.get_logger()
+
+payment_manager_payment_response = PaymentManagerPaymentResponse(
+    **{  # pyright: ignore[reportArgumentType]
+        "data": {
+            "id": "52373421",
+            "transactionId": "100974459",
+            "response": [
+                {
+                    "name": "Yashovchilar soni",
+                    "value": "4",
+                    "type": "STRING",
+                    "order": 7,
+                },
+                {
+                    "name": "Filial nomi",
+                    "value": "Уч-Тепа тумани ",
+                    "type": "STRING",
+                    "order": 2,
+                },
+                {
+                    "name": "Hisoblash turi",
+                    "value": "По водомеру",
+                    "type": "STRING",
+                    "order": 6,
+                },
+                {
+                    "name": "F.I.Sh.",
+                    "value": "K****** J****** X******",
+                    "type": "STRING",
+                    "order": 4,
+                },
+                {
+                    "name": "Shaxsiy raqam",
+                    "value": "2626215224",
+                    "type": "STRING",
+                    "order": 3,
+                },
+                {"name": "To'landi", "value": "1000", "type": "MONEY", "order": 8},
+                {
+                    "name": "Manzil",
+                    "value": "У**** 3* м******, 1*, 6*",
+                    "type": "STRING",
+                    "order": 5,
+                },
+                {
+                    "name": "Tashkilot nomi",
+                    "value": "УзСувТаъминот",
+                    "type": "STRING",
+                    "order": 1,
+                },
+            ],
+            "ofd": {
+                "qr": None,
+                "receiptType": None,
+                "terminalId": None,
+                "chequeId": None,
+                "fiscalSign": None,
+            },
+        },
+        "additional": {
+            "sender_name": "Aslon",
+            "sender_masked_pan": "**** **** **** 7704",
+            "date": "13-11-2025",
+            "amount": "1000",
+        },
+    }
+)
+functions_mapper["pay_for_home_utility"](
+    Context(
+        llm_output="Hello",
+        backend_output=payment_manager_payment_response.model_dump(),
+        version="v3",
+        language=LanguageOptions.UZBEK,
+        api_key="test",
+        logger_context=LoggerContext(
+            chat_id="test",
+            logger=logger,
+        ),
+    )
+)
+
+import os
+
+os._exit(1)
 
 
 # functions_mapper = {

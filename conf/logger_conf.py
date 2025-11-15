@@ -25,22 +25,21 @@ def setup_logging(logfile: str) -> structlog.stdlib.BoundLogger:
 
     # --- 1. Create handlers ---
     console_handler = logging.StreamHandler(sys.stdout)
+    log_level = logging.DEBUG
     if os.getenv("ENVIRONMENT", "development").lower() == "development":
-        console_handler.setLevel(logging.INFO)
+        log_level = logging.DEBUG
     else:
-        console_handler.setLevel(logging.INFO)
+        log_level = logging.INFO
+    console_handler.setLevel(log_level)
     console_handler.setFormatter(logging.Formatter(fmt="%(message)s"))
 
     file_handler = logging.FileHandler(logfile)
-    if os.getenv("ENVIRONMENT", "development").lower() == "development":
-        file_handler.setLevel(logging.INFO)
-    else:
-        file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(log_level)
     file_handler.setFormatter(logging.Formatter(fmt="%(message)s"))
 
     # --- 2. Set up root logger ---
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(log_level)
     root_logger.handlers = []  # clear default handlers
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
@@ -57,7 +56,7 @@ def setup_logging(logfile: str) -> structlog.stdlib.BoundLogger:
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG),
+        wrapper_class=structlog.make_filtering_bound_logger(log_level),
         cache_logger_on_first_use=True,
     )
 

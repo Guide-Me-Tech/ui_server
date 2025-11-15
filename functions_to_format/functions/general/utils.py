@@ -41,18 +41,16 @@ async def load_usages_async(collection: AsyncCollection, file_path: str):
                 else:
                     await collection.insert_one(usage)
 
-                logger.debug(f"Usage uploaded: {request_id}")
-
     except Exception as e:
         logger.error(f"Error loading usages: {e}")
 
 
 async def upload_usages_async() -> None:
     try:
-        client = AsyncMongoClient(config.mongo.mongo_uri)
+        client = AsyncMongoClient(config.mongo.mongo_uri)  # pyright: ignore[reportOptionalMemberAccess]
         collection: AsyncCollection = client.get_database(
-            config.mongo.database_name
-        ).get_collection(config.mongo.collection_name)
+            config.mongo.database_name  # pyright: ignore[reportOptionalMemberAccess]
+        ).get_collection(config.mongo.collection_name)  # pyright: ignore[reportOptionalMemberAccess]
         tasks = []
         for file in os.listdir("logs/usage"):
             tasks.append(load_usages_async(collection, f"logs/usage/{file}"))

@@ -27,7 +27,7 @@ dependencies = [
     "requests==2.32.3",
     "sentry-sdk>=2.44.0",
     "structlog>=25.5.0",
-    "tool-call-models==0.1.35",
+    "tool-call-models==0.1.40",
 ]
 
 [dependency-groups]
