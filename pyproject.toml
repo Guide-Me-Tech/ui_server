@@ -1,6 +1,6 @@
 [project]
 name = "ui-server"
-version = "1.001"
+version = "1.01"
 description = "UI Server to generate UI json representations using Yandex Divkit"
 readme = "README.md"
 requires-python = ">=3.13"

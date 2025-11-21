@@ -26,6 +26,7 @@ def add_ui_to_widget(
                 widget_args = widget_input.args
                 widget_input.widget.build_ui(sdui_function, **widget_args)
             except Exception as e:
+                logger.error("Error building widget", error=e)
                 logger.exception("Error building widget", error=e)
                 continue
     widgets: List[Widget] = []
