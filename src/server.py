@@ -23,7 +23,11 @@ from telemetry import (
 )
 
 try:
-    version = open("version.txt", "r").read()
+    import tomllib
+
+    with open("pyproject.toml", "rb") as f:
+        pyproject_data = tomllib.load(f)
+    version = pyproject_data.get("project", {}).get("version", "0")
 except Exception as e:
     version = "0"
 finally:
