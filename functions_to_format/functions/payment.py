@@ -1,5 +1,7 @@
 import json
 
+from functions_to_format.functions.functions import chatbot_answer
+
 from .general import (
     add_ui_to_widget,
     Widget,
@@ -304,36 +306,46 @@ def pay_for_home_utility(context: Context) -> BuildOutput:
     api_key = context.api_key
     logger = context.logger_context.logger
 
-    backend_output = PaymentManagerPaymentResponse.model_validate(backend_output)
+    inp = {}
 
-    logger.info("pay_for_home_utility")
+    try:
+        backend_output = PaymentManagerPaymentResponse.model_validate(backend_output)
+        payment_status_widget = Widget(
+            order=2,
+            type="payment_status_widget",
+            name="payment_status_widget",
+            layout="vertical",
+            fields=["payment_status"],
+            values=[backend_output.model_dump()],
+        )
+        inp[build_pay_for_home_utility_ui] = WidgetInput(
+            widget=payment_status_widget,
+            args={"payment_response": backend_output},
+        )
 
-    text_widget = TextWidget(
-        order=1,
-        values=[{"text": llm_output}],
-    )
-    payment_status_widget = Widget(
-        order=2,
-        type="payment_status_widget",
-        name="payment_status_widget",
-        layout="vertical",
-        fields=["payment_status"],
-        values=[backend_output.model_dump()],
-    )
+        logger.info("pay_for_home_utility")
+
+        text_widget = TextWidget(
+            order=1,
+            values=[{"text": llm_output}],
+        )
+        inp[build_text_widget] = WidgetInput(
+            widget=text_widget,
+            args={
+                "text": llm_output,
+            },
+        )
+
+    except Exception as e:
+        inp[build_text_widget] = WidgetInput(
+            widget=text_widget,
+            args={
+                "text": llm_output,
+            },
+        )
 
     widgets = add_ui_to_widget(
-        {
-            build_text_widget: WidgetInput(
-                widget=text_widget,
-                args={
-                    "text": llm_output,
-                },
-            ),
-            build_pay_for_home_utility_ui: WidgetInput(
-                widget=payment_status_widget,
-                args={"payment_response": backend_output},
-            ),
-        },
+        inp,
         version,
     )
     output = BuildOutput(
@@ -1101,6 +1113,10 @@ def get_fields_of_supplier_ui(fields: List[Field]):
     with open("logs/json/build_get_fields_of_supplier_ui.json", "w") as f:
         json.dump(div, f, ensure_ascii=False, indent=2)
     return div
+
+
+def get_home_utility_suppliers(context) -> BuildOutput:
+    return chatbot_answer(context)
 
 
 if __name__ == "__main__":

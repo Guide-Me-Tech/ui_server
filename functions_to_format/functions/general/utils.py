@@ -52,10 +52,13 @@ async def upload_usages_async() -> None:
             config.mongo.database_name  # pyright: ignore[reportOptionalMemberAccess]
         ).get_collection(config.mongo.collection_name)  # pyright: ignore[reportOptionalMemberAccess]
         tasks = []
-        for file in os.listdir("logs/usage"):
+        files = os.listdir("logs/usage")
+        for file in files:
             tasks.append(load_usages_async(collection, f"logs/usage/{file}"))
 
         await asyncio.gather(*tasks)
+        for file in files:
+            os.remove(f"logs/usage/{file}")
     except Exception as e:
         logger.error(f"Error uploading usages: {e}")
     finally:
