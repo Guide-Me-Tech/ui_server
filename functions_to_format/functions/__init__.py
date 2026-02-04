@@ -17,6 +17,7 @@ from .products import build_products_list_widget, get_products, search_products
 from .weather import build_weather_widget, get_weather_info
 from .buttons import build_buttons_row
 from .start_page import start_page_widget
+from .human_approval import human_approval_requests
 
 
 sdui_functions_map = {
@@ -56,4 +57,6 @@ functions_mapper = {
     "build_contacts_list": build_contacts_list,
     "pay_for_home_utility": pay_for_home_utility,
     "get_home_utility_suppliers": get_home_utility_suppliers,
+    "human_approval": human_approval_requests,
+    "human_approval_request": human_approval_requests,
 }
