@@ -66,10 +66,10 @@ def setup_telemetry(
         )
         trace_provider.add_span_processor(BatchSpanProcessor(otlp_trace_exporter))
 
-    if environment == "development" or config.otel.console_export:
-        # Add console exporter for development
-        console_exporter = ConsoleSpanExporter()
-        trace_provider.add_span_processor(BatchSpanProcessor(console_exporter))
+    # if environment == "development" or config.otel.console_export:
+    #     # Add console exporter for development
+    #     console_exporter = ConsoleSpanExporter()
+    #     trace_provider.add_span_processor(BatchSpanProcessor(console_exporter))
 
     trace.set_tracer_provider(trace_provider)
     _tracer = trace.get_tracer(__name__)

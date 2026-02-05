@@ -1,13 +1,11 @@
 {
     "exclude": [
+        "build",
+        "dist",
         ".venv",
         "tests",
         "test_requests",
-        "configuration_manager",
-        "adapters",
         "temp",
-        "utils",
-        "telemetry/examples.py"
     ],
     "reportMissingImports": true,
     "reportUnusedImport": "warning",

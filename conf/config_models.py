@@ -28,7 +28,7 @@ class OTELConfig:
     bsp_export_timeout: int = 30000
     traces_sampler: str = "parentbased_traceidratio"
     traces_sampler_arg: float = 1.0
-    exporter_otlp_endpoint: str = "http://tempo:4318/v1/traces"
+    exporter_otlp_endpoint: str = "http://localhost:4318/v1/traces"
     exporter_otlp_headers: Optional[str] = None
     console_export: bool = False
 
@@ -72,7 +72,7 @@ def New() -> AppConfig:
         traces_sampler=os.getenv("TRACES_SAMPLER", "parentbased_traceidratio"),
         traces_sampler_arg=float(os.getenv("TRACES_SAMPLER_ARG", 1.0)),
         exporter_otlp_endpoint=os.getenv(
-            "OTEL_EXPORTER_OTLP_ENDPOINT", "http://tempo:4318/v1/traces"
+            "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318/v1/traces"
         ),
         exporter_otlp_headers=os.getenv("EXPORTER_OTLP_HEADERS", None),
         console_export=bool(os.getenv("CONSOLE_EXPORT", False)),

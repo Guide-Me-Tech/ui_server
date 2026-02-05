@@ -1,4 +1,6 @@
 from typing import Any
+
+from pydivkit.core import Expr
 from functions_to_format.functions.buttons import build_buttons_row
 from .general import (
     add_ui_to_widget,
@@ -122,7 +124,81 @@ def human_approval_ui(
             width=dv.DivMatchParentSize(),
             height=dv.DivWrapContentSize(),
             # item_spacing=10,  # gap between items
+            variables=[
+                dv.IntegerVariable(name="success_visible", value=0),
+                dv.IntegerVariable(name="error_visible", value=0),
+                dv.StringVariable(name="error_text", value=""),
+            ],
         )
+        # Success container for approval feedback
+        success_container = dv.DivContainer(
+            id="success-container",
+            orientation=dv.DivContainerOrientation.HORIZONTAL,
+            visibility=Expr("@{success_visible == 1 ? 'visible' : 'gone'}"),
+            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+            width=dv.DivMatchParentSize(),
+            margins=dv.DivEdgeInsets(top=12, left=16, right=16, bottom=8),
+            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=14, right=14),
+            background=[dv.DivSolidBackground(color="#ECFDF5")],
+            border=dv.DivBorder(
+                corner_radius=10, stroke=dv.DivStroke(color="#A7F3D0", width=1)
+            ),
+            items=[
+                dv.DivText(
+                    text="✅ Action completed successfully!",
+                    font_size=14,
+                    font_family="Manrope",
+                    text_color="#065F46",
+                    font_weight=dv.DivFontWeight.MEDIUM,
+                    line_height=20,
+                )
+            ],
+        )
+
+        # Error container for approval feedback
+        error_container = dv.DivContainer(
+            id="error-container",
+            orientation=dv.DivContainerOrientation.HORIZONTAL,
+            visibility=Expr("@{error_visible == 1 ? 'visible' : 'gone'}"),
+            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+            width=dv.DivMatchParentSize(),
+            margins=dv.DivEdgeInsets(top=12, left=16, right=16, bottom=8),
+            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=14, right=14),
+            background=[dv.DivSolidBackground(color="#FEF2F2")],
+            border=dv.DivBorder(
+                corner_radius=10, stroke=dv.DivStroke(color="#FECACA", width=1)
+            ),
+            items=[
+                dv.DivText(
+                    text="⚠️",
+                    font_size=16,
+                    margins=dv.DivEdgeInsets(right=10),
+                ),
+                dv.DivText(
+                    text="@{error_text}",
+                    font_size=14,
+                    font_family="Manrope",
+                    text_color="#B91C1C",
+                    font_weight=dv.DivFontWeight.MEDIUM,
+                    line_height=20,
+                    width=dv.DivMatchParentSize(weight=1),
+                ),
+                dv.DivText(
+                    text="✕",
+                    font_size=18,
+                    text_color="#B91C1C",
+                    font_weight=dv.DivFontWeight.BOLD,
+                    paddings=dv.DivEdgeInsets(left=10, right=4),
+                    actions=[
+                        dv.DivAction(
+                            log_id="dismiss-error",
+                            url="div-action://set_variable?name=error_visible&value=0",
+                        )
+                    ],
+                ),
+            ],
+        )
+
         buttons_container = dv.DivContainer(
             orientation=dv.DivContainerOrientation.HORIZONTAL,
             items=[
@@ -151,6 +227,22 @@ def human_approval_ui(
                                         dv.RequestHeader(name="api-key", value=api_key)
                                     ],
                                 ),
+                                on_success_actions=[
+                                    dv.DivAction(
+                                        log_id="approve-success",
+                                        url="div-action://set_variable?name=success_visible&value=1",
+                                    )
+                                ],
+                                on_fail_actions=[
+                                    dv.DivAction(
+                                        log_id="approve-error",
+                                        url="div-action://set_variable?name=error_visible&value=1",
+                                    ),
+                                    dv.DivAction(
+                                        log_id="set-error-text",
+                                        url="div-action://set_variable?name=error_text&value=Failed to approve request",
+                                    ),
+                                ],
                             ),
                         ),
                     ],
@@ -180,6 +272,22 @@ def human_approval_ui(
                                         dv.RequestHeader(name="api-key", value=api_key)
                                     ],
                                 ),
+                                on_success_actions=[
+                                    dv.DivAction(
+                                        log_id="reject-success",
+                                        url="div-action://set_variable?name=success_visible&value=1",
+                                    )
+                                ],
+                                on_fail_actions=[
+                                    dv.DivAction(
+                                        log_id="reject-error",
+                                        url="div-action://set_variable?name=error_visible&value=1",
+                                    ),
+                                    dv.DivAction(
+                                        log_id="set-error-text",
+                                        url="div-action://set_variable?name=error_text&value=Failed to reject request",
+                                    ),
+                                ],
                             ),
                         ),
                     ],

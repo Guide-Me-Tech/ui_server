@@ -1,3 +1,7 @@
+import sys
+import os
+
+sys.path.append("/home/aslonhamidov/Desktop/work/ui_server")
 from conf import logger
 import os
 import time
@@ -22,6 +26,8 @@ from telemetry import (
     get_prometheus_metrics,
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
 try:
     import tomllib
 
@@ -44,6 +50,14 @@ setup_telemetry(app, service_name="ui_server", version=version)
 metrics_collector = MetricsCollector()
 tracer = get_tracer()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Add telemetry middleware with metrics collector
 app.add_middleware(TelemetryMiddleware, metrics_collector=metrics_collector)
 
@@ -56,6 +70,7 @@ for file in os.listdir("."):
 
 # Serve static files
 app.mount("/ui_server/static", StaticFiles(directory="static"), name="static")
+
 
 # https://www.youtbe.com/watch?v=NTP4XdTjRK0
 if os.getenv("ENVIRONMENT") == "production":
@@ -132,95 +147,93 @@ async def format_data_v3(request: Request, input_data: InputV3):
     logger = logger.bind(chat_id=input_data.chat_id)
     logger.info("BUILD UI V3")
 
-    with tracer.start_as_current_span("build_ui_v3") as span:
-        try:
-            logger.info("Step 1: Entering /chat/v3/build_ui")
-            language = LanguageOptions(request.headers.get("language", "ru"))
-            func_name = input_data.function_name
-            llm_output = input_data.llm_output or ""
-            backend_output = (
-                input_data.backend_output if input_data.backend_output else {}
-            )
-            api_key = input_data.api_key or ""
+    # with tracer.start_as_current_span("build_ui_v3") as span:
+    try:
+        logger.info("Step 1: Entering /chat/v3/build_ui")
+        language = LanguageOptions(request.headers.get("language", "ru"))
+        func_name = input_data.function_name
+        llm_output = input_data.llm_output or ""
+        backend_output = input_data.backend_output if input_data.backend_output else {}
+        api_key = input_data.api_key or ""
 
-            # Add telemetry attributes
-            span.set_attribute("function.name", func_name)
-            span.set_attribute("function.version", version)
-            span.set_attribute("language", language.value)
+        # Add telemetry attributes
+        # span.set_attribute("function.name", func_name)
+        # span.set_attribute("function.version", version)
+        # span.set_attribute("language", language.value)
 
-            logger.info(
-                "Received request parameters",
-                function_name=func_name,
-                llm_output=llm_output,
-                backend_output=backend_output,
-                api_key=input_data.api_key,
-            )
+        logger.info(
+            "Received request parameters",
+            function_name=func_name,
+            llm_output=llm_output,
+            backend_output=backend_output,
+            api_key=input_data.api_key,
+        )
 
-            if not func_name or func_name not in functions_mapper:
-                logger.warning(f"Invalid or missing function_name: {func_name}")
-                span.set_attribute("error", "invalid_function_name")
-                return JSONResponse(
-                    status_code=400,
-                    content=ErrorResponse(
-                        error=f"Invalid or missing function_name: {func_name}",
-                        traceback="",
-                    ).model_dump(),
-                )
-
-            logger.info(f"Step 2: Found function {func_name}, invoking now")
-
-            # Time function execution
-            func_start = time.time()
-            context = Context(
-                logger_context=LoggerContext(
-                    chat_id=input_data.chat_id or "", logger=logger
-                ),
-                llm_output=llm_output,
-                backend_output=backend_output,  # pyright: ignore[reportArgumentType]
-                version=version,
-                language=language,
-                api_key=api_key,
-            )
-
-            result: BuildOutput = functions_mapper[func_name](
-                context=context,
-            )
-            func_duration = (time.time() - func_start) * 1000
-
-            # Record function metrics
-            metrics_collector.record_function_invocation(
-                function_name=func_name,
-                duration_ms=func_duration,
-                success=True,
-                version=version,
-            )
-
-            span.set_attribute("function.duration_ms", func_duration)
-            logger.info(f"Step 3: Function result={result}")
-
-            return result
-        except Exception as e:
-            duration = (time.time() - start_time) * 1000
-
-            # Record error metrics
-            if "func_name" in locals():
-                metrics_collector.record_function_invocation(
-                    function_name=func_name,
-                    duration_ms=duration,
-                    success=False,
-                    version=version,
-                )
-
-            span.record_exception(e)
-            span.set_attribute("error.message", str(e))
-
-            logger.exception(f"Exception in /chat/v3/build_ui: {str(e)}")
+        if not func_name or func_name not in functions_mapper:
+            logger.warning(f"Invalid or missing function_name: {func_name}")
+            # span.set_attribute("error", "invalid_function_name")
             return JSONResponse(
-                status_code=500,
+                status_code=400,
                 content=ErrorResponse(
-                    error=str(e), traceback=str(e.__traceback__)
+                    error=f"Invalid or missing function_name: {func_name}",
+                    traceback="",
                 ).model_dump(),
             )
+
+        logger.info(f"Step 2: Found function {func_name}, invoking now")
+
+        # Time function execution
+        func_start = time.time()
+        context = Context(
+            logger_context=LoggerContext(
+                chat_id=input_data.chat_id or "", logger=logger
+            ),
+            llm_output=llm_output,
+            backend_output=backend_output,  # pyright: ignore[reportArgumentType]
+            version=version,
+            language=language,
+            api_key=api_key,
+        )
+
+        result: BuildOutput = functions_mapper[func_name](
+            context=context,
+        )
+        func_duration = (time.time() - func_start) * 1000
+
+        # Record function metrics
+        metrics_collector.record_function_invocation(
+            function_name=func_name,
+            duration_ms=func_duration,
+            success=True,
+            version=version,
+        )
+
+        # span.set_attribute("function.duration_ms", func_duration)
+        logger.info(f"Step 3: Function result={result}")
+
+        return result
+    except Exception as e:
+        duration = (time.time() - start_time) * 1000
+
+        # Record error metrics
+        if "func_name" in locals():
+            metrics_collector.record_function_invocation(
+                function_name=func_name,
+                duration_ms=duration,
+                success=False,
+                version=version,
+            )
+
+        # span.record_exception(e)
+        # span.set_attribute("error.message", str(e))
+
+        logger.exception(f"Exception in /chat/v3/build_ui: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content=ErrorResponse(
+                error=str(e), traceback=str(e.__traceback__)
+            ).model_dump(),
+        )
 
 
 @app.get("/chat")

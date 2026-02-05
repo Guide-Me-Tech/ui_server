@@ -1,4 +1,5 @@
 import pydivkit as dv
+from pydivkit.core import Expr
 import json
 from pydantic import BaseModel
 from typing import List
@@ -10,6 +11,26 @@ from functions_to_format.functions.general.const_values import LanguageOptions
 from conf import logger
 import structlog
 from models.context import Context
+
+
+# Feedback texts for news actions
+NEWS_FEEDBACK_TEXTS = {
+    LanguageOptions.RUSSIAN: {
+        "opening": "Открываем новость...",
+        "opened": "Новость открыта",
+        "error": "Не удалось открыть новость",
+    },
+    LanguageOptions.ENGLISH: {
+        "opening": "Opening article...",
+        "opened": "Article opened",
+        "error": "Failed to open article",
+    },
+    LanguageOptions.UZBEK: {
+        "opening": "Yangilik ochilmoqda...",
+        "opened": "Yangilik ochildi",
+        "error": "Yangilikni ochib bo'lmadi",
+    },
+}
 
 
 class NewsItem(BaseModel):
@@ -60,14 +81,39 @@ def get_news(context: Context) -> BuildOutput:
     return output
 
 
-def news_item(title, source, time, image_url, url):
+def news_item(
+    title: str,
+    source: str,
+    time: str,
+    image_url: str,
+    url: str,
+    index: int = 0,
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+):
+    """
+    Create a news item container with action handling and feedback.
+    
+    Args:
+        title: News article title
+        source: News source name
+        time: Publication time
+        image_url: Thumbnail image URL
+        url: Article URL to open
+        index: Item index for unique log IDs
+        language: Language for localization
+        
+    Returns:
+        DivContainer for the news item
+    """
+    feedback_texts = NEWS_FEEDBACK_TEXTS.get(language, NEWS_FEEDBACK_TEXTS[LanguageOptions.ENGLISH])
+    item_id = f"news-item-{index}"
+    
     return dv.DivContainer(
         orientation=dv.DivContainerOrientation.HORIZONTAL,
         alignment_vertical=dv.DivAlignmentVertical.CENTER,
         items=[
             dv.DivContainer(
                 orientation=dv.DivContainerOrientation.VERTICAL,
-                # width=dv.DivWeight(1),
                 items=[
                     dv.DivText(
                         text=title,
@@ -75,7 +121,6 @@ def news_item(title, source, time, image_url, url):
                         font_weight=dv.DivFontWeight.MEDIUM,
                         text_color="#FFFFFF",
                         max_lines=1,
-                        # ellipsis=dv.DivTextEllipsis(),
                     ),
                     dv.DivText(
                         text=f"{source} · {time}",
@@ -83,7 +128,6 @@ def news_item(title, source, time, image_url, url):
                         text_color="#D1D5DB",
                         margins=dv.DivEdgeInsets(top=2),
                         max_lines=1,
-                        # ellipsis=dv.DivTextEllipsis(),
                     ),
                 ],
             ),
@@ -97,14 +141,43 @@ def news_item(title, source, time, image_url, url):
             ),
         ],
         margins=dv.DivEdgeInsets(top=12),
-        action=dv.DivAction(log_id="open-news", url=url),  # this will open the web page
+        actions=[
+            # Main action to open news URL
+            dv.DivAction(
+                log_id=f"open-news-{index}",
+                url=url,
+                payload={
+                    "news_title": title,
+                    "news_source": source,
+                    "news_url": url,
+                },
+            ),
+            # Success feedback action
+            dv.DivAction(
+                log_id=f"open-news-{index}-success",
+                url="div-action://set_variable?name=news_opened&value=1",
+            ),
+        ],
     )
 
 
-def build_news_widget(news_widget_input: NewsWidgetInput):
-    # Parse input data
+def build_news_widget(
+    news_widget_input: NewsWidgetInput,
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+):
+    """
+    Build the news widget with feedback handling for news item actions.
+    
+    Args:
+        news_widget_input: Input data containing news items and header text
+        language: Language for localization
+        
+    Returns:
+        DivKit JSON for the news widget
+    """
+    feedback_texts = NEWS_FEEDBACK_TEXTS.get(language, NEWS_FEEDBACK_TEXTS[LanguageOptions.ENGLISH])
 
-    # Create news items
+    # Create news items with proper indexing
     news = [
         news_item(
             title=item.title,
@@ -112,9 +185,53 @@ def build_news_widget(news_widget_input: NewsWidgetInput):
             time=item.time,
             image_url=item.image_url,
             url=item.url,
+            index=idx,
+            language=language,
         )
-        for item in news_widget_input.news_items
+        for idx, item in enumerate(news_widget_input.news_items)
     ]
+
+    # Success feedback container for news opened
+    success_container = dv.DivContainer(
+        id="news-success-container",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
+        visibility=Expr("@{news_opened == 1 ? 'visible' : 'gone'}"),
+        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+        width=dv.DivMatchParentSize(),
+        margins=dv.DivEdgeInsets(top=8),
+        paddings=dv.DivEdgeInsets(top=8, bottom=8, left=12, right=12),
+        background=[dv.DivSolidBackground(color="#065F46")],
+        border=dv.DivBorder(
+            corner_radius=8, stroke=dv.DivStroke(color="#A7F3D0", width=1)
+        ),
+        items=[
+            dv.DivText(
+                text="✅",
+                font_size=13,
+                margins=dv.DivEdgeInsets(right=8),
+            ),
+            dv.DivText(
+                text=feedback_texts["opened"],
+                font_size=12,
+                text_color="#ECFDF5",
+                font_weight=dv.DivFontWeight.MEDIUM,
+                width=dv.DivMatchParentSize(weight=1),
+            ),
+            dv.DivText(
+                text="✕",
+                font_size=14,
+                text_color="#ECFDF5",
+                font_weight=dv.DivFontWeight.BOLD,
+                paddings=dv.DivEdgeInsets(left=8),
+                actions=[
+                    dv.DivAction(
+                        log_id="dismiss-news-success",
+                        url="div-action://set_variable?name=news_opened&value=0",
+                    )
+                ],
+            ),
+        ],
+    )
 
     items = [
         # Header
@@ -132,6 +249,7 @@ def build_news_widget(news_widget_input: NewsWidgetInput):
         ),
     ]
     items.extend(news)
+    items.append(success_container)
 
     root = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
@@ -139,8 +257,11 @@ def build_news_widget(news_widget_input: NewsWidgetInput):
         border=dv.DivBorder(corner_radius=16),
         paddings=dv.DivEdgeInsets(
             top=12, bottom=12, left=16, right=16
-        ),  # внутренние отступы
-        margins=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),  # внешние отступы
+        ),
+        margins=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
+        variables=[
+            dv.IntegerVariable(name="news_opened", value=0),
+        ],
         items=items,
     )
 
