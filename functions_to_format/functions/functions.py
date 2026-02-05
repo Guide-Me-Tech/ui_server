@@ -12,14 +12,37 @@ from .general import (
     build_buttons_row,
     build_text_widget,
     WidgetInput,
+    create_feedback_variables,
+    create_success_actions,
+    create_failure_actions,
+    create_success_container,
+    create_error_container,
 )
 from .general.utils import save_builder_output
 import pydivkit as dv
+from pydivkit.core import Expr
 from models.build import BuildOutput
 from pydantic import BaseModel
 from .general.const_values import WidgetMargins, LanguageOptions
 import structlog
 from models.context import Context
+
+
+# Feedback texts for contact actions
+CONTACT_FEEDBACK_TEXTS = {
+    LanguageOptions.RUSSIAN: {
+        "contact_selected": "Контакт выбран",
+        "contact_error": "Ошибка выбора контакта",
+    },
+    LanguageOptions.ENGLISH: {
+        "contact_selected": "Contact selected",
+        "contact_error": "Contact selection error",
+    },
+    LanguageOptions.UZBEK: {
+        "contact_selected": "Kontakt tanlandi",
+        "contact_error": "Kontaktni tanlashda xatolik",
+    },
+}
 
 
 def chatbot_answer(context: Context) -> BuildOutput:
@@ -78,7 +101,22 @@ class Contact(BaseModel):
     phone: str
 
 
-def build_contacts_list_widget(contacts: list[Contact]) -> Dict[str, Any]:
+def build_contacts_list_widget(
+    contacts: list[Contact],
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+) -> Dict[str, Any]:
+    """
+    Build a contacts list widget with feedback handling for contact selection.
+    
+    Args:
+        contacts: List of contact objects
+        language: Language for localization
+        
+    Returns:
+        DivKit JSON for the contacts list widget
+    """
+    feedback_texts = CONTACT_FEEDBACK_TEXTS.get(language, CONTACT_FEEDBACK_TEXTS[LanguageOptions.ENGLISH])
+    
     items: List[dv.Div] = [
         dv.DivText(
             text="Contacts List",
@@ -90,17 +128,7 @@ def build_contacts_list_widget(contacts: list[Contact]) -> Dict[str, Any]:
         )
     ]
 
-    for contact in contacts:
-        send_action = dv.DivAction(
-            log_id=f"send_contact_{contact.phone}",
-            url="divkit://send_contact",
-            payload={
-                "first_name": contact.first_name,
-                "last_name": contact.last_name,
-                "phone": contact.phone,
-            },
-        )
-
+    for idx, contact in enumerate(contacts):
         contact_cell = dv.DivContainer(
             orientation=dv.DivContainerOrientation.VERTICAL,
             paddings=dv.DivEdgeInsets(left=16, right=16, top=8, bottom=8),
@@ -127,13 +155,120 @@ def build_contacts_list_widget(contacts: list[Contact]) -> Dict[str, Any]:
                     letter_spacing=0,
                 ),
             ],
-            action=send_action,
+            actions=[
+                # Main selection action
+                dv.DivAction(
+                    log_id=f"send_contact_{contact.phone.replace('+', '').replace(' ', '')}",
+                    url="divkit://send_contact",
+                    payload={
+                        "first_name": contact.first_name,
+                        "last_name": contact.last_name,
+                        "phone": contact.phone,
+                    },
+                ),
+                # Success feedback action
+                dv.DivAction(
+                    log_id=f"send_contact_{idx}_success",
+                    url="div-action://set_variable?name=contact_selection_success&value=1",
+                ),
+            ],
         )
         items.append(contact_cell)
+
+    # Success feedback container
+    success_container = dv.DivContainer(
+        id="contact-selection-success",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
+        visibility=Expr("@{contact_selection_success == 1 ? 'visible' : 'gone'}"),
+        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+        width=dv.DivMatchParentSize(),
+        margins=dv.DivEdgeInsets(top=12, bottom=4),
+        paddings=dv.DivEdgeInsets(top=10, bottom=10, left=12, right=12),
+        background=[dv.DivSolidBackground(color="#ECFDF5")],
+        border=dv.DivBorder(
+            corner_radius=10, stroke=dv.DivStroke(color="#A7F3D0", width=1)
+        ),
+        items=[
+            dv.DivText(
+                text="✅",
+                font_size=14,
+                margins=dv.DivEdgeInsets(right=8),
+            ),
+            dv.DivText(
+                text=feedback_texts["contact_selected"],
+                font_size=13,
+                text_color="#065F46",
+                font_weight=dv.DivFontWeight.MEDIUM,
+                width=dv.DivMatchParentSize(weight=1),
+            ),
+            dv.DivText(
+                text="✕",
+                font_size=16,
+                text_color="#065F46",
+                font_weight=dv.DivFontWeight.BOLD,
+                paddings=dv.DivEdgeInsets(left=8),
+                actions=[
+                    dv.DivAction(
+                        log_id="dismiss-contact-selection-success",
+                        url="div-action://set_variable?name=contact_selection_success&value=0",
+                    )
+                ],
+            ),
+        ],
+    )
+
+    # Error feedback container
+    error_container = dv.DivContainer(
+        id="contact-selection-error",
+        orientation=dv.DivContainerOrientation.HORIZONTAL,
+        visibility=Expr("@{contact_selection_error == 1 ? 'visible' : 'gone'}"),
+        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+        width=dv.DivMatchParentSize(),
+        margins=dv.DivEdgeInsets(top=12, bottom=4),
+        paddings=dv.DivEdgeInsets(top=10, bottom=10, left=12, right=12),
+        background=[dv.DivSolidBackground(color="#FEF2F2")],
+        border=dv.DivBorder(
+            corner_radius=10, stroke=dv.DivStroke(color="#FECACA", width=1)
+        ),
+        items=[
+            dv.DivText(
+                text="⚠️",
+                font_size=14,
+                margins=dv.DivEdgeInsets(right=8),
+            ),
+            dv.DivText(
+                text=feedback_texts["contact_error"],
+                font_size=13,
+                text_color="#B91C1C",
+                font_weight=dv.DivFontWeight.MEDIUM,
+                width=dv.DivMatchParentSize(weight=1),
+            ),
+            dv.DivText(
+                text="✕",
+                font_size=16,
+                text_color="#B91C1C",
+                font_weight=dv.DivFontWeight.BOLD,
+                paddings=dv.DivEdgeInsets(left=8),
+                actions=[
+                    dv.DivAction(
+                        log_id="dismiss-contact-selection-error",
+                        url="div-action://set_variable?name=contact_selection_error&value=0",
+                    )
+                ],
+            ),
+        ],
+    )
+
+    items.append(success_container)
+    items.append(error_container)
 
     container = dv.DivContainer(
         orientation=dv.DivContainerOrientation.VERTICAL,
         items=items,
+        variables=[
+            dv.IntegerVariable(name="contact_selection_success", value=0),
+            dv.IntegerVariable(name="contact_selection_error", value=0),
+        ],
         margins=dv.DivEdgeInsets(
             top=WidgetMargins.TOP.value,
             left=WidgetMargins.LEFT.value,

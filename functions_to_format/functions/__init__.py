@@ -9,6 +9,9 @@ from .payment import (
     send_money_to_someone_via_card,
     pay_for_home_utility,
     get_home_utility_suppliers,
+    get_receiver_by_card,
+    build_receiver_by_card_ui,
+    build_send_money_ui,
 )
 from .contact import build_contact_widget, get_contact
 from .news import build_news_widget, get_news
@@ -34,6 +37,8 @@ sdui_functions_map = {
     "chatbot_answer": None,
     "text_widget": None,
     "buttons_widget": build_buttons_row,
+    "receiver_by_card": build_receiver_by_card_ui,
+    "send_money": build_send_money_ui,
 }
 functions_mapper = {
     "get_balance": get_balance,
@@ -59,4 +64,6 @@ functions_mapper = {
     "get_home_utility_suppliers": get_home_utility_suppliers,
     "human_approval": human_approval_requests,
     "human_approval_request": human_approval_requests,
+    "get_receiver_by_card": get_receiver_by_card,
+    "receiver_by_card": get_receiver_by_card,
 }

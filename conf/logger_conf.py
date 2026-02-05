@@ -83,8 +83,17 @@ def setup_logging(logfile: str) -> structlog.stdlib.BoundLogger:
     return get_logger()
 
 
-logfile_path = "/var/ui_server/"  # "/var/ui_server/"
+logfile_path = "logs/"  # "/var/ui_server/"
 logfile = "ui_server.log"
 if not os.path.exists(logfile_path):
     os.mkdir(logfile_path)
 logger = setup_logging(os.path.join(logfile_path, logfile))
+
+logging.getLogger("opentelemetry").setLevel(logging.ERROR)
+logging.getLogger("opentelemetry.sdk").setLevel(logging.ERROR)
+logging.getLogger("opentelemetry.exporter").setLevel(logging.ERROR)
+
+# Suppress specific loggers
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+logging.getLogger("fastapi").setLevel(logging.WARNING)

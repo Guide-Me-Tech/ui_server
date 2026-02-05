@@ -335,3 +335,6 @@ logs/usage/
 *.ignore.*
 a.json
 a.py
+share/
+jprq_/
+jprq

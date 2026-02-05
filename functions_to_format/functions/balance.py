@@ -1,4 +1,5 @@
 import pydivkit as dv
+from pydivkit.core import Expr
 import json
 from .general import (
     add_ui_to_widget,
@@ -7,10 +8,13 @@ from .general import (
     build_buttons_row,
     build_text_widget,
     TextWidget,
+    create_feedback_variables,
+    create_success_container,
+    create_error_container,
 )
 from .general.utils import save_builder_output
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from conf import logger
 from models.build import BuildOutput
 from models.context import Context, LoggerContext
@@ -18,6 +22,26 @@ from tool_call_models.cards import CardsBalanceResponse
 from tool_call_models.home_balance import HomeBalance
 from functions_to_format.functions.general.const_values import LanguageOptions
 import structlog
+
+
+# Feedback texts for balance actions
+BALANCE_FEEDBACK_TEXTS = {
+    LanguageOptions.RUSSIAN: {
+        "topup_success": "Пополнение выполнено",
+        "transfer_success": "Перевод выполнен",
+        "action_error": "Ошибка операции",
+    },
+    LanguageOptions.ENGLISH: {
+        "topup_success": "Top up completed",
+        "transfer_success": "Transfer completed",
+        "action_error": "Operation failed",
+    },
+    LanguageOptions.UZBEK: {
+        "topup_success": "To'ldirish bajarildi",
+        "transfer_success": "O'tkazma bajarildi",
+        "action_error": "Amal xatosi",
+    },
+}
 
 
 class CardInfo(BaseModel):
@@ -188,9 +212,10 @@ def get_home_balances(context: Context) -> BuildOutput:
     chat_id = context.logger_context.chat_id
     api_key = context.api_key
     logger = context.logger_context.logger
-    for k, v in backend_output["services"].items():
-        backend_output[k] = v
-    del backend_output["services"]
+    if "services" in backend_output:
+        for k, v in backend_output["services"].items():
+            backend_output[k] = v
+        del backend_output["services"]
 
     backend_data: HomeBalance = HomeBalance(**backend_output)
 
@@ -247,33 +272,55 @@ def get_balance(context: Context) -> BuildOutput:
     api_key = context.api_key
     logger = context.logger_context.logger
 
+    logger.info(f"Processing balance request for chat_id: {chat_id}")
+    logger.debug(f"Backend output type: {type(backend_output)}")
+
     # Janis Rubins: use precompiled validator if available to avoid repeated validation overhead
     #  preprocess backend output:
     output = [
         llm_output,
     ]
-    backend_data: CardsBalanceResponse = CardsBalanceResponse(**backend_output)
+
+    try:
+        backend_data: CardsBalanceResponse = CardsBalanceResponse(**backend_output)
+        logger.info(
+            f"Successfully parsed backend data with {len(backend_data.body[0].cardList)} cards"
+        )
+    except Exception as e:
+        logger.error(f"Failed to parse backend output: {e}")
+        raise
+
     backend_output_processed: List[CardInfo] = []
     # logger.info(f"backend_output {backend_output} ----- type:{type(backend_output)}")
     for i, card_info in enumerate(backend_data.body[0].cardList):
+        logger.debug(f"Processing card {i + 1}: {card_info.pan}")
+
         balance_value = 0
         if type(card_info.cardBalance.balance) is int:
             balance_value = card_info.cardBalance.balance
+            logger.debug(f"Card {i + 1} balance (int): {balance_value}")
         elif type(card_info.cardBalance.balance) is str:
             balance_value = int(card_info.cardBalance.balance.replace(" ", ""))
+            logger.debug(f"Card {i + 1} balance (str->int): {balance_value}")
         elif type(card_info.cardBalance.balance) is float:
             balance_value = int(card_info.cardBalance.balance)
+            logger.debug(f"Card {i + 1} balance (float->int): {balance_value}")
 
-        backend_output_processed.append(
-            CardInfo(
-                masked_card_pan=card_info.pan,
-                card_type=card_info.processingSystem,
-                balance=balance_value,
-                card_name=card_info.cardDetails.cardName,
-                cardColor=card_info.cardDetails.cardColor,
-                image_url=card_info.bankIcon.bankLogoMini,
-            )
+        card_info_processed = CardInfo(
+            masked_card_pan=card_info.pan,
+            card_type=card_info.processingSystem,
+            balance=balance_value,
+            card_name=card_info.cardDetails.cardName,
+            cardColor=card_info.cardDetails.cardColor,
+            image_url=card_info.bankIcon.bankLogoMini,
         )
+        backend_output_processed.append(card_info_processed)
+        logger.debug(
+            f"Added card: {card_info_processed.card_name} with balance {balance_value}"
+        )
+
+    logger.info(f"Processed {len(backend_output_processed)} cards successfully")
+
     text_widget = TextWidget(
         order=1,
         values=[{"text": llm_output}],
@@ -288,6 +335,8 @@ def get_balance(context: Context) -> BuildOutput:
             card.model_dump(exclude_none=True) for card in backend_output_processed
         ],
     )
+
+    logger.debug(f"Created widgets: text_widget (order=1), cards_list (order=2)")
 
     widgets = add_ui_to_widget(
         {
@@ -307,10 +356,18 @@ def get_balance(context: Context) -> BuildOutput:
         },
         version,
     )
+
+    logger.info(f"Built {len(widgets)} UI widgets for version {version}")
+
     output = BuildOutput(
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
         widgets_count=len(widgets),
     )
+
+    logger.info(
+        f"Balance processing completed successfully. Output contains {output.widgets_count} widgets"
+    )
+
     save_builder_output(context, output)
     return output
 
@@ -424,16 +481,24 @@ def account_block(
     )
 
 
-def action_button(text: str):
+def action_button(
+    text: str,
+    action_type: str = "default",
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+):
     """
-    Create an action button UI component.
+    Create an action button UI component with success/error feedback.
 
     Args:
         text (str): Button text
+        action_type (str): Type of action for payload
+        language (LanguageOptions): Language for localization
 
     Returns:
-        dv.DivText: UI component for action button
+        dv.DivText: UI component for action button with feedback handling
     """
+    button_id = f"action-{text.lower().replace(' ', '_')}"
+
     return dv.DivText(
         text=text,
         text_color="#2563EB",
@@ -441,10 +506,21 @@ def action_button(text: str):
         alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
         paddings=dv.DivEdgeInsets(top=8, bottom=8),
         border=dv.DivBorder(corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")),
-        action=dv.DivAction(
-            log_id=f"action-{text.lower()}",
-            url=f"div-action://{text.lower()}",  # или https://example.com/action
-        ),
+        actions=[
+            dv.DivAction(
+                log_id=button_id,
+                url=f"div-action://{text.lower().replace(' ', '_')}",
+                payload={
+                    "action": action_type,
+                    "button_text": text,
+                },
+            ),
+            # Success feedback action
+            dv.DivAction(
+                log_id=f"{button_id}-success",
+                url="div-action://set_variable?name=balance_action_success&value=1",
+            ),
+        ],
     )
 
 
