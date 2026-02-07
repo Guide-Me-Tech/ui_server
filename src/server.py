@@ -5,7 +5,10 @@ sys.path.append("/home/aslonhamidov/Desktop/work/ui_server")
 from conf import logger
 import os
 import time
+import asyncio
+from datetime import datetime
 from typing import Optional, Any, Dict, List, Callable, Set, Union
+from urllib.parse import quote
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -303,3 +306,101 @@ async def format_data_v2(input_data: InputV2):
         )
 
         return result
+
+
+# ---------------------------------------------------------------------------
+# Agent progress: dynamic message delivery
+# ---------------------------------------------------------------------------
+
+AGENT_STEP_MESSAGES: List[str] = [
+    "Initializing agent context...",
+    "Parsing user request...",
+    "Searching knowledge base...",
+    "Analyzing retrieved documents...",
+    "Cross-referencing sources...",
+    "Generating response draft...",
+    "Validating response accuracy...",
+    "Finalizing and formatting output...",
+]
+
+# In-memory state for the running agent
+_agent_state: Dict[str, Any] = {
+    "messages": [],       # list of {"step": int, "text": str}
+    "is_running": False,
+    "is_complete": False,
+    "result": None,
+    "started_at": None,
+}
+
+
+async def _deliver_messages_background(messages: List[str]) -> None:
+    """Background task: add one message every ~2 seconds."""
+    global _agent_state
+    for i, msg in enumerate(messages, start=1):
+        await asyncio.sleep(2)
+        if not _agent_state["is_running"]:
+            return  # agent was reset mid-run
+        _agent_state["messages"].append({"step": i, "text": msg})
+    await asyncio.sleep(1)
+    _agent_state["is_complete"] = True
+    _agent_state["is_running"] = False
+    _agent_state["result"] = (
+        "Agent completed successfully! The answer to your query has been "
+        "generated based on the analysis of relevant documents."
+    )
+
+
+@app.post("/start_agent")
+async def start_agent():
+    """Kick off a simulated 8-step agent run."""
+    global _agent_state
+    _agent_state = {
+        "messages": [],
+        "is_running": True,
+        "is_complete": False,
+        "result": None,
+        "started_at": datetime.now().isoformat(),
+    }
+    asyncio.create_task(_deliver_messages_background(AGENT_STEP_MESSAGES))
+    return {"status": "started", "total_steps": len(AGENT_STEP_MESSAGES)}
+
+
+@app.get("/new_messages")
+async def new_messages():
+    """
+    Return the current agent messages.
+
+    The response contains:
+      - messages: list of delivered messages so far
+      - is_running: whether the agent is still processing
+      - is_complete: whether all steps finished
+      - result: final result text (set once complete)
+      - total_steps: total number of steps (8)
+
+    The DivKit poll timer hits this endpoint every 2 seconds.
+    The host application (or DivKit action handler) should read the
+    response and set the corresponding card variables:
+        step_N_visible = true
+        step_N_text    = <message text>
+    """
+    return {
+        "messages": _agent_state["messages"],
+        "is_running": _agent_state["is_running"],
+        "is_complete": _agent_state["is_complete"],
+        "result": _agent_state["result"],
+        "total_steps": len(AGENT_STEP_MESSAGES),
+    }
+
+
+@app.post("/reset_agent")
+async def reset_agent():
+    """Reset the agent state back to idle."""
+    global _agent_state
+    _agent_state = {
+        "messages": [],
+        "is_running": False,
+        "is_complete": False,
+        "result": None,
+        "started_at": None,
+    }
+    return {"status": "reset"}

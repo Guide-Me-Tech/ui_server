@@ -1,0 +1,14 @@
+{
+  "function_name": "function_response_activity_record",
+  "llm_output": "Here is your current balance.",
+  "backend_output": {
+    "function_name": "get_balance",
+    "response": {
+      "balance": 1500.50,
+      "currency": "UZS",
+      "last_updated": "2025-02-07T12:00:00Z"
+    }
+  },
+  "chat_id": "chat_abc123",
+  "api_key": ""
+}

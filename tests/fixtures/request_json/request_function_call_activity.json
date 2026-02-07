@@ -1,0 +1,13 @@
+{
+  "function_name": "function_call_activity_record",
+  "llm_output": "Checking your balance and recent transactions.",
+  "backend_output": {
+    "function_name": "get_balance",
+    "arguments": {
+      "card_id": "card_123",
+      "include_history": true
+    }
+  },
+  "chat_id": "chat_abc123",
+  "api_key": ""
+}
