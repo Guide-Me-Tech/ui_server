@@ -4,9 +4,50 @@
   "backend_output": {
     "function_name": "get_balance",
     "response": {
-      "balance": 1500.50,
-      "currency": "UZS",
-      "last_updated": "2025-02-07T12:00:00Z"
+      "body": [
+        {
+          "custNo": "12345",
+          "phoneNumber": "+998901234567",
+          "firstname": "Aslon",
+          "middlename": "",
+          "lastname": "Hamidov",
+          "birthDate": "1990-01-01",
+          "pinfl": "00000000000000",
+          "createdAt": "2023-01-01",
+          "cardList": [
+            {
+              "panMask": "8600 **** **** 1234",
+              "panToken": "token_123",
+              "requestId": "req_001",
+              "pan": "8600********1234",
+              "expiry": "12/28",
+              "bankIssuer": "SmartBank",
+              "processingSystem": "UZCARD",
+              "salaryAmount": 0,
+              "isVerified": true,
+              "createdAt": "2023-06-15",
+              "cardDetails": {
+                "cardDetailsId": 1,
+                "cardName": "My Salary Card",
+                "cardColor": "#1E40AF",
+                "cardIsPrimary": true
+              },
+              "cardBalance": {
+                "balance": 1500050,
+                "status": 0
+              },
+              "isVirtual": false,
+              "bankIcon": {
+                "bankLogo": "https://example.com/logo.png",
+                "bankLogoMini": "https://example.com/logo_mini.png",
+                "bankWhiteLogo": "https://example.com/logo_w.png",
+                "bankWhiteLogoMini": "https://example.com/logo_w_mini.png"
+              }
+            }
+          ]
+        }
+      ],
+      "status": 0
     }
   },
   "chat_id": "chat_abc123",

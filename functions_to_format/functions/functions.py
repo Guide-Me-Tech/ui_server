@@ -1,17 +1,27 @@
+"""Function registry: maps function names to Strategy handler instances.
+
+Each handler is a ``FunctionStrategy`` instance (callable) that implements
+the Strategy Design Pattern.  The ``functions_mapper`` dict is the central
+dispatch table used at runtime.  The ``sdui_functions_map`` maps function
+names to their optional pydivkit UI builder functions.
+"""
+
 from .chatbot_answer import chatbot_answer, unauthorized_response, build_contacts_list
 from .balance import get_balance, build_balance_ui, get_home_balances
-from .payment import (
+from .transfer import (
     get_receiver_id_by_receiver_phone_number,
-    get_categories,
-    get_fields_of_supplier,
-    get_suppliers_by_category,
     get_number_by_receiver_name,
     send_money_to_someone_via_card,
-    pay_for_home_utility,
-    get_home_utility_suppliers,
     get_receiver_by_card,
     build_receiver_by_card_ui,
     build_send_money_ui,
+)
+from .payment import (
+    get_categories,
+    get_fields_of_supplier,
+    get_suppliers_by_category,
+    pay_for_home_utility,
+    get_home_utility_suppliers,
 )
 from .contact import build_contact_widget, get_contact
 from .news import build_news_widget, get_news

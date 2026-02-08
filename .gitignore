@@ -325,16 +325,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 temp
-build*.json
-*widget*.json
-test_*
-test_json/
-logs/json/
-logs/temp/
+logs/
+logs/
 logs/usage/
 *.ignore.*
-a.json
-a.py
-share/
-jprq_/
+components-check-list.md
 jprq
+jprq_/
+smarty_ui/

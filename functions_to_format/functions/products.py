@@ -11,9 +11,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from functions_to_format.functions.general import (
     Widget,
-    add_ui_to_widget,
     WidgetInput,
-    TextWidget,
     create_feedback_variables,
     create_success_actions,
     create_failure_actions,
@@ -21,13 +19,24 @@ from functions_to_format.functions.general import (
     create_error_container,
     get_feedback_text,
 )
-from .general.utils import save_builder_output
-from models.build import BuildOutput
 from conf import logger
-from .general.text import build_text_widget
 from tool_call_models.smartbazar import SearchProductsResponse, ProductItem
 import structlog
 from models.context import Context
+from .base_strategy import FunctionStrategy
+
+# Import smarty_ui components
+from smarty_ui import (
+    VStack,
+    HStack,
+    title_2,
+    text_1,
+    text_2,
+    caption_1,
+    caption_2,
+    icon,
+    default_theme,
+)
 
 # -------------------------------------------------------------------
 #  Функция-шаблон: возвращает dv.DivState с двумя состояниями — collapsed
@@ -37,66 +46,37 @@ from models.context import Context
 # import json
 
 
-def search_products(context: Context) -> BuildOutput:
-    return get_products(context=context)
+class GetProducts(FunctionStrategy):
+    """Strategy for building products list UI."""
 
+    def build_widget_inputs(self, context):
+        backend_output_model = SearchProductsResponse(**context.backend_output)
+        products = backend_output_model.products
+        context.logger_context.logger.info("Products", products=products)
 
-def get_products(context: Context) -> BuildOutput:
-    # Extract values from context
-    llm_output = context.llm_output
-    backend_output = context.backend_output
-    version = context.version
-    language = context.language
-    chat_id = context.logger_context.chat_id
-    api_key = context.api_key
-    logger = context.logger_context.logger
-
-    backend_output_model: SearchProductsResponse = SearchProductsResponse(
-        **backend_output
-    )
-    # logger.info(backend_output_model)
-    widget = Widget(
-        name="products_list_widget",
-        type="products_list_widget",
-        order=1,
-        layout="vertical",
-        fields=["products", "title"],
-    )
-
-    products = backend_output_model.products
-
-    text_widget = TextWidget(
-        order=1,
-        values=[{"text": llm_output}],
-    )
-
-    logger.info("Products", products=products)
-    widgets = add_ui_to_widget(
-        {
+        text_builder, text_input = self.make_text_input(context.llm_output)
+        return {
             build_products_list_widget: WidgetInput(
-                widget=widget,
+                widget=Widget(
+                    name="products_list_widget",
+                    type="products_list_widget",
+                    order=1,
+                    layout="vertical",
+                    fields=["products", "title"],
+                ),
                 args={
                     "products_list_input": products,
-                    "language": language,
-                    "chat_id": chat_id,
-                    "api_key": api_key,
+                    "language": context.language,
+                    "chat_id": context.logger_context.chat_id,
+                    "api_key": context.api_key,
                 },
             ),
-            build_text_widget: WidgetInput(
-                widget=text_widget,
-                args={
-                    "text": llm_output,
-                },
-            ),
-        },
-        version,
-    )
-    output = BuildOutput(
-        widgets_count=1,
-        widgets=[w.model_dump(exclude_none=True) for w in widgets],
-    )
-    save_builder_output(context, output)
-    return output
+            text_builder: text_input,
+        }
+
+
+get_products = GetProducts()
+search_products = get_products
 
 
 def make_product_state(
@@ -184,133 +164,111 @@ def make_product_state(
     # elif p.price and p.price.monthly:
     #     installment_price_text = f"{p.price.monthly} {texts_map[language]['summ']} x 12 {texts_map[language]['months']}"          # TODO: uncomment this when installment service is back again.
 
-    # Collapsed state div
-    collapsed_div = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        background=[dv.DivSolidBackground(color="#FFFFFF")],
-        margins=dv.DivEdgeInsets(bottom=8),
-        paddings=dv.DivEdgeInsets(left=12, right=12, top=12, bottom=12),
-        border=dv.DivBorder(corner_radius=8, stroke=dv.DivStroke(color="#E5E7EB")),
-        items=[
-            dv.DivImage(
-                image_url=main_image_mobile_url,
-                width=dv.DivFixedSize(value=40),
-                height=dv.DivFixedSize(value=40),
-                scale=dv.DivImageScale.FILL,
-            ),
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.VERTICAL,
-                width=dv.DivWrapContentSize(),
-                items=[
-                    dv.DivText(
-                        text=p.name, font_size=14, font_weight=dv.DivFontWeight.MEDIUM
-                    ),
-                    dv.DivText(
-                        text=price_text,
-                        font_size=13,
-                        text_color="#6B7280",
-                    ),
-                ],
-            ),
-        ],
-        actions=[
-            dv.DivAction(
-                log_id=f"expand_product_{p.id}_{index}",
-                url=f"sample-actions://set_state?state_id=0/{product_state_id}/expanded",
-            ),
-            dv.DivAction(
-                log_id=f"expand_product_{p.id}_{index}_div",
-                url=f"div-action://set_state?state_id=0/{product_state_id}/expanded",
-            ),
-        ],
+    # Collapsed state div using smarty_ui
+    product_image = dv.DivImage(
+        image_url=main_image_mobile_url,
+        width=dv.DivFixedSize(value=40),
+        height=dv.DivFixedSize(value=40),
+        scale=dv.DivImageScale.FILL,
     )
 
-    # Success feedback container for cart actions
-    success_container = dv.DivContainer(
-        id=f"success-{feedback_prefix}",
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        visibility=Expr(
-            f"@{{{feedback_prefix}_success_visible == 1 ? 'visible' : 'gone'}}"
+    product_name = text_1(p.name, color="#111133")
+    product_name.font_weight = dv.DivFontWeight.MEDIUM
+
+    product_price = caption_1(price_text, color="#6B7280")
+
+    product_info = VStack([product_name, product_price])
+    product_info.width = dv.DivWrapContentSize()
+
+    collapsed_div = HStack(
+        [product_image, product_info],
+        padding=12,
+        background="#FFFFFF",
+        corner_radius=8,
+    )
+    collapsed_div.margins = dv.DivEdgeInsets(bottom=8)
+    collapsed_div.border = dv.DivBorder(
+        corner_radius=8, stroke=dv.DivStroke(color="#E5E7EB")
+    )
+    collapsed_div.actions = [
+        dv.DivAction(
+            log_id=f"expand_product_{p.id}_{index}",
+            url=f"sample-actions://set_state?state_id=0/{product_state_id}/expanded",
         ),
-        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+        dv.DivAction(
+            log_id=f"expand_product_{p.id}_{index}_div",
+            url=f"div-action://set_state?state_id=0/{product_state_id}/expanded",
+        ),
+    ]
+
+    # Success feedback container for cart actions using smarty_ui
+    success_icon = caption_1("✅")
+    success_icon.margins = dv.DivEdgeInsets(right=8)
+
+    success_text = caption_1(texts_map[language]["added_to_cart"], color="#065F46")
+    success_text.font_weight = dv.DivFontWeight.MEDIUM
+    success_text.width = dv.DivMatchParentSize(weight=1)
+
+    dismiss_success = caption_1("✕", color="#065F46")
+    dismiss_success.font_size = 16
+    dismiss_success.font_weight = dv.DivFontWeight.BOLD
+    dismiss_success.paddings = dv.DivEdgeInsets(left=8, right=4)
+    dismiss_success.actions = [
+        dv.DivAction(
+            log_id=f"dismiss-success-{feedback_prefix}",
+            url=f"div-action://set_variable?name={feedback_prefix}_success_visible&value=0",
+        )
+    ]
+
+    success_container = HStack(
+        [success_icon, success_text, dismiss_success],
+        padding=10,
+        background="#ECFDF5",
+        corner_radius=8,
         width=dv.DivMatchParentSize(),
-        margins=dv.DivEdgeInsets(top=8, bottom=8),
-        paddings=dv.DivEdgeInsets(top=10, bottom=10, left=12, right=12),
-        background=[dv.DivSolidBackground(color="#ECFDF5")],
-        border=dv.DivBorder(
-            corner_radius=8, stroke=dv.DivStroke(color="#A7F3D0", width=1)
-        ),
-        items=[
-            dv.DivText(
-                text="✅",
-                font_size=14,
-                margins=dv.DivEdgeInsets(right=8),
-            ),
-            dv.DivText(
-                text=texts_map[language]["added_to_cart"],
-                font_size=13,
-                text_color="#065F46",
-                font_weight=dv.DivFontWeight.MEDIUM,
-                width=dv.DivMatchParentSize(weight=1),
-            ),
-            dv.DivText(
-                text="✕",
-                font_size=16,
-                text_color="#065F46",
-                font_weight=dv.DivFontWeight.BOLD,
-                paddings=dv.DivEdgeInsets(left=8, right=4),
-                actions=[
-                    dv.DivAction(
-                        log_id=f"dismiss-success-{feedback_prefix}",
-                        url=f"div-action://set_variable?name={feedback_prefix}_success_visible&value=0",
-                    )
-                ],
-            ),
-        ],
+    )
+    success_container.id = f"success-{feedback_prefix}"
+    success_container.visibility = Expr(
+        f"@{{{feedback_prefix}_success_visible == 1 ? 'visible' : 'gone'}}"
+    )
+    success_container.margins = dv.DivEdgeInsets(top=8, bottom=8)
+    success_container.border = dv.DivBorder(
+        corner_radius=8, stroke=dv.DivStroke(color="#A7F3D0", width=1)
     )
 
-    # Error feedback container for cart actions
-    error_container = dv.DivContainer(
-        id=f"error-{feedback_prefix}",
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        visibility=Expr(
-            f"@{{{feedback_prefix}_error_visible == 1 ? 'visible' : 'gone'}}"
-        ),
-        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+    # Error feedback container for cart actions using smarty_ui
+    error_icon = caption_1("⚠️")
+    error_icon.margins = dv.DivEdgeInsets(right=8)
+
+    error_text = caption_1(texts_map[language]["cart_error"], color="#B91C1C")
+    error_text.font_weight = dv.DivFontWeight.MEDIUM
+    error_text.width = dv.DivMatchParentSize(weight=1)
+
+    dismiss_error = caption_1("✕", color="#B91C1C")
+    dismiss_error.font_size = 16
+    dismiss_error.font_weight = dv.DivFontWeight.BOLD
+    dismiss_error.paddings = dv.DivEdgeInsets(left=8, right=4)
+    dismiss_error.actions = [
+        dv.DivAction(
+            log_id=f"dismiss-error-{feedback_prefix}",
+            url=f"div-action://set_variable?name={feedback_prefix}_error_visible&value=0",
+        )
+    ]
+
+    error_container = HStack(
+        [error_icon, error_text, dismiss_error],
+        padding=10,
+        background="#FEF2F2",
+        corner_radius=8,
         width=dv.DivMatchParentSize(),
-        margins=dv.DivEdgeInsets(top=8, bottom=8),
-        paddings=dv.DivEdgeInsets(top=10, bottom=10, left=12, right=12),
-        background=[dv.DivSolidBackground(color="#FEF2F2")],
-        border=dv.DivBorder(
-            corner_radius=8, stroke=dv.DivStroke(color="#FECACA", width=1)
-        ),
-        items=[
-            dv.DivText(
-                text="⚠️",
-                font_size=14,
-                margins=dv.DivEdgeInsets(right=8),
-            ),
-            dv.DivText(
-                text=texts_map[language]["cart_error"],
-                font_size=13,
-                text_color="#B91C1C",
-                font_weight=dv.DivFontWeight.MEDIUM,
-                width=dv.DivMatchParentSize(weight=1),
-            ),
-            dv.DivText(
-                text="✕",
-                font_size=16,
-                text_color="#B91C1C",
-                font_weight=dv.DivFontWeight.BOLD,
-                paddings=dv.DivEdgeInsets(left=8, right=4),
-                actions=[
-                    dv.DivAction(
-                        log_id=f"dismiss-error-{feedback_prefix}",
-                        url=f"div-action://set_variable?name={feedback_prefix}_error_visible&value=0",
-                    )
-                ],
-            ),
-        ],
+    )
+    error_container.id = f"error-{feedback_prefix}"
+    error_container.visibility = Expr(
+        f"@{{{feedback_prefix}_error_visible == 1 ? 'visible' : 'gone'}}"
+    )
+    error_container.margins = dv.DivEdgeInsets(top=8, bottom=8)
+    error_container.border = dv.DivBorder(
+        corner_radius=8, stroke=dv.DivStroke(color="#FECACA", width=1)
     )
 
     # Create on_success actions for cart add
@@ -337,217 +295,162 @@ def make_product_state(
         ),
     ]
 
-    # Expanded state div
-    expanded_div = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        background=[dv.DivSolidBackground(color="#FFFFFF")],
-        border=dv.DivBorder(corner_radius=12, stroke=dv.DivStroke(color="#E5E7EB")),
-        paddings=dv.DivEdgeInsets(left=12, right=12, top=12, bottom=12),
-        margins=dv.DivEdgeInsets(bottom=8),
-        variables=[
-            dv.IntegerVariable(name=f"{feedback_prefix}_success_visible", value=0),
-            dv.IntegerVariable(name=f"{feedback_prefix}_error_visible", value=0),
-        ],
-        items=[
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.HORIZONTAL,
-                items=[
-                    dv.DivImage(
-                        image_url=main_image_mobile_url,
-                        width=dv.DivFixedSize(value=40),
-                        height=dv.DivFixedSize(value=40),
-                        scale=dv.DivImageScale.FILL,
+    # Expanded state header row using smarty_ui
+    exp_product_image = dv.DivImage(
+        image_url=main_image_mobile_url,
+        width=dv.DivFixedSize(value=40),
+        height=dv.DivFixedSize(value=40),
+        scale=dv.DivImageScale.FILL,
+    )
+
+    exp_product_name = text_1(p.name, color="#111133")
+    exp_product_name.font_weight = dv.DivFontWeight.MEDIUM
+
+    exp_product_price = caption_1(price_text, color="#6B7280")
+
+    exp_product_info = VStack([exp_product_name, exp_product_price])
+    exp_product_info.width = dv.DivWrapContentSize()
+
+    exp_header_row = HStack([exp_product_image, exp_product_info])
+    exp_header_row.actions = [
+        dv.DivAction(
+            log_id=f"collapse_product_{p.id}_{index}",
+            url=f"sample-actions://set_state?state_id=0/{product_state_id}/collapsed",
+        ),
+        dv.DivAction(
+            log_id=f"collapse_product_{p.id}_{index}_div",
+            url=f"div-action://set_state?state_id=0/{product_state_id}/collapsed",
+        ),
+    ]
+
+    # Main product image
+    main_product_image = dv.DivImage(
+        image_url=main_image_mobile_url,
+        width=dv.DivMatchParentSize(),
+        height=dv.DivWrapContentSize(),
+        margins=dv.DivEdgeInsets(top=12),
+        scale=dv.DivImageScale.FIT,
+        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+        alignment_vertical=dv.DivAlignmentVertical.CENTER,
+    )
+
+    # Product details using smarty_ui
+    detail_name = caption_1(p.name, color="#374151")
+    detail_name.margins = dv.DivEdgeInsets(top=8)
+
+    rating_text = caption_2(f"⭐ {p.rate or 0}", color="#6B7280")
+    rating_text.margins = dv.DivEdgeInsets(top=4)
+
+    installment_label = caption_2(installment_price_text, color="#DB2777")
+    installment_label.background = [dv.DivSolidBackground(color="#FCE7F3")]
+    installment_label.paddings = dv.DivEdgeInsets(left=6, top=4, right=6, bottom=4)
+    installment_label.margins = dv.DivEdgeInsets(top=6)
+    installment_label.border = dv.DivBorder(
+        corner_radius=4, stroke=dv.DivStroke(color="#FCE7F3")
+    )
+
+    # Build buttons using smarty_ui text components
+    hide_btn = text_1(texts_map[language]["hide"], color="#6B7280")
+    hide_btn.border = dv.DivBorder(
+        corner_radius=8, stroke=dv.DivStroke(color="#D1D5DB")
+    )
+    hide_btn.height = dv.DivFixedSize(value=36)
+    hide_btn.width = dv.DivMatchParentSize()
+    hide_btn.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+    hide_btn.alignment_vertical = dv.DivAlignmentVertical.CENTER
+    hide_btn.text_alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+    hide_btn.text_alignment_vertical = dv.DivAlignmentVertical.CENTER
+    hide_btn.paddings = dv.DivEdgeInsets(left=16, right=16)
+    hide_btn.margins = dv.DivEdgeInsets(left=4) if p.offer_id else dv.DivEdgeInsets()
+    hide_btn.actions = [
+        dv.DivAction(
+            log_id=f"collapse_from_button_{p.id}_{index}",
+            url=f"sample-actions://set_state?state_id=0/{product_state_id}/collapsed",
+        ),
+        dv.DivAction(
+            log_id=f"collapse_from_button_{p.id}_{index}_div",
+            url=f"div-action://set_state?state_id=0/{product_state_id}/collapsed",
+        ),
+    ]
+
+    if p.offer_id:
+        add_btn = text_1(texts_map[language]["add"], color="#2563EB")
+        add_btn.border = dv.DivBorder(
+            corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
+        )
+        add_btn.height = dv.DivFixedSize(value=36)
+        add_btn.width = dv.DivMatchParentSize()
+        add_btn.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+        add_btn.alignment_vertical = dv.DivAlignmentVertical.CENTER
+        add_btn.text_alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+        add_btn.text_alignment_vertical = dv.DivAlignmentVertical.CENTER
+        add_btn.paddings = dv.DivEdgeInsets(left=16, right=16)
+        add_btn.margins = dv.DivEdgeInsets(right=4)
+        add_btn.actions = [
+            dv.DivAction(
+                url="divkit://send-request",
+                log_id=f"add_to_cart_{p.id}_{index}",
+                typed=dv.DivActionSubmit(
+                    container_id=cart_container,
+                    request=dv.DivActionSubmitRequest(
+                        url=f"https://smarty.smartbank.uz/chat/v3/tools/call?function_name=add_product_to_cart&chat_id={chat_id}&arguments={json.dumps({'offer_id': p.offer_id, 'quantity': 1})}",
+                        method=dv.RequestMethod.POST,
+                        headers=[dv.RequestHeader(name="api-key", value=api_key)],
                     ),
-                    dv.DivContainer(
-                        orientation=dv.DivContainerOrientation.VERTICAL,
-                        width=dv.DivWrapContentSize(),
-                        items=[
-                            dv.DivText(
-                                text=p.name,
-                                font_size=14,
-                                font_weight=dv.DivFontWeight.MEDIUM,
-                            ),
-                            dv.DivText(
-                                text=price_text,
-                                font_size=13,
-                                text_color="#6B7280",
-                            ),
-                        ],
-                    ),
-                ],
-                actions=[
-                    dv.DivAction(
-                        log_id=f"collapse_product_{p.id}_{index}",
-                        url=f"sample-actions://set_state?state_id=0/{product_state_id}/collapsed",
-                    ),
-                    dv.DivAction(
-                        log_id=f"collapse_product_{p.id}_{index}_div",
-                        url=f"div-action://set_state?state_id=0/{product_state_id}/collapsed",
-                    ),
-                ],
-            ),
-            dv.DivImage(
-                image_url=main_image_mobile_url,
-                width=dv.DivMatchParentSize(),
-                height=dv.DivWrapContentSize(),
-                margins=dv.DivEdgeInsets(top=12),
-                scale=dv.DivImageScale.FIT,
-                alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                alignment_vertical=dv.DivAlignmentVertical.CENTER,
-            ),
-            dv.DivText(
-                text=p.name,
-                font_size=13,
-                text_color="#374151",
-                margins=dv.DivEdgeInsets(top=8),
-            ),
-            dv.DivText(
-                text=f"⭐ {p.rate or 0}",
-                font_size=11,
-                text_color="#6B7280",
-                margins=dv.DivEdgeInsets(top=4),
-            ),
-            dv.DivText(
-                text=installment_price_text,
-                font_size=11,
-                text_color="#DB2777",
-                background=[dv.DivSolidBackground(color="#FCE7F3")],
-                paddings=dv.DivEdgeInsets(left=6, top=4, right=6, bottom=4),
-                margins=dv.DivEdgeInsets(top=6),
-                border=dv.DivBorder(
-                    corner_radius=4, stroke=dv.DivStroke(color="#FCE7F3")
+                    on_success_actions=cart_success_actions,
+                    on_fail_actions=cart_fail_actions,
                 ),
+                payload={
+                    "function_name": "add_product_to_cart",
+                    "chat_id": chat_id,
+                    "arguments": {
+                        "offer_id": p.offer_id,
+                        "quantity": 1,
+                    },
+                },
             ),
+        ]
+        buttons_items = [add_btn, hide_btn]
+    else:
+        hide_btn.margins = dv.DivEdgeInsets()
+        buttons_items = [hide_btn]
+
+    # Buttons container using HStack
+    buttons_row = HStack(buttons_items, width=dv.DivMatchParentSize())
+    buttons_row.margins = dv.DivEdgeInsets(top=12)
+    buttons_row.id = cart_container
+    buttons_row.content_alignment_horizontal = (
+        dv.DivContentAlignmentHorizontal.SPACE_BETWEEN
+        if p.offer_id
+        else dv.DivContentAlignmentHorizontal.CENTER
+    )
+    buttons_row.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+
+    # Expanded state div using VStack
+    expanded_div = VStack(
+        [
+            exp_header_row,
+            main_product_image,
+            detail_name,
+            rating_text,
+            installment_label,
             # Feedback containers
             success_container,
             error_container,
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.HORIZONTAL,
-                margins=dv.DivEdgeInsets(top=12),
-                width=dv.DivMatchParentSize(),
-                content_alignment_horizontal=(
-                    dv.DivContentAlignmentHorizontal.SPACE_BETWEEN
-                    if p.offer_id
-                    else dv.DivContentAlignmentHorizontal.CENTER
-                ),
-                alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                id=cart_container,
-                items=(  # pyright: ignore[reportArgumentType]
-                    [
-                        (
-                            dv.DivText(
-                                text=texts_map[language]["add"],
-                                border=dv.DivBorder(
-                                    corner_radius=8,
-                                    stroke=dv.DivStroke(color="#3B82F6"),
-                                ),
-                                text_color="#2563EB",
-                                height=dv.DivFixedSize(value=36),
-                                width=dv.DivMatchParentSize(),
-                                alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                                alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                                text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                                text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                                paddings=dv.DivEdgeInsets(left=16, right=16),
-                                margins=(
-                                    dv.DivEdgeInsets(right=4)
-                                    if p.offer_id
-                                    else dv.DivEdgeInsets()
-                                ),
-                                actions=[
-                                    dv.DivAction(
-                                        url="divkit://send-request",
-                                        log_id=f"add_to_cart_{p.id}_{index}",
-                                        typed=dv.DivActionSubmit(
-                                            container_id=cart_container,
-                                            request=dv.DivActionSubmitRequest(
-                                                url=f"https://smarty.smartbank.uz/chat/v3/tools/call?function_name=add_product_to_cart&chat_id={chat_id}&arguments={json.dumps({'offer_id': p.offer_id, 'quantity': 1})}",
-                                                method=dv.RequestMethod.POST,
-                                                headers=[
-                                                    dv.RequestHeader(
-                                                        name="api-key", value=api_key
-                                                    )
-                                                ],
-                                            ),
-                                            on_success_actions=cart_success_actions,
-                                            on_fail_actions=cart_fail_actions,
-                                        ),
-                                        payload={
-                                            "function_name": "add_product_to_cart",
-                                            "chat_id": chat_id,
-                                            "arguments": {
-                                                "offer_id": p.offer_id,
-                                                "quantity": 1,
-                                            },
-                                        },
-                                    ),
-                                ],
-                            )
-                            if p.offer_id
-                            else None
-                        ),
-                        dv.DivText(
-                            text=texts_map[language]["hide"],
-                            border=dv.DivBorder(
-                                corner_radius=8, stroke=dv.DivStroke(color="#D1D5DB")
-                            ),
-                            text_color="#6B7280",
-                            height=dv.DivFixedSize(value=36),
-                            width=dv.DivMatchParentSize(),
-                            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                            alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                            text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                            text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                            paddings=dv.DivEdgeInsets(left=16, right=16),
-                            margins=(
-                                dv.DivEdgeInsets(left=4)
-                                if p.offer_id
-                                else dv.DivEdgeInsets()
-                            ),
-                            actions=[
-                                dv.DivAction(
-                                    log_id=f"collapse_from_button_{p.id}_{index}",
-                                    url=f"sample-actions://set_state?state_id=0/{product_state_id}/collapsed",
-                                ),
-                                dv.DivAction(
-                                    log_id=f"collapse_from_button_{p.id}_{index}_div",
-                                    url=f"div-action://set_state?state_id=0/{product_state_id}/collapsed",
-                                ),
-                            ],
-                        ),
-                    ]
-                    if p.offer_id
-                    else [
-                        dv.DivText(
-                            text=texts_map[language]["hide"],
-                            border=dv.DivBorder(
-                                corner_radius=8, stroke=dv.DivStroke(color="#D1D5DB")
-                            ),
-                            text_color="#6B7280",
-                            height=dv.DivFixedSize(value=36),
-                            width=dv.DivMatchParentSize(),
-                            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                            alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                            text_alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                            text_alignment_vertical=dv.DivAlignmentVertical.CENTER,
-                            paddings=dv.DivEdgeInsets(left=16, right=16),
-                            margins=dv.DivEdgeInsets(),
-                            actions=[
-                                dv.DivAction(
-                                    log_id=f"collapse_from_button_{p.id}_{index}",
-                                    url=f"sample-actions://set_state?state_id=0/{product_state_id}/collapsed",
-                                ),
-                                dv.DivAction(
-                                    log_id=f"collapse_from_button_{p.id}_{index}_div",
-                                    url=f"div-action://set_state?state_id=0/{product_state_id}/collapsed",
-                                ),
-                            ],
-                        ),
-                    ]
-                ),
-            ),
+            buttons_row,
         ],
+        padding=12,
+        background="#FFFFFF",
+        corner_radius=12,
     )
+    expanded_div.margins = dv.DivEdgeInsets(bottom=8)
+    expanded_div.border = dv.DivBorder(
+        corner_radius=12, stroke=dv.DivStroke(color="#E5E7EB")
+    )
+    expanded_div.variables = [
+        dv.IntegerVariable(name=f"{feedback_prefix}_success_visible", value=0),
+        dv.IntegerVariable(name=f"{feedback_prefix}_error_visible", value=0),
+    ]
 
     return dv.DivState(
         id=product_state_id,
@@ -565,7 +468,7 @@ def build_products_list_widget(
     chat_id: str = "BLABLABLA",
     api_key: str = "BLABLABLA",
 ):
-    """Build products list widget using pydivkit SDK classes"""
+    """Build products list widget using smarty_ui components."""
     logger = structlog.get_logger()
     logger.info(
         "Starting build_products_list_widget",
@@ -590,19 +493,15 @@ def build_products_list_widget(
 
     if not products_list_input:
         logger.warning("No products provided, returning empty state")
-        empty_div = dv.DivText(
-            text=texts_map[language]["no_products"],
-            paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
-        )
+        empty_text = text_1(texts_map[language]["no_products"], color="#6B7280")
+        empty_text.paddings = dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16)
 
-        return dv.make_div(
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.VERTICAL,
-                width=dv.DivMatchParentSize(),
-                paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
-                items=[empty_div],
-            )
+        empty_container = VStack(
+            [empty_text],
+            padding=16,
+            width=dv.DivMatchParentSize(),
         )
+        return dv.make_div(empty_container)
 
     logger.info(
         "Creating product state elements", products_count=len(products_list_input)
@@ -622,12 +521,11 @@ def build_products_list_widget(
     logger.info(
         "Creating main container with product states", states_count=len(product_states)
     )
-    # Main container holding all products
-    main_container = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
+    # Main container holding all products using VStack
+    main_container = VStack(
+        product_states,
+        padding=16,
         width=dv.DivMatchParentSize(),
-        paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
-        items=product_states,
     )
 
     logger.info("Converting to div and saving output")

@@ -2,79 +2,71 @@ import pydivkit as dv
 import json
 from pydantic import BaseModel
 from typing import List
-from .general import Widget, add_ui_to_widget, WidgetInput
-from .general.utils import save_builder_output
-from models.build import BuildOutput
-from functions_to_format.functions.general.const_values import LanguageOptions
-from conf import logger
+from .general import Widget, WidgetInput
+from .base_strategy import FunctionStrategy
 from models.context import Context, LoggerContext
-import structlog
+
+# Import smarty_ui components
+from smarty_ui import (
+    VStack,
+    HStack,
+    text_1,
+    text_2,
+    caption_1,
+    default_theme,
+)
 
 
-def get_notifications(context: Context) -> BuildOutput:
-    # Extract values from context
-    llm_output = context.llm_output
-    backend_output = context.backend_output
-    version = context.version
-    language = context.language
-    chat_id = context.logger_context.chat_id
-    api_key = context.api_key
-    logger = context.logger_context.logger
+class GetNotifications(FunctionStrategy):
+    """Strategy for building notifications UI."""
 
-    notifications_widget = Widget(
-        name="notifications_widget",
-        type="notifications_widget",
-        layout="vertical",
-        order=1,
-        fields=["notifications"],
-    )
-    notification_input = NotificationsInput(
-        notifications=backend_output["notifications"]
-    )
-
-    widgets = add_ui_to_widget(
-        {
+    def build_widget_inputs(self, context):
+        notification_input = NotificationsInput(
+            notifications=context.backend_output["notifications"]
+        )
+        return {
             build_notifications_widget: WidgetInput(
-                widget=notifications_widget,
+                widget=Widget(
+                    name="notifications_widget",
+                    type="notifications_widget",
+                    layout="vertical",
+                    order=1,
+                    fields=["notifications"],
+                ),
                 args={
                     "notification_input": notification_input,
                     "context": context.logger_context,
                 },
             ),
-        },
-        version,
-    )
+        }
 
-    output = BuildOutput(
-        widgets_count=1,
-        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
-    )
-    save_builder_output(context, output)
-    return output
+
+get_notifications = GetNotifications()
 
 
 def notification_widget(title, description):
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        items=[
-            dv.DivText(
-                text=title,
-                font_size=14,
-                font_weight=dv.DivFontWeight.BOLD,
-                text_color="#1E3A8A",
-            ),
-            dv.DivText(
-                text=description,
-                font_size=13,
-                text_color="#374151",
-                margins=dv.DivEdgeInsets(top=4),
-            ),
-        ],
-        paddings=dv.DivEdgeInsets(left=16, right=16, bottom=16, top=16),
-        background=[dv.DivSolidBackground(color="#EFF6FF")],
-        border=dv.DivBorder(corner_radius=12, stroke=dv.DivStroke(color="#BFDBFE")),
+    """Create a notification widget using smarty_ui components."""
+    # Title using text_1 with bold weight
+    title_text = text_1(title, color="#1E3A8A")
+    title_text.font_weight = dv.DivFontWeight.BOLD
+
+    # Description using text_2
+    desc_text = text_2(description, color="#374151")
+    desc_text.margins = dv.DivEdgeInsets(top=4)
+
+    # Container using VStack
+    container = VStack(
+        [title_text, desc_text],
+        padding=16,
+        background="#EFF6FF",
+        corner_radius=12,
         width=dv.DivMatchParentSize(),
     )
+    container.border = dv.DivBorder(
+        corner_radius=12, stroke=dv.DivStroke(color="#BFDBFE")
+    )
+
+    return container
 
 
 class Notification(BaseModel):
@@ -90,8 +82,7 @@ def build_notifications_widget(
     notification_input: NotificationsInput,
     context: LoggerContext,
 ):
-    # Parse input data
-
+    """Build notifications widget using smarty_ui components."""
     # Create notification widgets
     notification_items = []
     for notification in notification_input.notifications:
@@ -101,13 +92,13 @@ def build_notifications_widget(
             )
         )
 
-    # Create container for all notifications
-    notifications_container = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        items=notification_items,
+    # Create container for all notifications using VStack
+    notifications_container = VStack(
+        notification_items,
+        gap=8,
         width=dv.DivMatchParentSize(),
-        margins=dv.DivEdgeInsets(left=8, right=8, top=8, bottom=8),
     )
+    notifications_container.margins = dv.DivEdgeInsets(left=8, right=8, top=8, bottom=8)
 
     # Return the widget as a JSON-serializable object
     return dv.make_div(notifications_container)

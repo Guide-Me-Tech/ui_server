@@ -26,12 +26,17 @@ dependencies = [
     "redis==5.2.1",
     "requests==2.32.3",
     "sentry-sdk>=2.44.0",
+    "smarty-ui",
     "structlog>=25.5.0",
     "tool-call-models==0.1.40",
 ]
+
+[tool.uv.sources]
+smarty-ui = { path = "smarty_ui" }
 
 [dependency-groups]
 dev = [
     "pymongo>=4.15.4",
     "pyright>=1.1.407",
 ]
+

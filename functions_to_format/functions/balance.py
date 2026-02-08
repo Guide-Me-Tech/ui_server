@@ -2,26 +2,38 @@ import pydivkit as dv
 from pydivkit.core import Expr
 import json
 from .general import (
-    add_ui_to_widget,
     Widget,
     WidgetInput,
-    build_buttons_row,
-    build_text_widget,
-    TextWidget,
-    create_feedback_variables,
-    create_success_container,
-    create_error_container,
 )
-from .general.utils import save_builder_output
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any, List, Optional
 from conf import logger
-from models.build import BuildOutput
-from models.context import Context, LoggerContext
+from models.context import Context
+from .base_strategy import FunctionStrategy
 from tool_call_models.cards import CardsBalanceResponse
 from tool_call_models.home_balance import HomeBalance
 from functions_to_format.functions.general.const_values import LanguageOptions
-import structlog
+
+# Import smarty_ui components
+from smarty_ui import (
+    VStack,
+    HStack,
+    title_2,
+    text_1,
+    text_2,
+    caption_1,
+    icon,
+    avatar,
+    divider,
+    simple_card,
+    default_theme,
+)
+
+# Import smarty_ui blocks for ready-made components
+from smarty_ui.blocks import (
+    cards_own_list as smarty_cards_own_list,
+    home_balance_widget as smarty_home_balance_widget,
+)
 
 
 # Feedback texts for balance actions
@@ -85,296 +97,170 @@ def format_balance(balance: int):
     return f"{balance:,}"
 
 
-def build_balances_part(home_balance: HomeBalance):
-    # Services list
-    service_icons = {
-        "electricity": "https://smarty-test.smartbank.uz/ui_server/static/electricity.png",
-        "gas": "https://smarty-test.smartbank.uz/ui_server/static/gas.png",
-        "internet": "https://smarty-test.smartbank.uz/ui_server/static/trash.png",
-        "water": "https://smarty-test.smartbank.uz/ui_server/static/water.png",
-        "mobile": "https://smarty-test.smartbank.uz/ui_server/static/mobile.png",
-        "garbage": "https://smarty-test.smartbank.uz/ui_server/static/trash.png",
-        "coldWater": "https://smarty-test.smartbank.uz/ui_server/static/water.png",
-        "hotWater": "https://smarty-test.smartbank.uz/ui_server/static/water.png",
-        "heating": "https://smarty-test.smartbank.uz/ui_server/static/heating.png",
-    }
-
-    items = []
-    for service_name, icon_url in service_icons.items():
-        if service_name not in home_balance.services:
-            continue
-        try:
-            items.append(
-                dv.DivContainer(
-                    orientation=dv.DivContainerOrientation.HORIZONTAL,
-                    width=(
-                        dv.DivFixedSize(value=150)
-                        if service_name == "electricity"
-                        else None
-                    ),
-                    height=dv.DivFixedSize(value=24),
-                    items=[
-                        dv.DivImage(
-                            image_url=icon_url,
-                            width=dv.DivFixedSize(value=24),
-                            height=dv.DivFixedSize(value=24),
-                        ),
-                        dv.DivText(
-                            text=format_balance(
-                                home_balance.services[service_name].balance * 100
-                            ),
-                            font_size=16,
-                            text_color="#666666",
-                            margins=dv.DivEdgeInsets(
-                                left=8 if service_name == "electricity" else 12
-                            ),
-                        ),
-                    ],
-                )
-            )
-        except KeyError:
-            pass
-        # Add separator after each service except the last one
-        if service_name != "internet":
-            items.append(
-                dv.DivContainer(
-                    height=dv.DivFixedSize(value=1),
-                    background=[dv.DivSolidBackground(color="#E5E5E5")],
-                    margins=dv.DivEdgeInsets(bottom=4, top=4),
-                )
-            )
-
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        margins=dv.DivEdgeInsets(top=8),
-        items=items,
-    )
-
-
-def build_home_balance_main_container(home_balance: HomeBalance):
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        width=dv.DivFixedSize(value=361),
-        height=dv.DivFixedSize(value=150),
-        background=[dv.DivSolidBackground(color="#EBF2FA")],
-        border=dv.DivBorder(corner_radius=20),
-        paddings=dv.DivEdgeInsets(left=16, right=16, top=12, bottom=12),
-        margins=dv.DivEdgeInsets(left=15),  # Added left margin to move card right
-        items=[
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.VERTICAL,
-                items=[
-                    dv.DivText(
-                        text="Мой дом",
-                        font_size=20,
-                        font_weight=dv.DivFontWeight.MEDIUM,
-                        text_color="#000000",
-                        margins=dv.DivEdgeInsets(bottom=8),
-                    ),
-                    dv.DivImage(
-                        image_url="https://smarty-test.smartbank.uz/ui_server/static/home.png",
-                        width=dv.DivFixedSize(value=60),
-                        height=dv.DivFixedSize(value=60),
-                    ),
-                ],
-            ),
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.VERTICAL,
-                margins=dv.DivEdgeInsets(left=64),
-                items=[
-                    build_balances_part(home_balance),
-                ],
-            ),
-        ],
-    )
-
-
-def build_home_balances_ui(home_balance: HomeBalance):
+def build_home_balances_ui_widget(
+    home_balance: HomeBalance,
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+):
     """
-    Build home balances UI using Yandex DivKit SDK.
+    Build home balances UI using smarty_ui home_balance_widget block component.
+    """
+    div = build_home_balances_ui(home_balance)
+    output = dv.make_div(div)
+
+    return output
+
+
+def build_home_balances_ui(home_balance: HomeBalance | dict[str, Any]):
+    """
+    Build home balances UI using smarty_ui home_balance_widget block component.
     Creates a card with house icon and utility service options.
     """
-    container = build_home_balance_main_container(home_balance)
-    output = dv.make_div(container)
-    with open("logs/json/build_home_balances_ui.json", "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
-    return output
+    # Map service names to utility types for smarty_ui
+    service_type_map = {
+        "electricity": "electricity",
+        "gas": "gas",
+        "water": "water",
+        "coldWater": "water",
+        "hotWater": "water",
+        "garbage": "recycling",
+        "internet": "other",
+        "mobile": "other",
+        "heating": "other",
+    }
 
+    if isinstance(home_balance, dict):
+        home_balance = HomeBalance(**home_balance)
 
-def get_home_balances(context: Context) -> BuildOutput:
-    """
-    Get home balances.
-    """
-    llm_output = context.llm_output
-    backend_output = context.backend_output
-    version = context.version
-    language = context.language
-    chat_id = context.logger_context.chat_id
-    api_key = context.api_key
-    logger = context.logger_context.logger
-    if "services" in backend_output:
-        for k, v in backend_output["services"].items():
-            backend_output[k] = v
-        del backend_output["services"]
+    # Convert home_balance services to smarty_ui UtilityBalanceData format
+    utilities = []
+    for service_name, service_data in home_balance.services.items():
+        utility_type = service_type_map.get(service_name, "other")
+        balance_value = service_data.balance * 100  # Convert to minor units
+        is_negative = balance_value < 0
 
-    backend_data: HomeBalance = HomeBalance(**backend_output)
+        utilities.append(
+            {
+                "utility_type": utility_type,
+                "balance": format_balance(abs(balance_value)),
+                "currency": "сум",
+                "is_negative": is_negative,
+            }
+        )
 
-    text_widget = TextWidget(
-        order=1,
-        values=[{"text": llm_output}],
+    # Use smarty_ui home_balance_widget block component
+    home_widget = smarty_home_balance_widget(
+        title=home_balance.homeName if home_balance.homeName else "Мой дом",
+        subtitle="Балансы",
+        utilities=utilities,
+        corner_radius=20,
     )
-    home_Balance_Widget = Widget(
-        name="home_balance_widget",
-        type="home_balance_widget",
-        order=2,
-        layout="vertical",
-        fields=["homeName", "services"],
-        values=[backend_data.model_dump(exclude_none=True)],
-    )
 
-    widgets = add_ui_to_widget(
-        {
-            build_text_widget: WidgetInput(
-                widget=text_widget,
-                args={"text": llm_output},
-            ),
-            build_home_balances_ui: WidgetInput(
-                widget=home_Balance_Widget,
+    # Wrap with margins
+    container = VStack([home_widget])
+    container.margins = dv.DivEdgeInsets(left=15)
+
+    return container
+
+
+class GetHomeBalances(FunctionStrategy):
+    """Strategy for building home balances UI."""
+
+    def build_widget_inputs(self, context):
+        backend_output = context.backend_output
+        if "services" in backend_output:
+            for k, v in backend_output["services"].items():
+                backend_output[k] = v
+            del backend_output["services"]
+
+        backend_data = HomeBalance(**backend_output)
+        text_builder, text_input = self.make_text_input(context.llm_output)
+        return {
+            text_builder: text_input,
+            build_home_balances_ui_widget: WidgetInput(
+                widget=Widget(
+                    name="home_balance_widget",
+                    type="home_balance_widget",
+                    order=2,
+                    layout="vertical",
+                    fields=["homeName", "services"],
+                    values=[backend_data.model_dump(exclude_none=True)],
+                ),
                 args={"home_balance": backend_data},
             ),
-        },
-        version,
-    )
-    output = BuildOutput(
-        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
-        widgets_count=len(widgets),
-    )
-    save_builder_output(context, output)
-    return output
+        }
 
 
-def get_balance(context: Context) -> BuildOutput:
-    """
-    Process balance information and create UI widgets.
+get_home_balances = GetHomeBalances()
 
-    Args:
-        context (Context): Context object containing llm_output, backend_output, version, etc.
 
-    Returns:
-        BuildOutput: Processed output with widgets
-    """
-    # Extract values from context
-    llm_output = context.llm_output
-    backend_output = context.backend_output
-    version = context.version
-    language = context.language
-    chat_id = context.logger_context.chat_id
-    api_key = context.api_key
-    logger = context.logger_context.logger
+class GetBalance(FunctionStrategy):
+    """Strategy for building balance UI."""
 
-    logger.info(f"Processing balance request for chat_id: {chat_id}")
-    logger.debug(f"Backend output type: {type(backend_output)}")
+    def build_widget_inputs(self, context):
+        logger = context.logger_context.logger
+        logger.info(
+            f"Processing balance request for chat_id: {context.logger_context.chat_id}"
+        )
 
-    # Janis Rubins: use precompiled validator if available to avoid repeated validation overhead
-    #  preprocess backend output:
-    output = [
-        llm_output,
-    ]
-
-    try:
-        backend_data: CardsBalanceResponse = CardsBalanceResponse(**backend_output)
+        backend_data = CardsBalanceResponse(**context.backend_output)
         logger.info(
             f"Successfully parsed backend data with {len(backend_data.body[0].cardList)} cards"
         )
-    except Exception as e:
-        logger.error(f"Failed to parse backend output: {e}")
-        raise
 
-    backend_output_processed: List[CardInfo] = []
-    # logger.info(f"backend_output {backend_output} ----- type:{type(backend_output)}")
-    for i, card_info in enumerate(backend_data.body[0].cardList):
-        logger.debug(f"Processing card {i + 1}: {card_info.pan}")
+        backend_output_processed = []
+        for i, card_info in enumerate(backend_data.body[0].cardList):
+            balance_value = 0
+            if type(card_info.cardBalance.balance) is int:
+                balance_value = card_info.cardBalance.balance
+            elif type(card_info.cardBalance.balance) is str:
+                balance_value = int(card_info.cardBalance.balance.replace(" ", ""))
+            elif type(card_info.cardBalance.balance) is float:
+                balance_value = int(card_info.cardBalance.balance)
 
-        balance_value = 0
-        if type(card_info.cardBalance.balance) is int:
-            balance_value = card_info.cardBalance.balance
-            logger.debug(f"Card {i + 1} balance (int): {balance_value}")
-        elif type(card_info.cardBalance.balance) is str:
-            balance_value = int(card_info.cardBalance.balance.replace(" ", ""))
-            logger.debug(f"Card {i + 1} balance (str->int): {balance_value}")
-        elif type(card_info.cardBalance.balance) is float:
-            balance_value = int(card_info.cardBalance.balance)
-            logger.debug(f"Card {i + 1} balance (float->int): {balance_value}")
+            backend_output_processed.append(
+                CardInfo(
+                    masked_card_pan=card_info.pan,
+                    card_type=card_info.processingSystem,
+                    balance=balance_value,
+                    card_name=card_info.cardDetails.cardName,
+                    cardColor=card_info.cardDetails.cardColor,
+                    image_url=card_info.bankIcon.bankLogoMini,
+                )
+            )
 
-        card_info_processed = CardInfo(
-            masked_card_pan=card_info.pan,
-            card_type=card_info.processingSystem,
-            balance=balance_value,
-            card_name=card_info.cardDetails.cardName,
-            cardColor=card_info.cardDetails.cardColor,
-            image_url=card_info.bankIcon.bankLogoMini,
-        )
-        backend_output_processed.append(card_info_processed)
-        logger.debug(
-            f"Added card: {card_info_processed.card_name} with balance {balance_value}"
-        )
+        logger.info(f"Processed {len(backend_output_processed)} cards successfully")
 
-    logger.info(f"Processed {len(backend_output_processed)} cards successfully")
-
-    text_widget = TextWidget(
-        order=1,
-        values=[{"text": llm_output}],
-    )
-    cards_list = Widget(
-        name="cards_own_list_widget_balance",
-        type="cards_own_list_widget_balance",
-        order=2,
-        layout="vertical",
-        fields=["masked_card_pan", "card_type", "balance", "card_name"],
-        values=[
-            card.model_dump(exclude_none=True) for card in backend_output_processed
-        ],
-    )
-
-    logger.debug(f"Created widgets: text_widget (order=1), cards_list (order=2)")
-
-    widgets = add_ui_to_widget(
-        {
-            build_text_widget: WidgetInput(
-                widget=text_widget,
-                args={"text": llm_output},
-            ),
-            build_balance_ui: WidgetInput(
-                widget=cards_list,
+        text_builder, text_input = self.make_text_input(context.llm_output)
+        return {
+            text_builder: text_input,
+            build_balance_ui_widget: WidgetInput(
+                widget=Widget(
+                    name="cards_own_list_widget_balance",
+                    type="cards_own_list_widget_balance",
+                    order=2,
+                    layout="vertical",
+                    fields=["masked_card_pan", "card_type", "balance", "card_name"],
+                    values=[
+                        card.model_dump(exclude_none=True)
+                        for card in backend_output_processed
+                    ],
+                ),
                 args={
                     "balance_input": BalanceInput(
                         cards=backend_output_processed, accounts=[]
                     ),
-                    "language": language,
+                    "language": context.language,
                 },
             ),
-        },
-        version,
-    )
+        }
 
-    logger.info(f"Built {len(widgets)} UI widgets for version {version}")
 
-    output = BuildOutput(
-        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
-        widgets_count=len(widgets),
-    )
-
-    logger.info(
-        f"Balance processing completed successfully. Output contains {output.widgets_count} widgets"
-    )
-
-    save_builder_output(context, output)
-    return output
+get_balance = GetBalance()
 
 
 def card_block(card: CardInfo, language: LanguageOptions = LanguageOptions.RUSSIAN):
     """
-    Create a UI container for displaying card information.
+    Create a UI container for displaying card information using smarty_ui.
 
     Args:
         card (dict): Card data including image_url, balance, last_digits, and type
@@ -394,43 +280,44 @@ def card_block(card: CardInfo, language: LanguageOptions = LanguageOptions.RUSSI
         },
     }
     sum_text = texts_map[language]["sum"]
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        items=[
-            dv.DivImage(
-                image_url=card.image_url,
-                width=dv.DivFixedSize(value=48),
-                height=dv.DivFixedSize(value=32),
-                scale=dv.DivImageScale.FIT,
-                # corner_radius=6,
-                margins=dv.DivEdgeInsets(right=12),
-            ),
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.VERTICAL,
-                items=[
-                    dv.DivText(
-                        text=f"{card.balance // 100} {sum_text}",
-                        font_size=16,
-                        font_weight=dv.DivFontWeight.BOLD,
-                        text_color="#111827",
-                    ),
-                    dv.DivText(
-                        text=f"💳 •• {card.masked_card_pan} — {card.card_type}",
-                        font_size=12,
-                        text_color="#6B7280",
-                    ),
-                ],
-            ),
-        ],
-        margins=dv.DivEdgeInsets(bottom=12),
+
+    # Card image using smarty_ui icon
+    card_image = dv.DivImage(
+        image_url=card.image_url,
+        width=dv.DivFixedSize(value=48),
+        height=dv.DivFixedSize(value=32),
+        scale=dv.DivImageScale.FIT,
     )
+
+    # Balance text using text_1 (bold)
+    balance_text = text_1(f"{card.balance // 100} {sum_text}", color="#111827")
+    balance_text.font_weight = dv.DivFontWeight.BOLD
+
+    # Card details using text_2
+    card_details = text_2(
+        f"💳 •• {card.masked_card_pan} — {card.card_type}",
+        color="#6B7280",
+    )
+
+    # Card info column using VStack
+    card_info = VStack([balance_text, card_details])
+
+    # Main row using HStack
+    card_row = HStack(
+        [card_image, card_info],
+        gap=12,
+        align_v="center",
+    )
+    card_row.margins = dv.DivEdgeInsets(bottom=12)
+
+    return card_row
 
 
 def account_block(
     account: Account, language: LanguageOptions = LanguageOptions.RUSSIAN
 ):
     """
-    Create a UI container for displaying account information.
+    Create a UI container for displaying account information using smarty_ui.
 
     Args:
         account (dict): Account data including image_url, balance, and type
@@ -451,34 +338,34 @@ def account_block(
     }
 
     sum_text = texts_map[language]["sum"]
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        items=[
-            dv.DivImage(
-                image_url=account.image_url,
-                width=dv.DivFixedSize(value=48),
-                height=dv.DivFixedSize(value=32),
-                scale=dv.DivImageScale.FIT,
-                # corner_radius=6,
-                margins=dv.DivEdgeInsets(right=12),
-            ),
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.VERTICAL,
-                items=[
-                    dv.DivText(
-                        text=f"{account.balance} {sum_text}",
-                        font_size=16,
-                        font_weight=dv.DivFontWeight.BOLD,
-                        text_color="#111827",
-                    ),
-                    dv.DivText(
-                        text=f"💼 {account.type}", font_size=12, text_color="#6B7280"
-                    ),
-                ],
-            ),
-        ],
-        margins=dv.DivEdgeInsets(bottom=12),
+
+    # Account image
+    account_image = dv.DivImage(
+        image_url=account.image_url,
+        width=dv.DivFixedSize(value=48),
+        height=dv.DivFixedSize(value=32),
+        scale=dv.DivImageScale.FIT,
     )
+
+    # Balance text using text_1 (bold)
+    balance_text = text_1(f"{account.balance} {sum_text}", color="#111827")
+    balance_text.font_weight = dv.DivFontWeight.BOLD
+
+    # Account type using text_2
+    account_type_text = text_2(f"💼 {account.type}", color="#6B7280")
+
+    # Account info column using VStack
+    account_info = VStack([balance_text, account_type_text])
+
+    # Main row using HStack
+    account_row = HStack(
+        [account_image, account_info],
+        gap=12,
+        align_v="center",
+    )
+    account_row.margins = dv.DivEdgeInsets(bottom=12)
+
+    return account_row
 
 
 def action_button(
@@ -524,12 +411,28 @@ def action_button(
     )
 
 
-def build_balance_ui(
+def build_balance_ui_widget(
     balance_input: BalanceInput,
     language: LanguageOptions = LanguageOptions.RUSSIAN,
 ):
     """
-    Build the balance UI using backend data and LLM output.
+    Build the balance UI using smarty_ui cards_own_list block component.
+    """
+
+    div = build_balance_ui(balance_input, language)
+    output = dv.make_div(div)
+    with open("logs/json/build_balance_ui.json", "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
+    return output
+
+
+def build_balance_ui(
+    balance_input: BalanceInput | dict[str, Any],
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
+):
+    """
+    Build the balance UI using smarty_ui cards_own_list block component.
 
     Args:
         balance_input (BalanceInput): Pydantic model containing cards and accounts data
@@ -537,6 +440,9 @@ def build_balance_ui(
     Returns:
         dict: Complete UI definition in DivKit format
     """
+
+    if isinstance(balance_input, dict):
+        balance_input = BalanceInput(**balance_input)
 
     logger.info("Build balance ui")
     cards = balance_input.cards
@@ -546,80 +452,73 @@ def build_balance_ui(
             "accounts_title": "Баланс ваших счетов:",
             "text": "Вы можете пополнить счёт или перевести средства на другую карту.",
             "actions": ["Пополнить", "Перевести"],
+            "currency": "сум",
         },
         LanguageOptions.ENGLISH: {
             "cards_title": "Your cards balance:",
             "accounts_title": "Your accounts balance:",
             "text": "You can top up your account or transfer money to another card.",
             "actions": ["Top up", "Transfer"],
+            "currency": "sum",
         },
         LanguageOptions.UZBEK: {
             "cards_title": "Sizning kartalaringizning balansi:",
             "accounts_title": "Sizning hisoblaringizning balansi:",
             "text": "Siz hisobingizni to'ldirishingiz yoki boshqa kartaga pul o'tkazishingiz mumkin.",
             "actions": ["To'ldirish", "O'tkazish"],
+            "currency": "so'm",
         },
     }
 
-    # Parse LLM output for text and actions
-    # text = "Вы можете пополнить счёт или перевести средства на другую карту."
-    # actions = ["Пополнить", "Перевести"]
-    text = texts_map[language]["text"]
-    actions = texts_map[language]["actions"]
     cards_title = texts_map[language]["cards_title"]
-    accounts_title = texts_map[language]["accounts_title"]
-
-    main_items = []
+    currency = texts_map[language]["currency"]
 
     if cards:
-        main_items.append(
-            dv.DivText(
-                text=cards_title,
-                font_size=13,
-                font_weight=dv.DivFontWeight.BOLD,
-                text_color="#374151",
-                margins=dv.DivEdgeInsets(bottom=8),
+        # Convert CardInfo to smarty_ui CardBalanceData format
+        smarty_cards = []
+        for card in cards:
+            smarty_cards.append(
+                {
+                    "balance": format_balance(card.balance // 100),
+                    "card_name": card.card_name,
+                    "card_thumbnail_url": card.image_url,
+                    "card_last_digits": card.masked_card_pan[-4:]
+                    if len(card.masked_card_pan) >= 4
+                    else card.masked_card_pan,
+                    "currency": currency,
+                }
             )
+
+        # Use smarty_ui cards_own_list block component
+        cards_widget = smarty_cards_own_list(
+            cards=smarty_cards,
+            corner_radius=8,
+            padding=16,
         )
-        main_items.extend([card_block(c, language) for c in cards])
 
-    # Сообщение и кнопки
-    # main_items.append(
-    #     dv.DivContainer(
-    #         orientation=dv.DivContainerOrientation.VERTICAL,
-    #         background=[dv.DivSolidBackground(color="#F9FAFB")],
-    #         paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
-    #         items=[
-    #             dv.DivText(text=text, font_size=13, text_color="#374151"),
-    #             dv.DivContainer(
-    #                 orientation=dv.DivContainerOrientation.HORIZONTAL,
-    #                 items=[action_button(act) for act in actions],
-    #                 margins=dv.DivEdgeInsets(top=12),
-    #             ),
-    #         ],
-    #         margins=dv.DivEdgeInsets(top=16),
-    #     )
-    # )
+        # Add title above the cards widget
+        title_text = caption_1(cards_title, color="#374151")
+        title_text.font_weight = dv.DivFontWeight.BOLD
+        title_text.margins = dv.DivEdgeInsets(bottom=8)
 
-    # Root контейнер
-    root = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        items=main_items,
-        width=dv.DivFixedSize(value=280),
-        # height=dv.DivFixedSize(value=248),
-        background=[dv.DivSolidBackground(color="#FFFFFF")],
-        border=dv.DivBorder(
-            corner_radius=8, stroke=dv.DivStroke(color="#E5E7EB", width=1)
-        ),
-        paddings=dv.DivEdgeInsets(top=16, bottom=16, left=16, right=16),
-        margins=dv.DivEdgeInsets(top=16, left=20),
-    )
+        root = VStack(
+            [title_text, cards_widget],
+            padding=0,
+            width=dv.DivFixedSize(value=280),
+        )
+        root.margins = dv.DivEdgeInsets(top=16, left=20)
+    else:
+        # Empty state
+        root = VStack(
+            [],
+            padding=16,
+            background="#FFFFFF",
+            corner_radius=8,
+            width=dv.DivFixedSize(value=280),
+        )
+        root.margins = dv.DivEdgeInsets(top=16, left=20)
 
-    output = dv.make_div(root)
-    with open("logs/json/build_balance_ui.json", "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
-
-    return output
+    return root
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+from smarty_ui.composites import assistant_bubble
 from models.widget import Widget
 import pydivkit as dv
 import json
@@ -15,35 +16,7 @@ def text_widget(
     text: str,
 ):
     text = text.replace("*", "")
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        background=[dv.DivSolidBackground(color="#F8FAFF")],  # light bluish-white
-        border=dv.DivBorder(corner_radius=16),
-        paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
-        items=[
-            dv.DivText(
-                text=text + "\n",
-                font_family="Manrope",
-                font_size=14,
-                font_weight=dv.DivFontWeight.LIGHT,
-                text_color="#111133",  # dark navy color
-                line_height=22,
-                letter_spacing=0,
-                # max_lines=0,  # Allow unlimited lines
-                text_alignment_horizontal=dv.DivAlignmentHorizontal.LEFT,
-                text_alignment_vertical=dv.DivAlignmentVertical.TOP,
-            )
-        ],
-        margins=dv.DivEdgeInsets(
-            top=WidgetMargins.TOP.value,
-            left=WidgetMargins.LEFT.value,
-            right=WidgetMargins.RIGHT.value,
-            bottom=WidgetMargins.BOTTOM.value,
-        ),
-        width=dv.DivMatchParentSize(),
-        height=dv.DivWrapContentSize(),
-        # item_spacing=10,  # gap between items
-    )
+    return assistant_bubble(text)
 
 
 def build_text_widget(text: str):
