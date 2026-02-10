@@ -47,6 +47,7 @@ def _get_response_ui_registry() -> Dict[str, Callable[[Context], BuildOutput]]:
         get_fields_of_supplier,
         get_suppliers_by_category,
     )
+    from .mortgage import calculate_mortgage
 
     _response_ui_registry = {
         "get_balance": get_balance,
@@ -60,6 +61,7 @@ def _get_response_ui_registry() -> Dict[str, Callable[[Context], BuildOutput]]:
         # "get_contact": get_contact,
         "get_products": get_products,
         "search_products": search_products,
+        "calculate_mortgage": calculate_mortgage,
     }
     return _response_ui_registry
 

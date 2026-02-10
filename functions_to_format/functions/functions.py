@@ -35,6 +35,7 @@ from .activity_report_events import (
     function_call_activity_record,
     function_response_activity_record,
 )
+from .mortgage import calculate_mortgage, build_mortgage_widget
 
 
 sdui_functions_map = {
@@ -53,6 +54,7 @@ sdui_functions_map = {
     "buttons_widget": build_buttons_row,
     "receiver_by_card": build_receiver_by_card_ui,
     "send_money": build_send_money_ui,
+    "calculate_mortgage": build_mortgage_widget,
 }
 functions_mapper = {
     "get_balance": get_balance,
@@ -82,4 +84,5 @@ functions_mapper = {
     "receiver_by_card": get_receiver_by_card,
     "function_call_activity_record": function_call_activity_record,
     "function_response_activity_record": function_response_activity_record,
+    "calculate_mortgage": calculate_mortgage,
 }

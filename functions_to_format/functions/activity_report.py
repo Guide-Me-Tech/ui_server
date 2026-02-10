@@ -34,14 +34,14 @@ class FunctionCallBackendOutput(BaseModel):
     """Backend output for function_call activity report."""
 
     function_name: str
-    arguments: Dict[str, Any]
+    arguments: Dict[str, Any] | None
 
 
 class FunctionResponseBackendOutput(BaseModel):
     """Backend output for function_response activity report."""
 
     function_name: str
-    response: Dict[str, Any]
+    response: Dict[str, Any] | None
 
 
 class ActivityIndicatorWidget(BaseModel):
@@ -201,7 +201,7 @@ def _build_activity_message_holder(
 
     state = dv.DivState(
         id=state_id,
-        default_state_id="expanded",
+        default_state_id="collapsed",
         states=[
             dv.DivStateState(state_id="collapsed", div=collapsed_trigger),
             dv.DivStateState(state_id="expanded", div=expanded_div),
