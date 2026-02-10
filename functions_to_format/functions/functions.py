@@ -1,17 +1,27 @@
+"""Function registry: maps function names to Strategy handler instances.
+
+Each handler is a ``FunctionStrategy`` instance (callable) that implements
+the Strategy Design Pattern.  The ``functions_mapper`` dict is the central
+dispatch table used at runtime.  The ``sdui_functions_map`` maps function
+names to their optional pydivkit UI builder functions.
+"""
+
 from .chatbot_answer import chatbot_answer, unauthorized_response, build_contacts_list
 from .balance import get_balance, build_balance_ui, get_home_balances
-from .payment import (
+from .transfer import (
     get_receiver_id_by_receiver_phone_number,
-    get_categories,
-    get_fields_of_supplier,
-    get_suppliers_by_category,
     get_number_by_receiver_name,
     send_money_to_someone_via_card,
-    pay_for_home_utility,
-    get_home_utility_suppliers,
     get_receiver_by_card,
     build_receiver_by_card_ui,
     build_send_money_ui,
+)
+from .payment import (
+    get_categories,
+    get_fields_of_supplier,
+    get_suppliers_by_category,
+    pay_for_home_utility,
+    get_home_utility_suppliers,
 )
 from .contact import build_contact_widget, get_contact
 from .news import build_news_widget, get_news
@@ -25,6 +35,7 @@ from .activity_report_events import (
     function_call_activity_record,
     function_response_activity_record,
 )
+from .mortgage import calculate_mortgage, build_mortgage_widget
 
 
 sdui_functions_map = {
@@ -43,6 +54,7 @@ sdui_functions_map = {
     "buttons_widget": build_buttons_row,
     "receiver_by_card": build_receiver_by_card_ui,
     "send_money": build_send_money_ui,
+    "calculate_mortgage": build_mortgage_widget,
 }
 functions_mapper = {
     "get_balance": get_balance,
@@ -72,4 +84,5 @@ functions_mapper = {
     "receiver_by_card": get_receiver_by_card,
     "function_call_activity_record": function_call_activity_record,
     "function_response_activity_record": function_response_activity_record,
+    "calculate_mortgage": calculate_mortgage,
 }

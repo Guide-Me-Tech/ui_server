@@ -1,0 +1,194 @@
+{
+    "card": {
+        "log_id": "card",
+        "states": [
+            {
+                "div": {
+                    "items": [
+                        {
+                            "background": [
+                                {
+                                    "color": "#F8FAFF",
+                                    "type": "solid"
+                                }
+                            ],
+                            "border": {
+                                "corner_radius": 16
+                            },
+                            "height": {
+                                "type": "wrap_content"
+                            },
+                            "items": [
+                                {
+                                    "font_family": "Manrope",
+                                    "font_size": 14,
+                                    "font_weight": "light",
+                                    "letter_spacing": 0,
+                                    "line_height": 22,
+                                    "text": "Please approve the action. \nuser_id: 60005982\nsession_id: cea77f0b-07f8-478b-a1c3-3d06be112300\napp_name: smarty\n\n",
+                                    "text_alignment_horizontal": "left",
+                                    "text_alignment_vertical": "top",
+                                    "text_color": "#111133",
+                                    "type": "text"
+                                }
+                            ],
+                            "margins": {
+                                "bottom": 16,
+                                "left": 16,
+                                "right": 16,
+                                "top": 16
+                            },
+                            "orientation": "vertical",
+                            "paddings": {
+                                "bottom": 16,
+                                "left": 16,
+                                "right": 16,
+                                "top": 16
+                            },
+                            "type": "container",
+                            "width": {
+                                "type": "match_parent"
+                            }
+                        },
+                        {
+                            "items": [
+                                {
+                                    "actions": [
+                                        {
+                                            "log_id": "btn-approve",
+                                            "typed": {
+                                                "container_id": "btn-approve",
+                                                "on_fail_actions": [
+                                                    {
+                                                        "log_id": "approve-error",
+                                                        "url": "div-action://set_variable?name=error_visible&value=1"
+                                                    },
+                                                    {
+                                                        "log_id": "set-error-text",
+                                                        "url": "div-action://set_variable?name=error_text&value=Failed to approve request"
+                                                    }
+                                                ],
+                                                "on_success_actions": [
+                                                    {
+                                                        "log_id": "approve-success",
+                                                        "url": "div-action://set_variable?name=success_visible&value=1"
+                                                    }
+                                                ],
+                                                "request": {
+                                                    "headers": [
+                                                        {
+                                                            "name": "api-key",
+                                                            "value": "skg_41ca223f9eee407692d679b53d00132a"
+                                                        }
+                                                    ],
+                                                    "method": "get",
+                                                    "url": "https://smarty-test.smartbank.uz/chat/v3/approval?tool_call_id=tool_pay_for_home_utility_wrapper_yWvDhGlgRpfKCLm7EgwF&user_id=60005982&session_id=cea77f0b-07f8-478b-a1c3-3d06be112300&app_name=smarty&action=approve"
+                                                },
+                                                "type": "submit"
+                                            },
+                                            "url": "divkit://send-request"
+                                        }
+                                    ],
+                                    "alignment_horizontal": "center",
+                                    "border": {
+                                        "corner_radius": 8,
+                                        "stroke": {
+                                            "color": "#3B82F6"
+                                        }
+                                    },
+                                    "font_size": 14,
+                                    "height": {
+                                        "type": "fixed",
+                                        "value": 36
+                                    },
+                                    "id": "btn-approve",
+                                    "margins": {
+                                        "right": 8
+                                    },
+                                    "paddings": {
+                                        "bottom": 8,
+                                        "left": 12,
+                                        "right": 12,
+                                        "top": 8
+                                    },
+                                    "text": "Approve",
+                                    "text_color": "#2563EB",
+                                    "type": "text"
+                                },
+                                {
+                                    "actions": [
+                                        {
+                                            "log_id": "btn-reject",
+                                            "typed": {
+                                                "container_id": "btn-reject",
+                                                "on_fail_actions": [
+                                                    {
+                                                        "log_id": "reject-error",
+                                                        "url": "div-action://set_variable?name=error_visible&value=1"
+                                                    },
+                                                    {
+                                                        "log_id": "set-error-text",
+                                                        "url": "div-action://set_variable?name=error_text&value=Failed to reject request"
+                                                    }
+                                                ],
+                                                "on_success_actions": [
+                                                    {
+                                                        "log_id": "reject-success",
+                                                        "url": "div-action://set_variable?name=success_visible&value=1"
+                                                    }
+                                                ],
+                                                "request": {
+                                                    "headers": [
+                                                        {
+                                                            "name": "api-key",
+                                                            "value": "skg_41ca223f9eee407692d679b53d00132a"
+                                                        }
+                                                    ],
+                                                    "method": "get",
+                                                    "url": "https://smarty-test.smartbank.uz/chat/v3/approval?tool_call_id=tool_pay_for_home_utility_wrapper_yWvDhGlgRpfKCLm7EgwF&user_id=60005982&session_id=cea77f0b-07f8-478b-a1c3-3d06be112300&app_name=smarty&action=reject"
+                                                },
+                                                "type": "submit"
+                                            },
+                                            "url": "divkit://send-request"
+                                        }
+                                    ],
+                                    "alignment_horizontal": "center",
+                                    "border": {
+                                        "corner_radius": 8,
+                                        "stroke": {
+                                            "color": "#3B82F6"
+                                        }
+                                    },
+                                    "font_size": 14,
+                                    "height": {
+                                        "type": "fixed",
+                                        "value": 36
+                                    },
+                                    "id": "btn-reject",
+                                    "margins": {
+                                        "right": 8
+                                    },
+                                    "paddings": {
+                                        "bottom": 8,
+                                        "left": 12,
+                                        "right": 12,
+                                        "top": 8
+                                    },
+                                    "text": "Reject",
+                                    "text_color": "#2563EB",
+                                    "type": "text"
+                                }
+                            ],
+                            "orientation": "horizontal",
+                            "type": "container"
+                        }
+                    ],
+                    "orientation": "vertical",
+                    "type": "container"
+                },
+                "state_id": 0
+            }
+        ]
+    },
+    "templates": {}
+}

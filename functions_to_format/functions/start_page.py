@@ -1,40 +1,23 @@
-from .general import Widget, WidgetInput, TextWidget, add_ui_to_widget
-from .general.utils import save_builder_output
-from models.build import BuildOutput
+from .general import Widget, WidgetInput
+from .base_strategy import FunctionStrategy
 from functions_to_format.functions.general.const_values import LanguageOptions
-from conf import logger
-import structlog
 from models.context import Context
 
 
-def start_page_widget(context: Context) -> BuildOutput:
-    # Extract values from context
-    llm_output = context.llm_output
-    backend_output = context.backend_output
-    version = context.version
-    language = context.language
-    chat_id = context.logger_context.chat_id
-    api_key = context.api_key
-    logger = context.logger_context.logger
+class StartPageWidget(FunctionStrategy):
+    """Strategy for building start page UI."""
+    def build_widget_inputs(self, context):
+        return {
+            build_start_page_widget: WidgetInput(
+                widget=Widget(
+                    name="start_page", type="start_page",
+                    order=1, layout="vertical", fields=[],
+                ),
+                args={},
+            ),
+        }
 
-    a = Widget(
-        name="start_page",
-        type="start_page",
-        order=1,
-        layout="vertical",
-        fields=[],
-    )
-    widgets = add_ui_to_widget(
-        widget_inputs={build_start_page_widget: WidgetInput(widget=a, args={})},
-        version=version,
-    )
-
-    output = BuildOutput(
-        widgets_count=len(widgets),
-        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
-    )
-    save_builder_output(context, output)
-    return output
+start_page_widget = StartPageWidget()
 
 
 def build_start_page_widget(

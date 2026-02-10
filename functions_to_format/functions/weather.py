@@ -1,76 +1,64 @@
 import pydivkit as dv
 import json
-from .general import (
-    Widget,
-    TextWidget,
-    build_text_widget,
-    add_ui_to_widget,
-    WidgetInput,
-)
-from .general.utils import save_builder_output
+from .general import WidgetInput
+from .base_strategy import FunctionStrategy
 from tool_call_models.weather import WeatherResponse
-from models.build import BuildOutput
+from models.widget import Widget
 from functions_to_format.functions.general.const_values import LanguageOptions
-from conf import logger
-import structlog
 from models.context import Context
 
+# Import smarty_ui components
+from smarty_ui import (
+    VStack,
+    HStack,
+    title_1,
+    title_2,
+    text_1,
+    text_2,
+    caption_1,
+    caption_2,
+    icon,
+    default_theme,
+)
 
-def get_weather_info(context: Context) -> BuildOutput:
-    # Extract values from context
-    llm_output = context.llm_output
-    backend_output = context.backend_output
-    version = context.version
-    language = context.language
-    chat_id = context.logger_context.chat_id
-    api_key = context.api_key
-    logger = context.logger_context.logger
 
-    weather_data = WeatherResponse(**backend_output)
-    widget = Widget(
-        name="weather_widget",
-        type="weather_widget",
-        order=2,
-        layout="vertical",
-        fields=[
-            "city",
-            "condition",
-            "temperature",
-            "feels_like",
-            "humidity",
-            "sunrise",
-            "wind_speed",
-            "sunset",
-        ],
-    )
-    text_widget = TextWidget(
-        order=1,
-        values=[{"text": llm_output}],
-    )
+class GetWeatherInfo(FunctionStrategy):
+    """Strategy for building weather info UI."""
 
-    widgets = add_ui_to_widget(
-        {
-            build_text_widget: WidgetInput(
-                widget=text_widget, args={"text": llm_output}
-            ),
+    def build_widget_inputs(self, context):
+        weather_data = WeatherResponse(**context.backend_output)
+        text_builder, text_input = self.make_text_input(context.llm_output)
+        return {
+            text_builder: text_input,
             build_weather_widget: WidgetInput(
-                widget=widget,
-                args={"weather_data": weather_data, "language": language},
+                widget=Widget(
+                    name="weather_widget",
+                    type="weather_widget",
+                    order=2,
+                    layout="vertical",
+                    fields=[
+                        "city",
+                        "condition",
+                        "temperature",
+                        "feels_like",
+                        "humidity",
+                        "sunrise",
+                        "wind_speed",
+                        "sunset",
+                    ],
+                ),
+                args={"weather_data": weather_data, "language": context.language},
             ),
-        },
-        version,
-    )
-    output = BuildOutput(
-        widgets_count=1,
-        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
-    )
-    save_builder_output(context, output)
-    return output
+        }
+
+
+get_weather_info = GetWeatherInfo()
 
 
 def weather_widget(
     data: WeatherResponse, language: LanguageOptions = LanguageOptions.RUSSIAN
 ):
+    """Build weather widget using smarty_ui components."""
     city_name = data.location.name
 
     texts_map = {
@@ -134,159 +122,111 @@ def weather_widget(
         data.current.condition.text,
     )
 
-    # Main weather card container
-    main_container = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        width=dv.DivFixedSize(value=320),
-        background=[dv.DivSolidBackground(color="#FFFFFF")],
-        border=dv.DivBorder(corner_radius=16, stroke=dv.DivStroke(color="#E5E7EB")),
-        paddings=dv.DivEdgeInsets(top=20, bottom=20, left=20, right=20),
-        margins=dv.DivEdgeInsets(top=16, left=20, right=20, bottom=16),
-        items=[
-            # Header with city name and location
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.HORIZONTAL,
-                alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                items=[
-                    dv.DivContainer(
-                        orientation=dv.DivContainerOrientation.VERTICAL,
-                        items=[
-                            dv.DivText(
-                                text=city_name,
-                                font_size=24,
-                                font_weight=dv.DivFontWeight.BOLD,
-                                text_color="#1F2937",
-                            ),
-                            dv.DivText(
-                                text=f"{city_name}, {country_name}",
-                                font_size=14,
-                                text_color="#6B7280",
-                            ),
-                        ],
-                    ),
-                    # Weather icon
-                    (
-                        dv.DivText(
-                            text="☀️",
-                            font_size=48,
-                        )
-                        if data.current.condition.icon is None
-                        else dv.DivImage(
-                            image_url="https:" + data.current.condition.icon,
-                            width=dv.DivFixedSize(value=48),
-                            height=dv.DivFixedSize(value=48),
-                        )
-                    ),
-                ],
-                margins=dv.DivEdgeInsets(bottom=16),
-            ),
-            # Main temperature and condition section
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.HORIZONTAL,
-                alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                items=[
-                    dv.DivContainer(
-                        orientation=dv.DivContainerOrientation.VERTICAL,
-                        items=[
-                            # Temperature with inline °C on same line
-                            dv.DivText(
-                                text=f"{current_temperature}°C",
-                                font_size=40,
-                                font_weight=dv.DivFontWeight.BOLD,
-                                text_color="#1F2937",
-                            ),
-                            dv.DivText(
-                                text=f"{texts_map[language]['feels_like']} {feels_like_temperature}°C",
-                                font_size=14,
-                                text_color="#6B7280",
-                            ),
-                            dv.DivText(
-                                text=f"{texts_map[language]['wind']} {wind_direction} {wind_speed} {texts_map[language]['wind_speed']}",
-                                font_size=14,
-                                text_color="#6B7280",
-                            ),
-                            dv.DivText(
-                                text=f"{texts_map[language]['humidity']} {humidity}%",
-                                font_size=14,
-                                text_color="#6B7280",
-                            ),
-                            dv.DivText(
-                                text=last_updated,
-                                font_size=14,
-                                text_color="#6B7280",
-                            ),
-                        ],
-                    ),
-                    dv.DivContainer(
-                        orientation=dv.DivContainerOrientation.VERTICAL,
-                        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                        items=[
-                            dv.DivText(
-                                text=condition_text,
-                                font_size=18,
-                                font_weight=dv.DivFontWeight.MEDIUM,
-                                text_color="#1F2937",
-                            ),
-                        ],
-                    ),
-                ],
-                margins=dv.DivEdgeInsets(bottom=24),
-            ),
-            # Weekly forecast section
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.HORIZONTAL,
-                alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                items=[
-                    # Generate forecast days dynamically
-                    *[
-                        dv.DivContainer(
-                            orientation=dv.DivContainerOrientation.VERTICAL,
-                            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                            items=[
-                                dv.DivText(
-                                    text=(
-                                        forecast_day.date.split("-")[2]
-                                        if len(forecast_day.date.split("-")) > 2
-                                        else forecast_day.date[:3]
-                                    ),
-                                    font_size=12,
-                                    text_color="#6B7280",
-                                ),
-                                (
-                                    dv.DivText(
-                                        text="☀️",
-                                        font_size=24,
-                                    )
-                                    if forecast_day.day.condition.icon is None
-                                    else dv.DivImage(
-                                        image_url="https:"
-                                        + forecast_day.day.condition.icon,
-                                        width=dv.DivFixedSize(value=24),
-                                        height=dv.DivFixedSize(value=24),
-                                    )
-                                ),
-                                dv.DivText(
-                                    text=f"{forecast_day.day.maxtemp_c}°C",
-                                    font_size=10,
-                                    font_weight=dv.DivFontWeight.BOLD,
-                                    text_color="#1F2937",
-                                ),
-                                dv.DivText(
-                                    text=f"{forecast_day.day.mintemp_c}°C",
-                                    font_size=9,
-                                    text_color="#6B7280",
-                                ),
-                            ],
-                            width=dv.DivFixedSize(value=40),
-                        )
-                        for forecast_day in data.forecast.forecastday[
-                            :6
-                        ]  # Show up to 6 days
-                    ]
-                ],
-            ),
-        ],
+    # Header with city name using smarty_ui
+    city_title = title_1(city_name, color="#1F2937")
+    city_title.font_weight = dv.DivFontWeight.BOLD
+
+    location_text = text_1(f"{city_name}, {country_name}", color="#6B7280")
+
+    city_info = VStack([city_title, location_text])
+
+    # Weather icon
+    weather_icon = (
+        dv.DivText(text="☀️", font_size=48)
+        if data.current.condition.icon is None
+        else dv.DivImage(
+            image_url="https:" + data.current.condition.icon,
+            width=dv.DivFixedSize(value=48),
+            height=dv.DivFixedSize(value=48),
+        )
     )
+
+    header_row = HStack([city_info, weather_icon])
+    header_row.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+    header_row.margins = dv.DivEdgeInsets(bottom=16)
+
+    # Temperature section using smarty_ui
+    temp_text = title_1(f"{current_temperature}°C", color="#1F2937")
+    temp_text.font_size = 40
+    temp_text.font_weight = dv.DivFontWeight.BOLD
+
+    feels_like_text = text_1(
+        f"{texts_map[language]['feels_like']} {feels_like_temperature}°C",
+        color="#6B7280",
+    )
+    wind_text = text_1(
+        f"{texts_map[language]['wind']} {wind_direction} {wind_speed} {texts_map[language]['wind_speed']}",
+        color="#6B7280",
+    )
+    humidity_text = text_1(
+        f"{texts_map[language]['humidity']} {humidity}%", color="#6B7280"
+    )
+    updated_text = text_1(last_updated, color="#6B7280")
+
+    temp_details = VStack(
+        [temp_text, feels_like_text, wind_text, humidity_text, updated_text]
+    )
+
+    # Condition text
+    condition_label = text_2(condition_text, color="#1F2937")
+    condition_label.font_size = 18
+    condition_label.font_weight = dv.DivFontWeight.MEDIUM
+
+    condition_container = VStack([condition_label])
+    condition_container.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+
+    temp_row = HStack([temp_details, condition_container])
+    temp_row.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+    temp_row.margins = dv.DivEdgeInsets(bottom=24)
+
+    # Weekly forecast section
+    forecast_items = []
+    for forecast_day in data.forecast.forecastday[:6]:
+        day_label = caption_2(
+            forecast_day.date.split("-")[2]
+            if len(forecast_day.date.split("-")) > 2
+            else forecast_day.date[:3],
+            color="#6B7280",
+        )
+
+        day_icon = (
+            dv.DivText(text="☀️", font_size=24)
+            if forecast_day.day.condition.icon is None
+            else dv.DivImage(
+                image_url="https:" + forecast_day.day.condition.icon,
+                width=dv.DivFixedSize(value=24),
+                height=dv.DivFixedSize(value=24),
+            )
+        )
+
+        max_temp = caption_2(f"{forecast_day.day.maxtemp_c}°C", color="#1F2937")
+        max_temp.font_size = 10
+        max_temp.font_weight = dv.DivFontWeight.BOLD
+
+        min_temp = caption_2(f"{forecast_day.day.mintemp_c}°C", color="#6B7280")
+        min_temp.font_size = 9
+
+        day_container = VStack([day_label, day_icon, max_temp, min_temp])
+        day_container.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+        day_container.width = dv.DivFixedSize(value=40)
+
+        forecast_items.append(day_container)
+
+    forecast_row = HStack(forecast_items)
+    forecast_row.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+
+    # Main weather card container using VStack
+    main_container = VStack(
+        [header_row, temp_row, forecast_row],
+        padding=20,
+        background="#FFFFFF",
+        corner_radius=16,
+        width=dv.DivFixedSize(value=320),
+    )
+    main_container.border = dv.DivBorder(
+        corner_radius=16, stroke=dv.DivStroke(color="#E5E7EB")
+    )
+    main_container.margins = dv.DivEdgeInsets(top=16, left=20, right=20, bottom=16)
 
     return main_container
 

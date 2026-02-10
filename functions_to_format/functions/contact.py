@@ -3,15 +3,24 @@ from pydivkit.core import Expr
 import json
 from pydantic import BaseModel
 from typing import List, Optional
-from .general import Widget, add_ui_to_widget
-from .general.utils import save_builder_output
-from models.build import BuildOutput
+from .general import Widget, WidgetInput
 from .general.const_values import WidgetMargins, LanguageOptions
-from .general import WidgetInput
-from conf import logger
-import structlog
-
 from models.context import Context, LoggerContext
+from .base_strategy import FunctionStrategy
+
+# Import smarty_ui components
+from smarty_ui import (
+    VStack,
+    HStack,
+    title_2,
+    text_1,
+    text_2,
+    caption_1,
+    avatar,
+    default_theme,
+)
+# Import smarty_ui blocks for ready-made components
+from smarty_ui.blocks import contacts_list as smarty_contacts_list
 
 
 # Feedback texts for contact widget actions
@@ -34,42 +43,29 @@ CONTACT_WIDGET_FEEDBACK_TEXTS = {
 }
 
 
-def get_contact(context: Context) -> BuildOutput:
-    # Extract values from context
-    llm_output = context.llm_output
-    backend_output = context.backend_output
-    version = context.version
-    language = context.language
-    chat_id = context.logger_context.chat_id
-    api_key = context.api_key
-    logger = context.logger_context.logger
+class GetContact(FunctionStrategy):
+    """Strategy for building contact UI."""
 
-    widget = Widget(
-        name="contact_widget",
-        type="contact_widget",
-        order=1,
-        layout="horizontal",
-        fields=["name", "avatar_url", "subtitle"],
-    )
-    widgets = add_ui_to_widget(
-        {
+    def build_widget_inputs(self, context):
+        return {
             build_contact_widget: WidgetInput(
-                widget=widget,
+                widget=Widget(
+                    name="contact_widget",
+                    type="contact_widget",
+                    order=1,
+                    layout="horizontal",
+                    fields=["name", "avatar_url", "subtitle"],
+                ),
                 args={
-                    "backend_output": backend_output,
-                    "llm_output": llm_output,
+                    "backend_output": context.backend_output,
+                    "llm_output": context.llm_output,
                     "context": context.logger_context,
                 },
-            )
-        },
-        version,
-    )
-    output = BuildOutput(
-        widgets_count=1,
-        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
-    )
-    save_builder_output(context, output)
-    return output
+            ),
+        }
+
+
+get_contact = GetContact()
 
 
 def contact_widget(
@@ -81,8 +77,8 @@ def contact_widget(
     language: LanguageOptions = LanguageOptions.RUSSIAN,
 ):
     """
-    Create a contact widget with optional click handling and feedback.
-    
+    Create a contact widget with optional click handling and feedback using smarty_ui.
+
     Args:
         name: Contact name
         avatar_url: Contact avatar image URL
@@ -90,103 +86,69 @@ def contact_widget(
         clickable: Whether the contact is clickable
         contact_id: Optional contact identifier for action payload
         language: Language for localization
-        
+
     Returns:
         DivContainer for the contact widget
     """
-    feedback_texts = CONTACT_WIDGET_FEEDBACK_TEXTS.get(language, CONTACT_WIDGET_FEEDBACK_TEXTS[LanguageOptions.ENGLISH])
-    
-    base_container = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        items=[
-            dv.DivImage(
-                image_url=avatar_url,
-                width=dv.DivFixedSize(value=40),
-                height=dv.DivFixedSize(value=40),
-                scale=dv.DivImageScale.FILL,
-                margins=dv.DivEdgeInsets(right=12),
-                border=dv.DivBorder(corner_radius=20),
-            ),
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.VERTICAL,
-                items=[
-                    dv.DivText(
-                        text=name,
-                        font_size=14,
-                        font_weight=dv.DivFontWeight.MEDIUM,
-                        text_color="#111827",
-                    ),
-                    dv.DivText(text=subtitle, font_size=12, text_color="#6B7280"),
-                ],
-            ),
-        ],
-        paddings=dv.DivEdgeInsets(top=12, bottom=12, right=12, left=12),
-        background=[dv.DivSolidBackground(color="#FFFFFF")],
-        border=dv.DivBorder(corner_radius=12, stroke=dv.DivStroke(color="#E5E7EB")),
-        width=dv.DivMatchParentSize(),
-        margins=dv.DivEdgeInsets(
-            bottom=WidgetMargins.BOTTOM.value,
-            top=WidgetMargins.TOP.value,
-            left=WidgetMargins.LEFT.value,
-            right=WidgetMargins.RIGHT.value,
-        ),
+    feedback_texts = CONTACT_WIDGET_FEEDBACK_TEXTS.get(
+        language, CONTACT_WIDGET_FEEDBACK_TEXTS[LanguageOptions.ENGLISH]
     )
-    
+
+    # Avatar using smarty_ui avatar component
+    contact_avatar = avatar(avatar_url, size=40)
+
+    # Name text using text_1
+    name_text = text_1(name, color="#111827")
+    name_text.font_weight = dv.DivFontWeight.MEDIUM
+    name_text.width = dv.DivWrapContentSize()
+
+    # Subtitle using text_2
+    subtitle_text = text_2(subtitle, color="#6B7280")
+    subtitle_text.width = dv.DivWrapContentSize()
+
+    # Contact info column using VStack
+    contact_info = VStack([name_text, subtitle_text])
+
+    # Main row using HStack
+    base_container = HStack(
+        [contact_avatar, contact_info],
+        gap=12,
+        align_v="center",
+        padding=12,
+        background="#FFFFFF",
+        corner_radius=12,
+        width=dv.DivMatchParentSize(),
+    )
+    base_container.border = dv.DivBorder(
+        corner_radius=12, stroke=dv.DivStroke(color="#E5E7EB")
+    )
+    base_container.margins = dv.DivEdgeInsets(
+        bottom=WidgetMargins.BOTTOM.value,
+        top=WidgetMargins.TOP.value,
+        left=WidgetMargins.LEFT.value,
+        right=WidgetMargins.RIGHT.value,
+    )
+
     if clickable:
-        safe_name = name.replace(' ', '_').replace('+', '')
-        base_container = dv.DivContainer(
-            orientation=dv.DivContainerOrientation.HORIZONTAL,
-            items=[
-                dv.DivImage(
-                    image_url=avatar_url,
-                    width=dv.DivFixedSize(value=40),
-                    height=dv.DivFixedSize(value=40),
-                    scale=dv.DivImageScale.FILL,
-                    margins=dv.DivEdgeInsets(right=12),
-                    border=dv.DivBorder(corner_radius=20),
-                ),
-                dv.DivContainer(
-                    orientation=dv.DivContainerOrientation.VERTICAL,
-                    items=[
-                        dv.DivText(
-                            text=name,
-                            font_size=14,
-                            font_weight=dv.DivFontWeight.MEDIUM,
-                            text_color="#111827",
-                        ),
-                        dv.DivText(text=subtitle, font_size=12, text_color="#6B7280"),
-                    ],
-                ),
-            ],
-            paddings=dv.DivEdgeInsets(top=12, bottom=12, right=12, left=12),
-            background=[dv.DivSolidBackground(color="#FFFFFF")],
-            border=dv.DivBorder(corner_radius=12, stroke=dv.DivStroke(color="#E5E7EB")),
-            width=dv.DivMatchParentSize(),
-            margins=dv.DivEdgeInsets(
-                bottom=WidgetMargins.BOTTOM.value,
-                top=WidgetMargins.TOP.value,
-                left=WidgetMargins.LEFT.value,
-                right=WidgetMargins.RIGHT.value,
+        safe_name = name.replace(" ", "_").replace("+", "")
+        base_container.actions = [
+            # Main contact action
+            dv.DivAction(
+                log_id=f"contact_select_{safe_name}",
+                url=f"divkit://contact/select",
+                payload={
+                    "contact_name": name,
+                    "contact_id": contact_id or safe_name,
+                    "subtitle": subtitle,
+                },
             ),
-            actions=[
-                # Main contact action
-                dv.DivAction(
-                    log_id=f"contact_select_{safe_name}",
-                    url=f"divkit://contact/select",
-                    payload={
-                        "contact_name": name,
-                        "contact_id": contact_id or safe_name,
-                        "subtitle": subtitle,
-                    },
-                ),
-                # Success feedback action
-                dv.DivAction(
-                    log_id=f"contact_select_{safe_name}_success",
-                    url="div-action://set_variable?name=contact_widget_success&value=1",
-                ),
-            ],
-        )
-    
+            # Success feedback action
+            dv.DivAction(
+                log_id=f"contact_select_{safe_name}_success",
+                url="div-action://set_variable?name=contact_widget_success&value=1",
+            ),
+        ]
+
     return base_container
 
 
@@ -229,104 +191,110 @@ def make_contacts_list(
     language: LanguageOptions = LanguageOptions.RUSSIAN,
 ):
     """
-    Create a contacts list container with optional click handling and feedback.
-    
+    Create a contacts list container using smarty_ui contacts_list block component.
+
     Args:
         contacts_data: List of contact data objects
         title: List title
         clickable: Whether contacts are clickable
         language: Language for localization
-        
+
     Returns:
         DivContainer for the contacts list
     """
-    feedback_texts = CONTACT_WIDGET_FEEDBACK_TEXTS.get(language, CONTACT_WIDGET_FEEDBACK_TEXTS[LanguageOptions.ENGLISH])
-    
-    items: List[dv.Div] = [
-        dv.DivText(
-            text=title,
-            font_size=16,
-            font_weight=dv.DivFontWeight.BOLD,
-            text_color="#111827",
-            margins=dv.DivEdgeInsets(bottom=12),
-        )
-    ]
+    feedback_texts = CONTACT_WIDGET_FEEDBACK_TEXTS.get(
+        language, CONTACT_WIDGET_FEEDBACK_TEXTS[LanguageOptions.ENGLISH]
+    )
 
+    # Convert Contact objects to ContactData format expected by smarty_ui
+    smarty_contacts = []
     for idx, contact in enumerate(contacts_data):
-        items.append(
-            contact_widget(
-                name=contact.name,
-                avatar_url=contact.avatar_url,
-                subtitle=contact.subtitle,
-                clickable=clickable,
-                contact_id=str(idx),
-                language=language,
-            )
-        )
+        contact_data = {
+            "name": contact.name,
+            "phone": contact.subtitle,  # subtitle is used as phone in our model
+        }
+        if contact.avatar_url:
+            contact_data["avatar_url"] = contact.avatar_url
+        if clickable:
+            # Add action URL for clickable contacts
+            safe_name = contact.name.replace(" ", "_").replace("+", "")
+            contact_data["action_url"] = f"divkit://contact/select?contact_id={idx}&name={safe_name}"
+        smarty_contacts.append(contact_data)
+
+    # Use smarty_ui contacts_list block component
+    contacts_widget = smarty_contacts_list(
+        contacts=smarty_contacts,
+        show_index=True,
+        corner_radius=16,
+        padding=16,
+    )
 
     if clickable:
-        # Success feedback container
-        success_container = dv.DivContainer(
-            id="contacts-list-success",
-            orientation=dv.DivContainerOrientation.HORIZONTAL,
-            visibility=Expr("@{contact_widget_success == 1 ? 'visible' : 'gone'}"),
-            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-            width=dv.DivMatchParentSize(),
-            margins=dv.DivEdgeInsets(top=12),
-            paddings=dv.DivEdgeInsets(top=10, bottom=10, left=12, right=12),
-            background=[dv.DivSolidBackground(color="#ECFDF5")],
-            border=dv.DivBorder(
-                corner_radius=10, stroke=dv.DivStroke(color="#A7F3D0", width=1)
-            ),
-            items=[
-                dv.DivText(
-                    text="✅",
-                    font_size=14,
-                    margins=dv.DivEdgeInsets(right=8),
-                ),
-                dv.DivText(
-                    text=feedback_texts["contact_selected"],
-                    font_size=13,
-                    text_color="#065F46",
-                    font_weight=dv.DivFontWeight.MEDIUM,
-                    width=dv.DivMatchParentSize(weight=1),
-                ),
-                dv.DivText(
-                    text="✕",
-                    font_size=16,
-                    text_color="#065F46",
-                    font_weight=dv.DivFontWeight.BOLD,
-                    paddings=dv.DivEdgeInsets(left=8),
-                    actions=[
-                        dv.DivAction(
-                            log_id="dismiss-contacts-list-success",
-                            url="div-action://set_variable?name=contact_widget_success&value=0",
-                        )
-                    ],
-                ),
-            ],
-        )
-        items.append(success_container)
-        
-        return dv.DivContainer(
-            orientation=dv.DivContainerOrientation.VERTICAL,
-            items=items,
-            paddings=dv.DivEdgeInsets(all=16),
-            background=[dv.DivSolidBackground(color="#F9FAFB")],
-            border=dv.DivBorder(corner_radius=16),
-            width=dv.DivMatchParentSize(),
-            variables=[
-                dv.IntegerVariable(name="contact_widget_success", value=0),
-                dv.IntegerVariable(name="contact_widget_error", value=0),
-            ],
-        )
+        # Wrap with title and feedback containers
+        title_text = title_2(title, color="#111827")
+        title_text.margins = dv.DivEdgeInsets(bottom=12)
 
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        items=items,
-        paddings=dv.DivEdgeInsets(all=16),
-        background=[dv.DivSolidBackground(color="#F9FAFB")],
-        border=dv.DivBorder(corner_radius=16),
+        # Success feedback container using HStack
+        success_icon = text_1("✅")
+        success_icon.margins = dv.DivEdgeInsets(right=8)
+
+        success_text = caption_1(feedback_texts["contact_selected"], color="#065F46")
+        success_text.width = dv.DivMatchParentSize(weight=1)
+
+        dismiss_btn = text_1("✕", color="#065F46")
+        dismiss_btn.font_weight = dv.DivFontWeight.BOLD
+        dismiss_btn.paddings = dv.DivEdgeInsets(left=8)
+        dismiss_btn.actions = [
+            dv.DivAction(
+                log_id="dismiss-contacts-list-success",
+                url="div-action://set_variable?name=contact_widget_success&value=0",
+            )
+        ]
+
+        success_container = HStack(
+            [success_icon, success_text, dismiss_btn],
+            align_v="center",
+            align_h="center",
+            padding_top=10,
+            padding_bottom=10,
+            padding_left=12,
+            padding_right=12,
+            background="#ECFDF5",
+            corner_radius=10,
+            width=dv.DivMatchParentSize(),
+        )
+        success_container.id = "contacts-list-success"
+        success_container.visibility = Expr(
+            "@{contact_widget_success == 1 ? 'visible' : 'gone'}"
+        )
+        success_container.border = dv.DivBorder(
+            corner_radius=10, stroke=dv.DivStroke(color="#A7F3D0", width=1)
+        )
+        success_container.margins = dv.DivEdgeInsets(top=12)
+
+        # Main container using VStack
+        container = VStack(
+            [title_text, contacts_widget, success_container],
+            padding=16,
+            background="#F9FAFB",
+            corner_radius=16,
+            width=dv.DivMatchParentSize(),
+        )
+        container.variables = [
+            dv.IntegerVariable(name="contact_widget_success", value=0),
+            dv.IntegerVariable(name="contact_widget_error", value=0),
+        ]
+        return container
+
+    # Non-clickable: just wrap with title
+    title_text = title_2(title, color="#111827")
+    title_text.margins = dv.DivEdgeInsets(bottom=12)
+
+    return VStack(
+        [title_text, contacts_widget],
+        padding=16,
+        background="#F9FAFB",
+        corner_radius=16,
         width=dv.DivMatchParentSize(),
     )
 

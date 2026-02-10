@@ -3,14 +3,10 @@ from typing import Any
 from pydivkit.core import Expr
 from functions_to_format.functions.buttons import build_buttons_row
 from .general import (
-    add_ui_to_widget,
     Widget,
-    TextWidget,
-    build_text_widget,
     WidgetInput,
 )
-from .general.utils import save_builder_output
-from models.build import BuildOutput
+from .base_strategy import FunctionStrategy
 
 from conf import logger
 from functions_to_format.functions.general.const_values import (
@@ -20,6 +16,20 @@ from functions_to_format.functions.general.const_values import (
 import structlog
 from models.context import Context
 import pydivkit as dv
+
+# Import smarty_ui components
+from smarty_ui import (
+    VStack,
+    HStack,
+    title_2,
+    text_1,
+    text_2,
+    caption_1,
+    caption_2,
+    primary_button,
+    secondary_button,
+    default_theme,
+)
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger(__name__)
 
@@ -76,228 +86,191 @@ def human_approval_ui(
             reject_link_length=len(reject_link),
         )
 
-        #  "tool_call_id": "tool_send_money_to_someone_via_card_wrapper_jD3yQhOEG53QTSWiKUEf",
-        #         "user_id": "60005982",
-        #         "session_id": "a96d3fa0-a3c8-43cd-9090-f55afb285ff9",
-        #         "app_name": "smarty",
-        #         "created_at": {
-        #             "seconds": 1770202179
-        #         },
-
-        # based on the Human Approval Requests
-        # first lets make some button for approve and reject actually
-        text_container = dv.DivContainer(
-            orientation=dv.DivContainerOrientation.VERTICAL,
-            background=[dv.DivSolidBackground(color="#F8FAFF")],  # light bluish-white
-            border=dv.DivBorder(corner_radius=16),
-            paddings=dv.DivEdgeInsets(left=16, right=16, top=16, bottom=16),
-            items=[
-                dv.DivText(
-                    text="Please approve the action. \n"
-                    + "user_id: "
-                    + human_approval_input["human_approval_event"]["user_id"]
-                    + "\n"
-                    + "session_id: "
-                    + human_approval_input["human_approval_event"]["session_id"]
-                    + "\n"
-                    + "app_name: "
-                    + human_approval_input["human_approval_event"]["app_name"]
-                    + "\n"
-                    + "\n",
-                    font_family="Manrope",
-                    font_size=14,
-                    font_weight=dv.DivFontWeight.LIGHT,
-                    text_color="#111133",  # dark navy color
-                    line_height=22,
-                    letter_spacing=0,
-                    # max_lines=0,  # Allow unlimited lines
-                    text_alignment_horizontal=dv.DivAlignmentHorizontal.LEFT,
-                    text_alignment_vertical=dv.DivAlignmentVertical.TOP,
-                )
-            ],
-            margins=dv.DivEdgeInsets(
-                top=WidgetMargins.TOP.value,
-                left=WidgetMargins.LEFT.value,
-                right=WidgetMargins.RIGHT.value,
-                bottom=WidgetMargins.BOTTOM.value,
-            ),
-            width=dv.DivMatchParentSize(),
-            height=dv.DivWrapContentSize(),
-            # item_spacing=10,  # gap between items
-            variables=[
-                dv.IntegerVariable(name="success_visible", value=0),
-                dv.IntegerVariable(name="error_visible", value=0),
-                dv.StringVariable(name="error_text", value=""),
-            ],
+        # Build approval info text using smarty_ui
+        info_text = text_1(
+            "Please approve the action. \n"
+            + "user_id: "
+            + human_approval_input["human_approval_event"]["user_id"]
+            + "\n"
+            + "session_id: "
+            + human_approval_input["human_approval_event"]["session_id"]
+            + "\n"
+            + "app_name: "
+            + human_approval_input["human_approval_event"]["app_name"]
+            + "\n",
+            color="#111133",
         )
-        # Success container for approval feedback
-        success_container = dv.DivContainer(
-            id="success-container",
-            orientation=dv.DivContainerOrientation.HORIZONTAL,
-            visibility=Expr("@{success_visible == 1 ? 'visible' : 'gone'}"),
-            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+        info_text.font_weight = dv.DivFontWeight.LIGHT
+        info_text.line_height = 22
+        info_text.text_alignment_horizontal = dv.DivAlignmentHorizontal.LEFT
+        info_text.text_alignment_vertical = dv.DivAlignmentVertical.TOP
+
+        # Text container using VStack
+        text_container = VStack(
+            [info_text],
+            padding=16,
+            background="#F8FAFF",
+            corner_radius=16,
             width=dv.DivMatchParentSize(),
-            margins=dv.DivEdgeInsets(top=12, left=16, right=16, bottom=8),
-            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=14, right=14),
-            background=[dv.DivSolidBackground(color="#ECFDF5")],
-            border=dv.DivBorder(
-                corner_radius=10, stroke=dv.DivStroke(color="#A7F3D0", width=1)
-            ),
-            items=[
-                dv.DivText(
-                    text="✅ Action completed successfully!",
-                    font_size=14,
-                    font_family="Manrope",
-                    text_color="#065F46",
-                    font_weight=dv.DivFontWeight.MEDIUM,
-                    line_height=20,
-                )
-            ],
+        )
+        text_container.height = dv.DivWrapContentSize()
+        text_container.margins = dv.DivEdgeInsets(
+            top=WidgetMargins.TOP.value,
+            left=WidgetMargins.LEFT.value,
+            right=WidgetMargins.RIGHT.value,
+            bottom=WidgetMargins.BOTTOM.value,
+        )
+        text_container.variables = [
+            dv.IntegerVariable(name="success_visible", value=0),
+            dv.IntegerVariable(name="error_visible", value=0),
+            dv.StringVariable(name="error_text", value=""),
+        ]
+
+        # Success container using smarty_ui
+        success_text = text_1("✅ Action completed successfully!", color="#065F46")
+        success_text.font_weight = dv.DivFontWeight.MEDIUM
+        success_text.line_height = 20
+
+        success_container = HStack(
+            [success_text],
+            padding=12,
+            background="#ECFDF5",
+            corner_radius=10,
+            width=dv.DivMatchParentSize(),
+        )
+        success_container.id = "success-container"
+        success_container.visibility = Expr(
+            "@{success_visible == 1 ? 'visible' : 'gone'}"
+        )
+        success_container.margins = dv.DivEdgeInsets(
+            top=12, left=16, right=16, bottom=8
+        )
+        success_container.border = dv.DivBorder(
+            corner_radius=10, stroke=dv.DivStroke(color="#A7F3D0", width=1)
         )
 
-        # Error container for approval feedback
-        error_container = dv.DivContainer(
-            id="error-container",
-            orientation=dv.DivContainerOrientation.HORIZONTAL,
-            visibility=Expr("@{error_visible == 1 ? 'visible' : 'gone'}"),
-            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+        # Error container using smarty_ui
+        error_icon = caption_1("⚠️")
+        error_icon.font_size = 16
+        error_icon.margins = dv.DivEdgeInsets(right=10)
+
+        error_msg = text_1("@{error_text}", color="#B91C1C")
+        error_msg.font_weight = dv.DivFontWeight.MEDIUM
+        error_msg.line_height = 20
+        error_msg.width = dv.DivMatchParentSize(weight=1)
+
+        dismiss_error = caption_1("✕", color="#B91C1C")
+        dismiss_error.font_size = 18
+        dismiss_error.font_weight = dv.DivFontWeight.BOLD
+        dismiss_error.paddings = dv.DivEdgeInsets(left=10, right=4)
+        dismiss_error.actions = [
+            dv.DivAction(
+                log_id="dismiss-error",
+                url="div-action://set_variable?name=error_visible&value=0",
+            )
+        ]
+
+        error_container = HStack(
+            [error_icon, error_msg, dismiss_error],
+            padding=12,
+            background="#FEF2F2",
+            corner_radius=10,
             width=dv.DivMatchParentSize(),
-            margins=dv.DivEdgeInsets(top=12, left=16, right=16, bottom=8),
-            paddings=dv.DivEdgeInsets(top=12, bottom=12, left=14, right=14),
-            background=[dv.DivSolidBackground(color="#FEF2F2")],
-            border=dv.DivBorder(
-                corner_radius=10, stroke=dv.DivStroke(color="#FECACA", width=1)
-            ),
-            items=[
-                dv.DivText(
-                    text="⚠️",
-                    font_size=16,
-                    margins=dv.DivEdgeInsets(right=10),
-                ),
-                dv.DivText(
-                    text="@{error_text}",
-                    font_size=14,
-                    font_family="Manrope",
-                    text_color="#B91C1C",
-                    font_weight=dv.DivFontWeight.MEDIUM,
-                    line_height=20,
-                    width=dv.DivMatchParentSize(weight=1),
-                ),
-                dv.DivText(
-                    text="✕",
-                    font_size=18,
-                    text_color="#B91C1C",
-                    font_weight=dv.DivFontWeight.BOLD,
-                    paddings=dv.DivEdgeInsets(left=10, right=4),
-                    actions=[
+        )
+        error_container.id = "error-container"
+        error_container.visibility = Expr("@{error_visible == 1 ? 'visible' : 'gone'}")
+        error_container.margins = dv.DivEdgeInsets(top=12, left=16, right=16, bottom=8)
+        error_container.border = dv.DivBorder(
+            corner_radius=10, stroke=dv.DivStroke(color="#FECACA", width=1)
+        )
+
+        # Approve button using smarty_ui text component with actions
+        approve_btn = text_1("Approve", color="#2563EB")
+        approve_btn.id = "btn-approve"
+        approve_btn.border = dv.DivBorder(
+            corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
+        )
+        approve_btn.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+        approve_btn.height = dv.DivFixedSize(value=36)
+        approve_btn.paddings = dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8)
+        approve_btn.margins = dv.DivEdgeInsets(right=8)
+        approve_btn.actions = [
+            dv.DivAction(
+                url="divkit://send-request",
+                log_id="btn-approve",
+                typed=dv.DivActionSubmit(
+                    container_id="btn-approve",
+                    request=dv.DivActionSubmitRequest(
+                        url=approve_link,
+                        method=dv.RequestMethod.GET,
+                        headers=[dv.RequestHeader(name="api-key", value=api_key)],
+                    ),
+                    on_success_actions=[
                         dv.DivAction(
-                            log_id="dismiss-error",
-                            url="div-action://set_variable?name=error_visible&value=0",
+                            log_id="approve-success",
+                            url="div-action://set_variable?name=success_visible&value=1",
                         )
                     ],
+                    on_fail_actions=[
+                        dv.DivAction(
+                            log_id="approve-error",
+                            url="div-action://set_variable?name=error_visible&value=1",
+                        ),
+                        dv.DivAction(
+                            log_id="set-error-text",
+                            url="div-action://set_variable?name=error_text&value=Failed to approve request",
+                        ),
+                    ],
                 ),
-            ],
-        )
+            ),
+        ]
 
-        buttons_container = dv.DivContainer(
-            orientation=dv.DivContainerOrientation.HORIZONTAL,
-            items=[
-                dv.DivText(
-                    text="Approve",
-                    id="btn-approve",
-                    font_size=14,
-                    text_color="#2563EB",
-                    border=dv.DivBorder(
-                        corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
+        # Reject button using smarty_ui text component with actions
+        reject_btn = text_1("Reject", color="#2563EB")
+        reject_btn.id = "btn-reject"
+        reject_btn.border = dv.DivBorder(
+            corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
+        )
+        reject_btn.alignment_horizontal = dv.DivAlignmentHorizontal.CENTER
+        reject_btn.height = dv.DivFixedSize(value=36)
+        reject_btn.paddings = dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8)
+        reject_btn.margins = dv.DivEdgeInsets(right=8)
+        reject_btn.actions = [
+            dv.DivAction(
+                url="divkit://send-request",
+                log_id="btn-reject",
+                typed=dv.DivActionSubmit(
+                    container_id="btn-reject",
+                    request=dv.DivActionSubmitRequest(
+                        url=reject_link,
+                        method=dv.RequestMethod.GET,
+                        headers=[dv.RequestHeader(name="api-key", value=api_key)],
                     ),
-                    alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                    height=dv.DivFixedSize(value=36),
-                    paddings=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
-                    margins=dv.DivEdgeInsets(right=8),
-                    actions=[
+                    on_success_actions=[
                         dv.DivAction(
-                            url="divkit://send-request",
-                            log_id="btn-approve",
-                            typed=dv.DivActionSubmit(
-                                container_id="btn-approve",
-                                request=dv.DivActionSubmitRequest(
-                                    url=approve_link,
-                                    method=dv.RequestMethod.GET,
-                                    headers=[
-                                        dv.RequestHeader(name="api-key", value=api_key)
-                                    ],
-                                ),
-                                on_success_actions=[
-                                    dv.DivAction(
-                                        log_id="approve-success",
-                                        url="div-action://set_variable?name=success_visible&value=1",
-                                    )
-                                ],
-                                on_fail_actions=[
-                                    dv.DivAction(
-                                        log_id="approve-error",
-                                        url="div-action://set_variable?name=error_visible&value=1",
-                                    ),
-                                    dv.DivAction(
-                                        log_id="set-error-text",
-                                        url="div-action://set_variable?name=error_text&value=Failed to approve request",
-                                    ),
-                                ],
-                            ),
+                            log_id="reject-success",
+                            url="div-action://set_variable?name=success_visible&value=1",
+                        )
+                    ],
+                    on_fail_actions=[
+                        dv.DivAction(
+                            log_id="reject-error",
+                            url="div-action://set_variable?name=error_visible&value=1",
+                        ),
+                        dv.DivAction(
+                            log_id="set-error-text",
+                            url="div-action://set_variable?name=error_text&value=Failed to reject request",
                         ),
                     ],
                 ),
-                dv.DivText(
-                    text="Reject",
-                    id="btn-reject",
-                    font_size=14,
-                    text_color="#2563EB",
-                    border=dv.DivBorder(
-                        corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
-                    ),
-                    alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-                    height=dv.DivFixedSize(value=36),
-                    paddings=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
-                    margins=dv.DivEdgeInsets(right=8),
-                    actions=[
-                        dv.DivAction(
-                            url="divkit://send-request",
-                            log_id="btn-reject",
-                            typed=dv.DivActionSubmit(
-                                container_id="btn-reject",
-                                request=dv.DivActionSubmitRequest(
-                                    url=reject_link,
-                                    method=dv.RequestMethod.GET,
-                                    headers=[
-                                        dv.RequestHeader(name="api-key", value=api_key)
-                                    ],
-                                ),
-                                on_success_actions=[
-                                    dv.DivAction(
-                                        log_id="reject-success",
-                                        url="div-action://set_variable?name=success_visible&value=1",
-                                    )
-                                ],
-                                on_fail_actions=[
-                                    dv.DivAction(
-                                        log_id="reject-error",
-                                        url="div-action://set_variable?name=error_visible&value=1",
-                                    ),
-                                    dv.DivAction(
-                                        log_id="set-error-text",
-                                        url="div-action://set_variable?name=error_text&value=Failed to reject request",
-                                    ),
-                                ],
-                            ),
-                        ),
-                    ],
-                ),
-            ],
-        )
-        container = dv.DivContainer(
-            orientation=dv.DivContainerOrientation.VERTICAL,
-            items=[text_container, buttons_container],
-        )
+            ),
+        ]
+
+        # Buttons container using HStack
+        buttons_container = HStack([approve_btn, reject_btn])
+
+        # Main container using VStack
+        container = VStack([text_container, buttons_container])
 
         logger.info("Successfully built human approval UI container")
         return dv.make_div(container)
@@ -314,87 +287,44 @@ def human_approval_ui(
         raise
 
 
-def human_approval_requests(context: Context) -> BuildOutput:
-    context.logger_context.logger.info(
-        "Starting human approval requests processing",
-        chat_id=context.logger_context.chat_id,
-    )
+class HumanApprovalRequests(FunctionStrategy):
+    """Strategy for building human approval UI with fallback."""
 
-    llm_output = context.llm_output
-    backend_output = context.backend_output
-    version = context.version
-    language = context.language
-    chat_id = context.logger_context.chat_id
-    api_key = context.api_key
-    logger = context.logger_context.logger
+    def build_widget_inputs(self, context):
+        """Build the happy-path widget inputs (approval widget)."""
+        return {
+            human_approval_ui: WidgetInput(
+                widget=Widget(
+                    order=2,
+                    type="approval_widget",
+                    name="approval_widget",
+                    layout="vertical",
+                    fields=["approval_widget"],
+                    values=[context.backend_output],
+                ),
+                args={
+                    "human_approval_input": context.backend_output,
+                    "language": context.language,
+                    "api_key": context.api_key,
+                    "text": context.llm_output,
+                },
+            ),
+        }
 
-    logger.info(
-        "Extracted context values",
-        llm_output_length=len(llm_output) if llm_output else 0,
-        backend_output_keys=list(backend_output.keys())
-        if isinstance(backend_output, dict)
-        else "not_dict",
-        version=version,
-        language=language,
-    )
-
-    inp = {}
-
-    try:
-        logger.info("Creating human approval widget")
-        human_approval_widget = Widget(
-            order=2,
-            type="approval_widget",
-            name="approval_widget",
-            layout="vertical",
-            fields=["approval_widget"],
-            values=[backend_output],
+    def execute(self, context):
+        logger = context.logger_context.logger
+        logger.info(
+            "Starting human approval requests processing",
+            chat_id=context.logger_context.chat_id,
         )
-        inp[human_approval_ui] = WidgetInput(
-            widget=human_approval_widget,
-            args={
-                "human_approval_input": backend_output,
-                "language": language,
-                "api_key": api_key,
-                "text": llm_output,
-            },
-        )
+        try:
+            return super().execute(context)
+        except Exception as e:
+            logger.error(
+                "Error creating widgets, falling back to text widget only", error=str(e)
+            )
+            text_builder, text_input = self.make_text_input(context.llm_output)
+            return self._build_and_save(context, {text_builder: text_input})
 
-        logger.info("human_approval_requests - widget created successfully")
 
-    except Exception as e:
-        logger.error(
-            "Error creating widgets, falling back to text widget only", error=str(e)
-        )
-        text_widget = TextWidget(
-            order=1,
-            values=[{"text": llm_output}],
-        )
-        inp[build_text_widget] = WidgetInput(
-            widget=text_widget,
-            args={
-                "text": llm_output,
-            },
-        )
-
-    logger.info("Adding UI to widgets", widget_count=len(inp))
-    widgets = add_ui_to_widget(
-        inp,
-        version,
-    )
-
-    logger.info("Widgets processed", final_widget_count=len(widgets))
-
-    output = BuildOutput(
-        widgets_count=len(widgets),
-        widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
-    )
-
-    logger.info("Saving builder output")
-    save_builder_output(context, output)
-
-    logger.info(
-        "Human approval requests processing completed successfully",
-        output_widget_count=output.widgets_count,
-    )
-    return output
+human_approval_requests = HumanApprovalRequests()

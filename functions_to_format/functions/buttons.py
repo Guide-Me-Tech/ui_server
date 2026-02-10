@@ -3,6 +3,16 @@ from pydivkit.core import Expr
 import json
 from typing import List, Optional
 
+# Import smarty_ui components
+from smarty_ui import (
+    VStack,
+    HStack,
+    text_1,
+    caption_1,
+    default_theme,
+)
+from smarty_ui.primitives import smarty_button
+
 
 # Feedback texts for button actions
 BUTTON_FEEDBACK_TEXTS = {
@@ -27,153 +37,123 @@ def build_buttons_row(
     include_feedback: bool = True,
 ):
     """
-    Build a row of buttons with optional feedback handling.
-    
+    Build a row of buttons with optional feedback handling using smarty_ui smarty_button component.
+
     Args:
         button_texts: List of button text labels
         language: Language code for feedback text (ru, en, uz)
         include_feedback: Whether to include success/error feedback containers
-        
+
     Returns:
         DivContainer with buttons and optional feedback
     """
     feedback_texts = BUTTON_FEEDBACK_TEXTS.get(language, BUTTON_FEEDBACK_TEXTS["en"])
-    
-    button_items = [
-        dv.DivText(
-            text=txt,
-            font_size=14,
-            text_color="#2563EB",
-            border=dv.DivBorder(
-                corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
+
+    # Build button items using smarty_ui smarty_button
+    button_items = []
+    for txt in button_texts:
+        # Create smarty_button with action_url for the main action
+        action_url = f"div-action://button/{txt.lower().replace(' ', '_')}"
+        btn = smarty_button(text=txt, action_url=action_url)
+
+        # Add custom actions including feedback action
+        btn.actions = [
+            dv.DivAction(
+                log_id=f"btn-{txt.lower().replace(' ', '_')}",
+                url=action_url,
+                payload={"button_text": txt, "action": txt.lower()},
             ),
-            alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
-            height=dv.DivFixedSize(value=36),
-            paddings=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
-            margins=dv.DivEdgeInsets(right=8),
-            actions=[
-                dv.DivAction(
-                    log_id=f"btn-{txt.lower().replace(' ', '_')}",
-                    url=f"div-action://button/{txt.lower().replace(' ', '_')}",
-                    payload={"button_text": txt, "action": txt.lower()},
-                ),
-                # Success feedback action
-                dv.DivAction(
-                    log_id=f"btn-{txt.lower().replace(' ', '_')}-success",
-                    url="div-action://set_variable?name=simple_btn_success_visible&value=1",
-                ),
-            ],
-        )
-        for txt in button_texts
-    ]
-    
+            # Success feedback action
+            dv.DivAction(
+                log_id=f"btn-{txt.lower().replace(' ', '_')}-success",
+                url="div-action://set_variable?name=simple_btn_success_visible&value=1",
+            ),
+        ]
+        btn.margins = dv.DivEdgeInsets(right=8)
+        button_items.append(btn)
+
     if not include_feedback:
-        return dv.DivContainer(
-            orientation=dv.DivContainerOrientation.HORIZONTAL,
-            items=button_items,
+        return HStack(button_items)
+
+    # Success feedback container using smarty_ui
+    success_icon = caption_1("✅")
+    success_icon.margins = dv.DivEdgeInsets(right=8)
+
+    success_text = caption_1(feedback_texts["action_success"], color="#065F46")
+    success_text.font_weight = dv.DivFontWeight.MEDIUM
+    success_text.width = dv.DivMatchParentSize(weight=1)
+
+    dismiss_success = caption_1("✕", color="#065F46")
+    dismiss_success.font_weight = dv.DivFontWeight.BOLD
+    dismiss_success.paddings = dv.DivEdgeInsets(left=8)
+    dismiss_success.actions = [
+        dv.DivAction(
+            log_id="dismiss-simple-btn-success",
+            url="div-action://set_variable?name=simple_btn_success_visible&value=0",
         )
-    
-    # Success feedback container
-    success_container = dv.DivContainer(
-        id="simple-btn-success",
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        visibility=Expr("@{simple_btn_success_visible == 1 ? 'visible' : 'gone'}"),
-        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+    ]
+
+    success_container = HStack(
+        [success_icon, success_text, dismiss_success],
+        padding=8,
+        background="#ECFDF5",
+        corner_radius=8,
         width=dv.DivMatchParentSize(),
-        margins=dv.DivEdgeInsets(top=8),
-        paddings=dv.DivEdgeInsets(top=8, bottom=8, left=12, right=12),
-        background=[dv.DivSolidBackground(color="#ECFDF5")],
-        border=dv.DivBorder(
-            corner_radius=8, stroke=dv.DivStroke(color="#A7F3D0", width=1)
-        ),
-        items=[
-            dv.DivText(
-                text="✅",
-                font_size=13,
-                margins=dv.DivEdgeInsets(right=8),
-            ),
-            dv.DivText(
-                text=feedback_texts["action_success"],
-                font_size=13,
-                text_color="#065F46",
-                font_weight=dv.DivFontWeight.MEDIUM,
-                width=dv.DivMatchParentSize(weight=1),
-            ),
-            dv.DivText(
-                text="✕",
-                font_size=14,
-                text_color="#065F46",
-                font_weight=dv.DivFontWeight.BOLD,
-                paddings=dv.DivEdgeInsets(left=8),
-                actions=[
-                    dv.DivAction(
-                        log_id="dismiss-simple-btn-success",
-                        url="div-action://set_variable?name=simple_btn_success_visible&value=0",
-                    )
-                ],
-            ),
-        ],
     )
-    
-    # Error feedback container
-    error_container = dv.DivContainer(
-        id="simple-btn-error",
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        visibility=Expr("@{simple_btn_error_visible == 1 ? 'visible' : 'gone'}"),
-        alignment_horizontal=dv.DivAlignmentHorizontal.CENTER,
+    success_container.id = "simple-btn-success"
+    success_container.visibility = Expr(
+        "@{simple_btn_success_visible == 1 ? 'visible' : 'gone'}"
+    )
+    success_container.margins = dv.DivEdgeInsets(top=8)
+    success_container.border = dv.DivBorder(
+        corner_radius=8, stroke=dv.DivStroke(color="#A7F3D0", width=1)
+    )
+
+    # Error feedback container using smarty_ui
+    error_icon = caption_1("⚠️")
+    error_icon.margins = dv.DivEdgeInsets(right=8)
+
+    error_text = caption_1(feedback_texts["action_error"], color="#B91C1C")
+    error_text.font_weight = dv.DivFontWeight.MEDIUM
+    error_text.width = dv.DivMatchParentSize(weight=1)
+
+    dismiss_error = caption_1("✕", color="#B91C1C")
+    dismiss_error.font_weight = dv.DivFontWeight.BOLD
+    dismiss_error.paddings = dv.DivEdgeInsets(left=8)
+    dismiss_error.actions = [
+        dv.DivAction(
+            log_id="dismiss-simple-btn-error",
+            url="div-action://set_variable?name=simple_btn_error_visible&value=0",
+        )
+    ]
+
+    error_container = HStack(
+        [error_icon, error_text, dismiss_error],
+        padding=8,
+        background="#FEF2F2",
+        corner_radius=8,
         width=dv.DivMatchParentSize(),
-        margins=dv.DivEdgeInsets(top=8),
-        paddings=dv.DivEdgeInsets(top=8, bottom=8, left=12, right=12),
-        background=[dv.DivSolidBackground(color="#FEF2F2")],
-        border=dv.DivBorder(
-            corner_radius=8, stroke=dv.DivStroke(color="#FECACA", width=1)
-        ),
-        items=[
-            dv.DivText(
-                text="⚠️",
-                font_size=13,
-                margins=dv.DivEdgeInsets(right=8),
-            ),
-            dv.DivText(
-                text=feedback_texts["action_error"],
-                font_size=13,
-                text_color="#B91C1C",
-                font_weight=dv.DivFontWeight.MEDIUM,
-                width=dv.DivMatchParentSize(weight=1),
-            ),
-            dv.DivText(
-                text="✕",
-                font_size=14,
-                text_color="#B91C1C",
-                font_weight=dv.DivFontWeight.BOLD,
-                paddings=dv.DivEdgeInsets(left=8),
-                actions=[
-                    dv.DivAction(
-                        log_id="dismiss-simple-btn-error",
-                        url="div-action://set_variable?name=simple_btn_error_visible&value=0",
-                    )
-                ],
-            ),
-        ],
     )
-    
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        variables=[
-            dv.IntegerVariable(name="simple_btn_success_visible", value=0),
-            dv.IntegerVariable(name="simple_btn_error_visible", value=0),
-        ],
-        items=[
-            # Buttons row
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.HORIZONTAL,
-                items=button_items,
-            ),
-            # Feedback containers
-            success_container,
-            error_container,
-        ],
+    error_container.id = "simple-btn-error"
+    error_container.visibility = Expr(
+        "@{simple_btn_error_visible == 1 ? 'visible' : 'gone'}"
     )
+    error_container.margins = dv.DivEdgeInsets(top=8)
+    error_container.border = dv.DivBorder(
+        corner_radius=8, stroke=dv.DivStroke(color="#FECACA", width=1)
+    )
+
+    # Buttons row using HStack
+    buttons_row = HStack(button_items)
+
+    # Main container using VStack
+    main_container = VStack([buttons_row, success_container, error_container])
+    main_container.variables = [
+        dv.IntegerVariable(name="simple_btn_success_visible", value=0),
+        dv.IntegerVariable(name="simple_btn_error_visible", value=0),
+    ]
+
+    return dv.make_div(main_container)
 
 
 if __name__ == "__main__":

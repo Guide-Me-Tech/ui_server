@@ -3,13 +3,30 @@ import json
 from pydantic import BaseModel
 from typing import Any, Dict, List
 from pydivkit.core import Expr
+import structlog
+
+from functions_to_format.functions.balance import (
+    build_balance_ui,
+    build_home_balances_ui,
+)
 from .general import Widget, add_ui_to_widget, WidgetInput
 from .general.utils import save_builder_output
 from models.build import BuildOutput
 from functions_to_format.functions.general.const_values import LanguageOptions
-from conf import logger
 from models.context import Context, LoggerContext
-import structlog
+
+# Import smarty_ui components
+from smarty_ui import (
+    VStack,
+    HStack,
+    text_1,
+    text_2,
+    caption_1,
+    caption_2,
+    default_theme,
+)
+
+logger = structlog.get_logger(__name__)
 
 
 # Backend output schemas for activity reports
@@ -17,14 +34,14 @@ class FunctionCallBackendOutput(BaseModel):
     """Backend output for function_call activity report."""
 
     function_name: str
-    arguments: Dict[str, Any]
+    arguments: Dict[str, Any] | None
 
 
 class FunctionResponseBackendOutput(BaseModel):
     """Backend output for function_response activity report."""
 
     function_name: str
-    response: Dict[str, Any]
+    response: Dict[str, Any] | None
 
 
 class ActivityIndicatorWidget(BaseModel):
@@ -82,37 +99,47 @@ def _trigger_row(
     target_state: str,
     log_id: str,
 ) -> dv.DivContainer:
-    """Trigger row: message + chevron (like ReasoningTrigger). Tapping toggles state."""
+    """Trigger row: message + chevron (like ReasoningTrigger). Tapping toggles state.
+
+    Uses smarty_ui HStack for horizontal layout.
+    """
     set_state_url = f"div-action://set_state?state_id=0/{state_id}/{target_state}"
-    return dv.DivContainer(
-        orientation=dv.DivContainerOrientation.HORIZONTAL,
-        background=[dv.DivSolidBackground(color=MESSAGE_BLOCK_BG)],
-        paddings=dv.DivEdgeInsets(
-            left=TRIGGER_PADDING_H,
-            right=TRIGGER_PADDING_H,
-            top=TRIGGER_PADDING_V,
-            bottom=TRIGGER_PADDING_V,
-        ),
-        border=dv.DivBorder(
-            corner_radius=TRIGGER_RADIUS,
-            stroke=dv.DivStroke(color="#4B5563", width=1),
-        ),
-        alignment_vertical=dv.DivAlignmentVertical.CENTER,
-        items=[
-            dv.DivContainer(
-                orientation=dv.DivContainerOrientation.VERTICAL,
-                width=dv.DivMatchParentSize(weight=1),
-                margins=dv.DivEdgeInsets(right=GAP_MESSAGE_CHEVRON),
-                items=[_message_glow_text(message)],
-            ),
-            dv.DivText(
-                text=chevron,
-                font_size=16,
-                text_color=CHEVRON_COLOR,
-            ),
-        ],
-        action=dv.DivAction(log_id=log_id, url=set_state_url),
+
+    # Message container with flex weight
+    message_container = dv.DivContainer(
+        orientation=dv.DivContainerOrientation.VERTICAL,
+        width=dv.DivMatchParentSize(weight=1),
+        items=[_message_glow_text(message)],
     )
+
+    # Chevron text
+    chevron_text = dv.DivText(
+        text=chevron,
+        font_size=16,
+        text_color=CHEVRON_COLOR,
+    )
+
+    # Use HStack for horizontal layout
+    trigger = HStack(
+        [message_container, chevron_text],
+        gap=GAP_MESSAGE_CHEVRON,
+        align_v="center",
+        padding_left=TRIGGER_PADDING_H,
+        padding_right=TRIGGER_PADDING_H,
+        padding_top=TRIGGER_PADDING_V,
+        padding_bottom=TRIGGER_PADDING_V,
+        background=MESSAGE_BLOCK_BG,
+        corner_radius=TRIGGER_RADIUS,
+    )
+
+    # Add border stroke and action manually (not supported by HStack helper)
+    trigger.border = dv.DivBorder(
+        corner_radius=TRIGGER_RADIUS,
+        stroke=dv.DivStroke(color="#4B5563", width=1),
+    )
+    trigger.action = dv.DivAction(log_id=log_id, url=set_state_url)
+
+    return trigger
 
 
 def _build_activity_message_holder(
@@ -122,7 +149,10 @@ def _build_activity_message_holder(
     log_id: str,
     action_url: str = "div-action://activity-report",
 ):
-    """Reasoning-like collapsible: trigger row (message + chevron) + expandable content (title + detail)."""
+    """Reasoning-like collapsible: trigger row (message + chevron) + expandable content (title + detail).
+
+    Uses smarty_ui VStack for vertical layouts.
+    """
     state_id = f"activity_{log_id}"
 
     # Collapsed: only trigger row with ▼ (expand)
@@ -134,70 +164,38 @@ def _build_activity_message_holder(
         log_id=log_id,
     )
 
-    # Expanded: trigger row with ▲ (collapse) + content below in a card
-    content_inner = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        items=[
-            dv.DivText(
-                text=title,
-                font_size=13,
-                text_color=CONTENT_TITLE_COLOR,
-                font_weight=dv.DivFontWeight.MEDIUM,
-                margins=dv.DivEdgeInsets(bottom=8),
-            ),
-            dv.DivText(
-                text=detail_json,
-                font_size=11,
-                text_color=CONTENT_DETAIL_COLOR,
-                line_height=18,
-            ),
-        ],
-    )
-    content_block = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        margins=dv.DivEdgeInsets(top=SPACING_ABOVE_CONTENT),
-        paddings=dv.DivEdgeInsets(
-            left=CONTENT_PADDING,
-            right=CONTENT_PADDING,
-            top=CONTENT_PADDING,
-            bottom=CONTENT_PADDING,
-        ),
-        background=[dv.DivSolidBackground(color=CONTENT_BLOCK_BG)],
-        border=dv.DivBorder(
-            corner_radius=CONTENT_RADIUS,
-            stroke=dv.DivStroke(color=CONTENT_BLOCK_BORDER, width=1),
-        ),
-        transition_in=dv.DivFadeTransition(duration=200, alpha=0.5),
-        items=[content_inner],
-    )
-    expanded_trigger = _trigger_row(
-        message=message,
-        chevron="▲",
-        state_id=state_id,
-        target_state="collapsed",
-        log_id=log_id,
-    )
-    expanded_div = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        items=[
-            expanded_trigger,
-            content_block,
-        ],
-    )
+    # Expanded trigger
+    # expanded_trigger = _trigger_row(
+    #     message=message,
+    #     chevron="▲",
+    #     state_id=state_id,
+    #     target_state="collapsed",
+    #     log_id=log_id,
+    # )
+
+    # Expanded div using VStack
+    # expanded_div = VStack([expanded_trigger])
 
     state = dv.DivState(
         id=state_id,
-        default_state_id="expanded",
+        default_state_id="collapsed",
         states=[
             dv.DivStateState(state_id="collapsed", div=collapsed_trigger),
-            dv.DivStateState(state_id="expanded", div=expanded_div),
+            # dv.DivStateState(state_id="expanded", div=expanded_div),
         ],
     )
-    wrapper = dv.DivContainer(
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        margins=dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8),
-        items=[state],
+
+    widgets = [state]
+
+    # Wrapper using VStack
+    wrapper = VStack(
+        widgets,
+        padding_left=12,
+        padding_right=12,
+        padding_top=8,
+        padding_bottom=8,
     )
+
     return dv.make_div(wrapper)
 
 
@@ -205,8 +203,14 @@ def build_function_call_activity_widget(
     message: str,
     function_name: str,
     arguments: Dict[str, Any],
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
 ):
     """Builder for function_call activity: shows message and call details (function_name, arguments)."""
+    logger.debug(
+        "building_function_call_activity_widget",
+        function_name=function_name,
+        message=message,
+    )
     title = f"Calling: {function_name}"
     detail_json = json.dumps(arguments, ensure_ascii=False, default=str)[:500]
     if len(detail_json) >= 500:
@@ -224,12 +228,19 @@ def build_function_response_activity_widget(
     message: str,
     function_name: str,
     response: Dict[str, Any],
+    language: LanguageOptions = LanguageOptions.RUSSIAN,
 ):
     """Builder for function_response activity: shows message and response (function_name, response)."""
+    logger.debug(
+        "building_function_response_activity_widget",
+        function_name=function_name,
+        message=message,
+    )
     title = f"Response from: {function_name}"
     detail_json = json.dumps(response, ensure_ascii=False, default=str)[:500]
     if len(detail_json) >= 500:
         detail_json += "..."
+
     return _build_activity_message_holder(
         message=message,
         title=title,
@@ -240,20 +251,21 @@ def build_function_response_activity_widget(
 
 
 def build_activity_indicator_widget(message: str) -> ActivityIndicatorWidget:
-    container = dv.DivContainer(
-        id="activity_report",
-        orientation=dv.DivContainerOrientation.VERTICAL,
-        items=[
-            dv.DivText(text=message, font_size=14, text_color="#F1F5F9"),
-        ],
-        action=dv.DivAction(
-            log_id="activity_report",
-            url="div-action://activity-report",
-            payload={
-                "message": message,
-                "link": "http://10.212.134.3:8003/new_messages?idx=12341234",
-            },
-        ),
+    """Build activity indicator widget using smarty_ui components."""
+    logger.debug("building_activity_indicator_widget", message=message)
+    # Use text_1 for the message text
+    message_text = text_1(message, color="#F1F5F9")
+
+    # Use VStack for vertical layout
+    container = VStack([message_text])
+    container.id = "activity_report"
+    container.action = dv.DivAction(
+        log_id="activity_report",
+        url="div-action://activity-report",
+        payload={
+            "message": message,
+            "link": "http://10.212.134.3:8003/new_messages?idx=12341234",
+        },
     )
 
     return dv.make_div(container)
@@ -267,7 +279,9 @@ def activity_indicator(context: Context) -> BuildOutput:
     language = context.language
     chat_id = context.logger_context.chat_id
     api_key = context.api_key
-    logger = context.logger_context.logger
+    ctx_logger = context.logger_context.logger
+
+    ctx_logger.info("activity_indicator_started", llm_output=llm_output)
 
     inp = {}
 
@@ -291,5 +305,6 @@ def activity_indicator(context: Context) -> BuildOutput:
         widgets=[widget.model_dump(exclude_none=True) for widget in widgets],
     )
 
+    ctx_logger.info("activity_indicator_completed", widgets_count=len(widgets))
     save_builder_output(context, output)
     return output
