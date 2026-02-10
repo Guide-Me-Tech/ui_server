@@ -164,47 +164,24 @@ def _build_activity_message_holder(
         log_id=log_id,
     )
 
-    # Content inner using VStack
-    title_text = caption_1(title, color=CONTENT_TITLE_COLOR)
-    detail_text = caption_2(detail_json, color=CONTENT_DETAIL_COLOR)
-
-    content_inner = VStack(
-        [title_text, detail_text],
-        gap=8,
-    )
-
-    # Content block with styling
-    content_block = VStack(
-        [content_inner],
-        padding=CONTENT_PADDING,
-        background=CONTENT_BLOCK_BG,
-        corner_radius=CONTENT_RADIUS,
-    )
-    content_block.margins = dv.DivEdgeInsets(top=SPACING_ABOVE_CONTENT)
-    content_block.border = dv.DivBorder(
-        corner_radius=CONTENT_RADIUS,
-        stroke=dv.DivStroke(color=CONTENT_BLOCK_BORDER, width=1),
-    )
-    content_block.transition_in = dv.DivFadeTransition(duration=200, alpha=0.5)
-
     # Expanded trigger
-    expanded_trigger = _trigger_row(
-        message=message,
-        chevron="▲",
-        state_id=state_id,
-        target_state="collapsed",
-        log_id=log_id,
-    )
+    # expanded_trigger = _trigger_row(
+    #     message=message,
+    #     chevron="▲",
+    #     state_id=state_id,
+    #     target_state="collapsed",
+    #     log_id=log_id,
+    # )
 
     # Expanded div using VStack
-    expanded_div = VStack([expanded_trigger, content_block])
+    # expanded_div = VStack([expanded_trigger])
 
     state = dv.DivState(
         id=state_id,
         default_state_id="collapsed",
         states=[
             dv.DivStateState(state_id="collapsed", div=collapsed_trigger),
-            dv.DivStateState(state_id="expanded", div=expanded_div),
+            # dv.DivStateState(state_id="expanded", div=expanded_div),
         ],
     )
 
