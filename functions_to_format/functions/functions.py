@@ -74,6 +74,7 @@ functions_mapper = {
     "get_suppliers_by_category": get_suppliers_by_category,
     "start_page_widget": start_page_widget,
     "send_money_to_someone_via_card": send_money_to_someone_via_card,
+    "send_money_to_someone_via_card_wrapper": send_money_to_someone_via_card,
     "get_home_balances": get_home_balances,
     "build_contacts_list": build_contacts_list,
     "pay_for_home_utility": pay_for_home_utility,
