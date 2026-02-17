@@ -2,6 +2,14 @@ import json
 from typing import Any, Dict, List
 
 from smarty_ui.blocks import contacts_list
+from tool_call_models.smartbazar import SearchProductsResponse
+
+from .human_approval import (
+    HumanApprovalRequestEvent,
+    human_approval_ui,
+)
+
+from .products import build_products_list_widget
 from .general import (
     Widget,
     ButtonsWidget,
@@ -52,7 +60,55 @@ class ChatbotAnswer(FunctionStrategy):
 
     def build_widget_inputs(self, context):
         text_builder, text_input = self.make_text_input(context.llm_output)
-        return {text_builder: text_input}
+
+        # # add products list widget as well
+
+        return {
+            # build_products_list_widget: WidgetInput(
+            #     widget=Widget(
+            #         name="products_list_widget",
+            #         type="products_list_widget",
+            #         order=1,
+            #         layout="vertical",
+            #         fields=["products", "title"],
+            #     ),
+            #     args={
+            #         "products_list_input": SearchProductsResponse(
+            #             **json.load(
+            #                 open(
+            #                     "../consultant_ai_golang_backend/playground/fixture/smartbazar_search_products.json"
+            #                 )
+            #             )["backend_output"]
+            #         ).products[:1],
+            #         "language": context.language,
+            #         "chat_id": context.logger_context.chat_id,
+            #         "api_key": context.api_key,
+            #     },
+            # ), # USED FOR TESTING
+            # human_approval_ui: WidgetInput(
+            #     widget=Widget(
+            #         order=2,
+            #         type="approval_widget",
+            #         name="approval_widget",
+            #         layout="vertical",
+            #         fields=["approval_widget"],
+            #         values=[context.backend_output],
+            #     ),
+            #     args={
+            #         "human_approval_input": HumanApprovalRequestEvent.model_validate(
+            #             json.load(
+            #                 open(
+            #                     "../consultant_ai_golang_backend/playground/fixture/human_approval.json"
+            #                 )
+            #             )["backend_output"]["human_approval_event"]
+            #         ),
+            #         "language": context.language,
+            #         "api_key": context.api_key,
+            #         "text": context.llm_output,
+            #     },
+            # ), # USED FOR TESTING
+            text_builder: text_input,
+        }
 
 
 chatbot_answer = ChatbotAnswer()

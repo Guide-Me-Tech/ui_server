@@ -1,4 +1,5 @@
 from typing import Any
+import uuid
 
 from pydantic import BaseModel
 from pydivkit.core import Expr
@@ -219,11 +220,6 @@ def human_approval_ui(
             right=WidgetMargins.RIGHT.value,
             bottom=WidgetMargins.BOTTOM.value,
         )
-        text_container.variables = [
-            dv.IntegerVariable(name="success_visible", value=0),
-            dv.IntegerVariable(name="error_visible", value=0),
-            dv.StringVariable(name="error_text", value=""),
-        ]
 
         # Optional details container for specific tools (e.g. pay_for_home_utility_wrapper)
         utility_details_container = None
@@ -405,67 +401,176 @@ def human_approval_ui(
                         bottom=0,
                     )
 
-        # Success container using smarty_ui
-        success_text = text_1("✅ Action completed successfully!", color="#065F46")
-        success_text.font_weight = dv.DivFontWeight.MEDIUM
-        success_text.line_height = 20
+        # Generate unique ID for this approval widget instance
+        widget_uuid = str(uuid.uuid4())[:8]
 
-        success_container = HStack(
-            [success_text],
+        # Variable names for feedback visibility (4 status variables)
+        accept_success_var = f"human_approval_action_accept_success_{widget_uuid}"
+        accept_fail_var = f"human_approval_action_accept_fail_{widget_uuid}"
+        reject_success_var = f"human_approval_action_reject_success_{widget_uuid}"
+        reject_fail_var = f"human_approval_action_reject_fail_{widget_uuid}"
+
+        # Variable names for button visibility (2 button variables)
+        accept_btn_visible_var = f"human_approval_action_accept_button_{widget_uuid}_visible"
+        reject_btn_visible_var = f"human_approval_action_reject_button_{widget_uuid}_visible"
+
+        # Accept Success container
+        accept_success_icon = caption_1("✅")
+        accept_success_icon.margins = dv.DivEdgeInsets(right=8)
+
+        accept_success_text = text_1("Request approved successfully!", color="#065F46")
+        accept_success_text.font_weight = dv.DivFontWeight.MEDIUM
+        accept_success_text.line_height = 20
+        accept_success_text.width = dv.DivMatchParentSize(weight=1)
+
+        dismiss_accept_success = caption_1("✕", color="#065F46")
+        dismiss_accept_success.font_size = 16
+        dismiss_accept_success.font_weight = dv.DivFontWeight.BOLD
+        dismiss_accept_success.paddings = dv.DivEdgeInsets(left=8, right=4)
+        dismiss_accept_success.actions = [
+            dv.DivAction(
+                log_id=f"dismiss-accept-success_{widget_uuid}",
+                url=f"div-action://set_variable?name={accept_success_var}&value=0",
+            )
+        ]
+
+        accept_success_container = HStack(
+            [accept_success_icon, accept_success_text, dismiss_accept_success],
             padding=12,
             background="#ECFDF5",
             corner_radius=10,
             width=dv.DivMatchParentSize(),
         )
-        success_container.id = "success-container"
-        success_container.visibility = Expr(
-            "@{success_visible == 1 ? 'visible' : 'gone'}"
+        accept_success_container.id = f"accept-success-container-{widget_uuid}"
+        accept_success_container.visibility = Expr(
+            f"@{{{accept_success_var} == 1 ? 'visible' : 'gone'}}"
         )
-        success_container.margins = dv.DivEdgeInsets(
+        accept_success_container.margins = dv.DivEdgeInsets(
             top=12, left=16, right=16, bottom=8
         )
-        success_container.border = dv.DivBorder(
+        accept_success_container.border = dv.DivBorder(
             corner_radius=10, stroke=dv.DivStroke(color="#A7F3D0", width=1)
         )
 
-        # Error container using smarty_ui
-        error_icon = caption_1("⚠️")
-        error_icon.font_size = 16
-        error_icon.margins = dv.DivEdgeInsets(right=10)
+        # Accept Fail container
+        accept_fail_icon = caption_1("⚠️")
+        accept_fail_icon.font_size = 16
+        accept_fail_icon.margins = dv.DivEdgeInsets(right=10)
 
-        error_msg = text_1("@{error_text}", color="#B91C1C")
-        error_msg.font_weight = dv.DivFontWeight.MEDIUM
-        error_msg.line_height = 20
-        error_msg.width = dv.DivMatchParentSize(weight=1)
+        accept_fail_text = text_1("Failed to approve request", color="#B91C1C")
+        accept_fail_text.font_weight = dv.DivFontWeight.MEDIUM
+        accept_fail_text.line_height = 20
+        accept_fail_text.width = dv.DivMatchParentSize(weight=1)
 
-        dismiss_error = caption_1("✕", color="#B91C1C")
-        dismiss_error.font_size = 18
-        dismiss_error.font_weight = dv.DivFontWeight.BOLD
-        dismiss_error.paddings = dv.DivEdgeInsets(left=10, right=4)
-        dismiss_error.actions = [
+        dismiss_accept_fail = caption_1("✕", color="#B91C1C")
+        dismiss_accept_fail.font_size = 18
+        dismiss_accept_fail.font_weight = dv.DivFontWeight.BOLD
+        dismiss_accept_fail.paddings = dv.DivEdgeInsets(left=10, right=4)
+        dismiss_accept_fail.actions = [
             dv.DivAction(
-                log_id="dismiss-error",
-                url="div-action://set_variable?name=error_visible&value=0",
+                log_id=f"dismiss-accept-fail_{widget_uuid}",
+                url=f"div-action://set_variable?name={accept_fail_var}&value=0",
             )
         ]
 
-        error_container = HStack(
-            [error_icon, error_msg, dismiss_error],
+        accept_fail_container = HStack(
+            [accept_fail_icon, accept_fail_text, dismiss_accept_fail],
             padding=12,
             background="#FEF2F2",
             corner_radius=10,
             width=dv.DivMatchParentSize(),
         )
-        error_container.id = "error-container"
-        error_container.visibility = Expr("@{error_visible == 1 ? 'visible' : 'gone'}")
-        error_container.margins = dv.DivEdgeInsets(top=12, left=16, right=16, bottom=8)
-        error_container.border = dv.DivBorder(
+        accept_fail_container.id = f"accept-fail-container-{widget_uuid}"
+        accept_fail_container.visibility = Expr(
+            f"@{{{accept_fail_var} == 1 ? 'visible' : 'gone'}}"
+        )
+        accept_fail_container.margins = dv.DivEdgeInsets(
+            top=12, left=16, right=16, bottom=8
+        )
+        accept_fail_container.border = dv.DivBorder(
+            corner_radius=10, stroke=dv.DivStroke(color="#FECACA", width=1)
+        )
+
+        # Reject Success container
+        reject_success_icon = caption_1("✅")
+        reject_success_icon.margins = dv.DivEdgeInsets(right=8)
+
+        reject_success_text = text_1("Request rejected successfully!", color="#065F46")
+        reject_success_text.font_weight = dv.DivFontWeight.MEDIUM
+        reject_success_text.line_height = 20
+        reject_success_text.width = dv.DivMatchParentSize(weight=1)
+
+        dismiss_reject_success = caption_1("✕", color="#065F46")
+        dismiss_reject_success.font_size = 16
+        dismiss_reject_success.font_weight = dv.DivFontWeight.BOLD
+        dismiss_reject_success.paddings = dv.DivEdgeInsets(left=8, right=4)
+        dismiss_reject_success.actions = [
+            dv.DivAction(
+                log_id=f"dismiss-reject-success_{widget_uuid}",
+                url=f"div-action://set_variable?name={reject_success_var}&value=0",
+            )
+        ]
+
+        reject_success_container = HStack(
+            [reject_success_icon, reject_success_text, dismiss_reject_success],
+            padding=12,
+            background="#ECFDF5",
+            corner_radius=10,
+            width=dv.DivMatchParentSize(),
+        )
+        reject_success_container.id = f"reject-success-container-{widget_uuid}"
+        reject_success_container.visibility = Expr(
+            f"@{{{reject_success_var} == 1 ? 'visible' : 'gone'}}"
+        )
+        reject_success_container.margins = dv.DivEdgeInsets(
+            top=12, left=16, right=16, bottom=8
+        )
+        reject_success_container.border = dv.DivBorder(
+            corner_radius=10, stroke=dv.DivStroke(color="#A7F3D0", width=1)
+        )
+
+        # Reject Fail container
+        reject_fail_icon = caption_1("⚠️")
+        reject_fail_icon.font_size = 16
+        reject_fail_icon.margins = dv.DivEdgeInsets(right=10)
+
+        reject_fail_text = text_1("Failed to reject request", color="#B91C1C")
+        reject_fail_text.font_weight = dv.DivFontWeight.MEDIUM
+        reject_fail_text.line_height = 20
+        reject_fail_text.width = dv.DivMatchParentSize(weight=1)
+
+        dismiss_reject_fail = caption_1("✕", color="#B91C1C")
+        dismiss_reject_fail.font_size = 18
+        dismiss_reject_fail.font_weight = dv.DivFontWeight.BOLD
+        dismiss_reject_fail.paddings = dv.DivEdgeInsets(left=10, right=4)
+        dismiss_reject_fail.actions = [
+            dv.DivAction(
+                log_id=f"dismiss-reject-fail_{widget_uuid}",
+                url=f"div-action://set_variable?name={reject_fail_var}&value=0",
+            )
+        ]
+
+        reject_fail_container = HStack(
+            [reject_fail_icon, reject_fail_text, dismiss_reject_fail],
+            padding=12,
+            background="#FEF2F2",
+            corner_radius=10,
+            width=dv.DivMatchParentSize(),
+        )
+        reject_fail_container.id = f"reject-fail-container-{widget_uuid}"
+        reject_fail_container.visibility = Expr(
+            f"@{{{reject_fail_var} == 1 ? 'visible' : 'gone'}}"
+        )
+        reject_fail_container.margins = dv.DivEdgeInsets(
+            top=12, left=16, right=16, bottom=8
+        )
+        reject_fail_container.border = dv.DivBorder(
             corner_radius=10, stroke=dv.DivStroke(color="#FECACA", width=1)
         )
 
         # Approve button using smarty_ui text component with actions
         approve_btn = text_1("Approve", color="#2563EB")
-        approve_btn.id = "btn-approve"
+        approve_btn.id = f"btn-approve-{widget_uuid}"
         approve_btn.border = dv.DivBorder(
             corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
         )
@@ -473,40 +578,73 @@ def human_approval_ui(
         approve_btn.height = dv.DivFixedSize(value=36)
         approve_btn.paddings = dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8)
         approve_btn.margins = dv.DivEdgeInsets(right=8)
+        approve_btn.visibility = Expr(
+            f"@{{{accept_btn_visible_var} == 1 ? 'visible' : 'gone'}}"
+        )
+        # Variables to be sent with the approve request
+        approve_btn.variables = [
+            dv.StringVariable(name="tool_call_id", value=human_approval_input.tool_call_id),
+            dv.StringVariable(name="user_id", value=human_approval_input.user_id),
+            dv.StringVariable(name="session_id", value=human_approval_input.session_id),
+            dv.StringVariable(name="app_name", value=human_approval_input.app_name),
+            dv.StringVariable(name="action", value="approve"),
+        ]
         approve_btn.actions = [
             dv.DivAction(
                 url="divkit://send-request",
-                log_id="btn-approve",
+                log_id=f"btn-approve_{widget_uuid}",
                 typed=dv.DivActionSubmit(
-                    container_id="btn-approve",
+                    container_id=f"btn-approve-{widget_uuid}",
                     request=dv.DivActionSubmitRequest(
                         url=approve_link,
-                        method=dv.RequestMethod.GET,
                         headers=[dv.RequestHeader(name="api-key", value=api_key)],
+                        method=dv.RequestMethod.POST,
                     ),
                     on_success_actions=[
+                        # Show accept success message
                         dv.DivAction(
-                            log_id="approve-success",
-                            url="div-action://set_variable?name=success_visible&value=1",
-                        )
+                            log_id=f"accept-success-show_{widget_uuid}",
+                            url=f"div-action://set_variable?name={accept_success_var}&value=1",
+                        ),
+                        # Hide accept fail message
+                        dv.DivAction(
+                            log_id=f"accept-fail-hide_{widget_uuid}",
+                            url=f"div-action://set_variable?name={accept_fail_var}&value=0",
+                        ),
+                        # Hide approve button
+                        dv.DivAction(
+                            log_id=f"accept-btn-hide_{widget_uuid}",
+                            url=f"div-action://set_variable?name={accept_btn_visible_var}&value=0",
+                        ),
+                        # Hide reject button
+                        dv.DivAction(
+                            log_id=f"reject-btn-hide-on-accept_{widget_uuid}",
+                            url=f"div-action://set_variable?name={reject_btn_visible_var}&value=0",
+                        ),
                     ],
                     on_fail_actions=[
+                        # Show accept fail message
                         dv.DivAction(
-                            log_id="approve-error",
-                            url="div-action://set_variable?name=error_visible&value=1",
+                            log_id=f"accept-fail-show_{widget_uuid}",
+                            url=f"div-action://set_variable?name={accept_fail_var}&value=1",
                         ),
+                        # Hide accept success message
                         dv.DivAction(
-                            log_id="set-error-text",
-                            url="div-action://set_variable?name=error_text&value=Failed to approve request",
+                            log_id=f"accept-success-hide_{widget_uuid}",
+                            url=f"div-action://set_variable?name={accept_success_var}&value=0",
                         ),
                     ],
                 ),
+                payload={
+                    "url": approve_link,
+                    "method": "GET",
+                },
             ),
         ]
 
         # Reject button using smarty_ui text component with actions
         reject_btn = text_1("Reject", color="#2563EB")
-        reject_btn.id = "btn-reject"
+        reject_btn.id = f"btn-reject-{widget_uuid}"
         reject_btn.border = dv.DivBorder(
             corner_radius=8, stroke=dv.DivStroke(color="#3B82F6")
         )
@@ -514,31 +652,60 @@ def human_approval_ui(
         reject_btn.height = dv.DivFixedSize(value=36)
         reject_btn.paddings = dv.DivEdgeInsets(left=12, right=12, top=8, bottom=8)
         reject_btn.margins = dv.DivEdgeInsets(right=8)
+        reject_btn.visibility = Expr(
+            f"@{{{reject_btn_visible_var} == 1 ? 'visible' : 'gone'}}"
+        )
+        # Variables to be sent with the reject request
+        reject_btn.variables = [
+            dv.StringVariable(name="tool_call_id", value=human_approval_input.tool_call_id),
+            dv.StringVariable(name="user_id", value=human_approval_input.user_id),
+            dv.StringVariable(name="session_id", value=human_approval_input.session_id),
+            dv.StringVariable(name="app_name", value=human_approval_input.app_name),
+            dv.StringVariable(name="action", value="reject"),
+        ]
         reject_btn.actions = [
             dv.DivAction(
                 url="divkit://send-request",
-                log_id="btn-reject",
+                log_id=f"btn-reject_{widget_uuid}",
                 typed=dv.DivActionSubmit(
-                    container_id="btn-reject",
+                    container_id=f"btn-reject-{widget_uuid}",
                     request=dv.DivActionSubmitRequest(
                         url=reject_link,
-                        method=dv.RequestMethod.GET,
+                        method=dv.RequestMethod.POST,
                         headers=[dv.RequestHeader(name="api-key", value=api_key)],
                     ),
                     on_success_actions=[
+                        # Show reject success message
                         dv.DivAction(
-                            log_id="reject-success",
-                            url="div-action://set_variable?name=success_visible&value=1",
-                        )
+                            log_id=f"reject-success-show_{widget_uuid}",
+                            url=f"div-action://set_variable?name={reject_success_var}&value=1",
+                        ),
+                        # Hide reject fail message
+                        dv.DivAction(
+                            log_id=f"reject-fail-hide_{widget_uuid}",
+                            url=f"div-action://set_variable?name={reject_fail_var}&value=0",
+                        ),
+                        # Hide reject button
+                        dv.DivAction(
+                            log_id=f"reject-btn-hide_{widget_uuid}",
+                            url=f"div-action://set_variable?name={reject_btn_visible_var}&value=0",
+                        ),
+                        # Hide approve button
+                        dv.DivAction(
+                            log_id=f"accept-btn-hide-on-reject_{widget_uuid}",
+                            url=f"div-action://set_variable?name={accept_btn_visible_var}&value=0",
+                        ),
                     ],
                     on_fail_actions=[
+                        # Show reject fail message
                         dv.DivAction(
-                            log_id="reject-error",
-                            url="div-action://set_variable?name=error_visible&value=1",
+                            log_id=f"reject-fail-show_{widget_uuid}",
+                            url=f"div-action://set_variable?name={reject_fail_var}&value=1",
                         ),
+                        # Hide reject success message
                         dv.DivAction(
-                            log_id="set-error-text",
-                            url="div-action://set_variable?name=error_text&value=Failed to reject request",
+                            log_id=f"reject-success-hide_{widget_uuid}",
+                            url=f"div-action://set_variable?name={reject_success_var}&value=0",
                         ),
                     ],
                 ),
@@ -547,14 +714,32 @@ def human_approval_ui(
 
         # Buttons container using HStack
         buttons_container = HStack([approve_btn, reject_btn])
+        buttons_container.margins = dv.DivEdgeInsets(
+            top=12, left=16, right=16, bottom=8
+        )
 
         # Main container using VStack
         children = [text_container]
         if "utility_details_container" in locals() and utility_details_container:
             children.append(utility_details_container)
+        # Add feedback containers (success/error messages for both actions)
+        children.append(accept_success_container)
+        children.append(accept_fail_container)
+        children.append(reject_success_container)
+        children.append(reject_fail_container)
         children.append(buttons_container)
 
         container = VStack(children)
+        container.variables = [
+            # 4 status variables (initially hidden = 0)
+            dv.IntegerVariable(name=accept_success_var, value=0),
+            dv.IntegerVariable(name=accept_fail_var, value=0),
+            dv.IntegerVariable(name=reject_success_var, value=0),
+            dv.IntegerVariable(name=reject_fail_var, value=0),
+            # 2 button visibility variables (initially visible = 1)
+            dv.IntegerVariable(name=accept_btn_visible_var, value=1),
+            dv.IntegerVariable(name=reject_btn_visible_var, value=1),
+        ]
 
         logger.info("Successfully built human approval UI container")
         return dv.make_div(container)
