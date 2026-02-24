@@ -1,6 +1,7 @@
 import pydivkit as dv
 from pydivkit.core import Expr
 import json
+import uuid
 from typing import List, Optional
 
 # Import smarty_ui components
@@ -34,7 +35,7 @@ BUTTON_FEEDBACK_TEXTS = {
 def build_buttons_row(
     button_texts: list,
     language: str = "ru",
-    include_feedback: bool = True,
+    include_feedback: bool = False,
 ):
     """
     Build a row of buttons with optional feedback handling using smarty_ui smarty_button component.
@@ -42,12 +43,19 @@ def build_buttons_row(
     Args:
         button_texts: List of button text labels
         language: Language code for feedback text (ru, en, uz)
-        include_feedback: Whether to include success/error feedback containers
+        include_feedback: Whether to include success/error feedback containers (default: False)
 
     Returns:
         DivContainer with buttons and optional feedback
     """
+    # Generate unique ID for this button row instance to avoid variable conflicts
+    btn_row_uuid = str(uuid.uuid4())[:8]
+
     feedback_texts = BUTTON_FEEDBACK_TEXTS.get(language, BUTTON_FEEDBACK_TEXTS["en"])
+
+    # Unique variable names for this button row instance
+    success_var = f"btn_row_{btn_row_uuid}_success_visible"
+    error_var = f"btn_row_{btn_row_uuid}_error_visible"
 
     # Build button items using smarty_ui smarty_button
     button_items = []
@@ -56,24 +64,32 @@ def build_buttons_row(
         action_url = f"div-action://button/{txt.lower().replace(' ', '_')}"
         btn = smarty_button(text=txt, action_url=action_url)
 
-        # Add custom actions including feedback action
-        btn.actions = [
+        # Add custom actions (feedback action only if include_feedback is True)
+        actions = [
             dv.DivAction(
-                log_id=f"btn-{txt.lower().replace(' ', '_')}",
+                log_id=f"btn-{txt.lower().replace(' ', '_')}-{btn_row_uuid}",
                 url=action_url,
                 payload={"button_text": txt, "action": txt.lower()},
             ),
-            # Success feedback action
-            dv.DivAction(
-                log_id=f"btn-{txt.lower().replace(' ', '_')}-success",
-                url="div-action://set_variable?name=simple_btn_success_visible&value=1",
-            ),
         ]
+
+        if include_feedback:
+            # Success feedback action
+            actions.append(
+                dv.DivAction(
+                    log_id=f"btn-{txt.lower().replace(' ', '_')}-success-{btn_row_uuid}",
+                    url=f"div-action://set_variable?name={success_var}&value=1",
+                )
+            )
+
+        btn.actions = actions
         btn.margins = dv.DivEdgeInsets(right=8)
         button_items.append(btn)
 
     if not include_feedback:
-        return HStack(button_items)
+        # Return simple HStack without feedback containers and without variables
+        buttons_row = HStack(button_items)
+        return dv.make_div(buttons_row)
 
     # Success feedback container using smarty_ui
     success_icon = caption_1("✅")
@@ -88,8 +104,8 @@ def build_buttons_row(
     dismiss_success.paddings = dv.DivEdgeInsets(left=8)
     dismiss_success.actions = [
         dv.DivAction(
-            log_id="dismiss-simple-btn-success",
-            url="div-action://set_variable?name=simple_btn_success_visible&value=0",
+            log_id=f"dismiss-btn-success-{btn_row_uuid}",
+            url=f"div-action://set_variable?name={success_var}&value=0",
         )
     ]
 
@@ -100,9 +116,9 @@ def build_buttons_row(
         corner_radius=8,
         width=dv.DivMatchParentSize(),
     )
-    success_container.id = "simple-btn-success"
+    success_container.id = f"btn-success-{btn_row_uuid}"
     success_container.visibility = Expr(
-        "@{simple_btn_success_visible == 1 ? 'visible' : 'gone'}"
+        f"@{{{success_var} == 1 ? 'visible' : 'gone'}}"
     )
     success_container.margins = dv.DivEdgeInsets(top=8)
     success_container.border = dv.DivBorder(
@@ -122,8 +138,8 @@ def build_buttons_row(
     dismiss_error.paddings = dv.DivEdgeInsets(left=8)
     dismiss_error.actions = [
         dv.DivAction(
-            log_id="dismiss-simple-btn-error",
-            url="div-action://set_variable?name=simple_btn_error_visible&value=0",
+            log_id=f"dismiss-btn-error-{btn_row_uuid}",
+            url=f"div-action://set_variable?name={error_var}&value=0",
         )
     ]
 
@@ -134,9 +150,9 @@ def build_buttons_row(
         corner_radius=8,
         width=dv.DivMatchParentSize(),
     )
-    error_container.id = "simple-btn-error"
+    error_container.id = f"btn-error-{btn_row_uuid}"
     error_container.visibility = Expr(
-        "@{simple_btn_error_visible == 1 ? 'visible' : 'gone'}"
+        f"@{{{error_var} == 1 ? 'visible' : 'gone'}}"
     )
     error_container.margins = dv.DivEdgeInsets(top=8)
     error_container.border = dv.DivBorder(
@@ -146,11 +162,11 @@ def build_buttons_row(
     # Buttons row using HStack
     buttons_row = HStack(button_items)
 
-    # Main container using VStack
+    # Main container using VStack with scoped variables
     main_container = VStack([buttons_row, success_container, error_container])
     main_container.variables = [
-        dv.IntegerVariable(name="simple_btn_success_visible", value=0),
-        dv.IntegerVariable(name="simple_btn_error_visible", value=0),
+        dv.IntegerVariable(name=success_var, value=0),
+        dv.IntegerVariable(name=error_var, value=0),
     ]
 
     return dv.make_div(main_container)
@@ -158,6 +174,12 @@ def build_buttons_row(
 
 if __name__ == "__main__":
     buttons = ["submit", "cancel"]
+    # Test without feedback (default)
     buttons_widget = build_buttons_row(buttons)
     with open("logs/json/buttons.json", "w") as f:
-        json.dump(dv.make_div(buttons_widget), f, indent=2, ensure_ascii=False)
+        json.dump(buttons_widget, f, indent=2, ensure_ascii=False)
+
+    # Test with feedback
+    buttons_widget_with_feedback = build_buttons_row(buttons, include_feedback=True)
+    with open("logs/json/buttons_with_feedback.json", "w") as f:
+        json.dump(buttons_widget_with_feedback, f, indent=2, ensure_ascii=False)

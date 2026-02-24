@@ -129,9 +129,17 @@ class FunctionCallActivityRecord(FunctionStrategy):
     """Strategy for function-call activity event UI."""
 
     def build_widget_inputs(self, context):
+        context.logger_context.logger.debug(
+            "function_call_activity_record_building_widget_inputs",
+        )
         data = FunctionCallBackendOutput(
             function_name=context.backend_output.get("function_name", ""),
             arguments=context.backend_output.get("arguments", {}),
+        )
+        context.logger_context.logger.debug(
+            "function_call_activity_record_parsed_data",
+            function_name=data.function_name,
+            arguments=data.arguments,
         )
         return {
             build_function_call_activity_widget: WidgetInput(
@@ -163,9 +171,16 @@ class FunctionResponseActivityRecord(FunctionStrategy):
     """
 
     def build_widget_inputs(self, context):
+        context.logger_context.logger.debug(
+            "function_response_activity_record_building_widget_inputs",
+        )
         data = FunctionResponseBackendOutput(
             function_name=context.backend_output.get("function_name", ""),
             response=context.backend_output.get("response", {}),
+        )
+        context.logger_context.logger.debug(
+            "function_response_activity_record_parsed_data",
+            function_name=data.function_name,
         )
         return {
             build_function_response_activity_widget: WidgetInput(
@@ -186,17 +201,36 @@ class FunctionResponseActivityRecord(FunctionStrategy):
         }
 
     def execute(self, context):
+        context.logger_context.logger.info(
+            "function_response_activity_record_execute_started",
+        )
         data = FunctionResponseBackendOutput(
             function_name=context.backend_output.get("function_name", ""),
             response=context.backend_output.get("response", {}),
+        )
+        context.logger_context.logger.debug(
+            "function_response_activity_record_trying_embedded_ui",
+            function_name=data.function_name,
         )
         embedded = _try_build_embedded_ui(
             function_name=data.function_name,
             response=data.response,
             parent_context=context,
         )
+        context.logger_context.logger.debug(
+            "function_response_activity_record_embedded_ui_result",
+            has_embedded=embedded is not None,
+            embedded_count=len(embedded) if embedded else 0,
+        )
         widget_inputs = self.build_widget_inputs(context)
-        return self._build_and_save(context, widget_inputs, extra_widget_dicts=embedded)
+        result = self._build_and_save(
+            context, widget_inputs, extra_widget_dicts=embedded
+        )
+        context.logger_context.logger.info(
+            "function_response_activity_record_execute_completed",
+            widgets_count=result.widgets_count,
+        )
+        return result
 
 
 function_response_activity_record = FunctionResponseActivityRecord()

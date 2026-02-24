@@ -225,7 +225,7 @@ def human_approval_ui(
         utility_details_container = None
 
         if (
-            human_approval_input.tool_name == "pay_for_home_utility_wrapper"
+            human_approval_input.tool_name == "make_payment"
             and human_approval_input.arguments
         ):
             try:
@@ -411,8 +411,12 @@ def human_approval_ui(
         reject_fail_var = f"human_approval_action_reject_fail_{widget_uuid}"
 
         # Variable names for button visibility (2 button variables)
-        accept_btn_visible_var = f"human_approval_action_accept_button_{widget_uuid}_visible"
-        reject_btn_visible_var = f"human_approval_action_reject_button_{widget_uuid}_visible"
+        accept_btn_visible_var = (
+            f"human_approval_action_accept_button_{widget_uuid}_visible"
+        )
+        reject_btn_visible_var = (
+            f"human_approval_action_reject_button_{widget_uuid}_visible"
+        )
 
         # Accept Success container
         accept_success_icon = caption_1("✅")
@@ -583,7 +587,9 @@ def human_approval_ui(
         )
         # Variables to be sent with the approve request
         approve_btn.variables = [
-            dv.StringVariable(name="tool_call_id", value=human_approval_input.tool_call_id),
+            dv.StringVariable(
+                name="tool_call_id", value=human_approval_input.tool_call_id
+            ),
             dv.StringVariable(name="user_id", value=human_approval_input.user_id),
             dv.StringVariable(name="session_id", value=human_approval_input.session_id),
             dv.StringVariable(name="app_name", value=human_approval_input.app_name),
@@ -657,7 +663,9 @@ def human_approval_ui(
         )
         # Variables to be sent with the reject request
         reject_btn.variables = [
-            dv.StringVariable(name="tool_call_id", value=human_approval_input.tool_call_id),
+            dv.StringVariable(
+                name="tool_call_id", value=human_approval_input.tool_call_id
+            ),
             dv.StringVariable(name="user_id", value=human_approval_input.user_id),
             dv.StringVariable(name="session_id", value=human_approval_input.session_id),
             dv.StringVariable(name="app_name", value=human_approval_input.app_name),
