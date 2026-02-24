@@ -28,7 +28,7 @@ dependencies = [
     "sentry-sdk>=2.44.0",
     "smarty-ui",
     "structlog>=25.5.0",
-    "tool-call-models==0.1.42",
+    "tool-call-models==0.1.49",
 ]
 
 [tool.uv.sources]
