@@ -481,7 +481,7 @@ def build_balance_ui(
                 {
                     "balance": format_balance(card.balance // 100),
                     "card_name": card.card_name,
-                    "card_thumbnail_url": card.image_url,
+                    "card_thumbnail_url": card,
                     "card_last_digits": card.masked_card_pan[-4:]
                     if len(card.masked_card_pan) >= 4
                     else card.masked_card_pan,

@@ -325,7 +325,7 @@ AGENT_STEP_MESSAGES: List[str] = [
 
 # In-memory state for the running agent
 _agent_state: Dict[str, Any] = {
-    "messages": [],       # list of {"step": int, "text": str}
+    "messages": [],  # list of {"step": int, "text": str}
     "is_running": False,
     "is_complete": False,
     "result": None,
