@@ -44,7 +44,12 @@ finally:
         version = "0"
 logger.info("Starting server", env=os.getenv("ENVIRONMENT"), version=version)
 
-app = FastAPI()
+app = FastAPI(
+    title="UI Server",
+    description="UI Server to generate UI json representations using Yandex Divkit",
+    version=version,
+    openapi_url="/ui_server/openapi.json",
+)
 
 # Setup telemetry
 setup_telemetry(app, service_name="ui_server", version=version)
@@ -72,7 +77,7 @@ for file in os.listdir("."):
         logger.info(f"Deleted file: {file}")
 
 # Serve static files
-app.mount("/ui_server/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # https://www.youtbe.com/watch?v=NTP4XdTjRK0

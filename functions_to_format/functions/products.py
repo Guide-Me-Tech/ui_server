@@ -24,6 +24,7 @@ from tool_call_models.smartbazar import SearchProductsResponse, ProductItem
 import structlog
 from models.context import Context
 from .base_strategy import FunctionStrategy
+from conf import config
 
 # Import smarty_ui components
 from smarty_ui import (
@@ -393,7 +394,7 @@ def make_product_state(
                 typed=dv.DivActionSubmit(
                     container_id=cart_container,
                     request=dv.DivActionSubmitRequest(
-                        url=f"https://smarty.smartbank.uz/chat/v3/tools/call?function_name=add_product_to_cart&chat_id={chat_id}&arguments={json.dumps({'offer_id': p.offer_id, 'quantity': 1})}",
+                        url=f"{config.smarty.base_url}/chat/v3/tools/call?function_name=add_product_to_cart&chat_id={chat_id}&arguments={json.dumps({'offer_id': p.offer_id, 'quantity': 1})}",
                         method=dv.RequestMethod.POST,
                         headers=[dv.RequestHeader(name="api-key", value=api_key)],
                     ),

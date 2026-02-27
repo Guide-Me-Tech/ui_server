@@ -26,10 +26,21 @@ def setup_logging(logfile: str) -> structlog.stdlib.BoundLogger:
     # --- 1. Create handlers ---
     console_handler = logging.StreamHandler(sys.stdout)
     log_level = logging.DEBUG
-    if os.getenv("ENVIRONMENT", "development").lower() == "development":
+    if os.getenv("LOG_LEVEL", "DEBUG").upper() == "DEBUG":
         log_level = logging.DEBUG
-    else:
+    elif os.getenv("LOG_LEVEL", "DEBUG").upper() == "INFO":
         log_level = logging.INFO
+    elif os.getenv("LOG_LEVEL", "DEBUG").upper() == "WARNING":
+        log_level = logging.WARNING
+    elif os.getenv("LOG_LEVEL", "DEBUG").upper() == "ERROR":
+        log_level = logging.ERROR
+    elif os.getenv("LOG_LEVEL", "DEBUG").upper() == "CRITICAL":
+        log_level = logging.CRITICAL
+    elif os.getenv("LOG_LEVEL", "DEBUG").upper() == "FATAL":
+        log_level = logging.FATAL
+    else:
+        log_level = logging.DEBUG
+
     console_handler.setLevel(log_level)
     console_handler.setFormatter(logging.Formatter(fmt="%(message)s"))
 
