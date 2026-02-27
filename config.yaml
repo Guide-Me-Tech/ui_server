@@ -1,0 +1,47 @@
+development:
+  logfire:
+    token: ""
+  sentry:
+    dsn: ""
+  otel:
+    service_name: ui_server
+    resource_attributes: "deployment.environment=development,service.namespace=ui-server"
+    bsp_schedule_delay: 5000
+    bsp_max_queue_size: 2048
+    bsp_max_export_batch_size: 512
+    bsp_export_timeout: 30000
+    traces_sampler: parentbased_traceidratio
+    traces_sampler_arg: 1.0
+    exporter_otlp_endpoint: "http://localhost:4318/v1/traces"
+    exporter_otlp_headers: null
+    console_export: false
+  mongo:
+    database_name: usage
+    collection_name: ui_server
+    mongo_uri: "mongodb://admin:admin@localhost:27017"
+  smarty:
+    base_url: "https://smarty-test.smartbank.uz"
+
+production:
+  logfire:
+    token: ""
+  sentry:
+    dsn: ""
+  otel:
+    service_name: ui_server
+    resource_attributes: "deployment.environment=production,service.namespace=ui-server"
+    bsp_schedule_delay: 5000
+    bsp_max_queue_size: 2048
+    bsp_max_export_batch_size: 512
+    bsp_export_timeout: 30000
+    traces_sampler: parentbased_traceidratio
+    traces_sampler_arg: 1.0
+    exporter_otlp_endpoint: "http://tempo:4318/v1/traces"
+    exporter_otlp_headers: null
+    console_export: false
+  mongo:
+    database_name: usage
+    collection_name: ui_server
+    mongo_uri: "mongodb://admin:admin@mongo:27017"
+  smarty:
+    base_url: "https://smarty.smartbank.uz"

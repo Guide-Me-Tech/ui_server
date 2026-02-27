@@ -82,8 +82,9 @@ def setup_telemetry(
     _prometheus_reader = PrometheusMetricReader()
     metric_readers.append(_prometheus_reader)
 
-    if environment == "development" or config.otel.console_export:
+    if config.otel.console_export:
         # Add console exporter for development
+        print("Adding console exporter for development")
         console_metric_exporter = ConsoleMetricExporter()
         metric_readers.append(
             PeriodicExportingMetricReader(
